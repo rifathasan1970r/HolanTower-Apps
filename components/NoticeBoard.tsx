@@ -4,11 +4,12 @@ import { NOTICES, TRANSLATIONS } from '../constants';
 
 interface NoticeBoardProps {
   lang: 'bn' | 'en';
+  text?: string;
 }
 
-const NoticeBoard: React.FC<NoticeBoardProps> = ({ lang }) => {
-  // Combine all notices into a single string
-  const noticeText = NOTICES.map(n => n.text).join(" ••• ");
+const NoticeBoard: React.FC<NoticeBoardProps> = ({ lang, text }) => {
+  // Combine all notices into a single string or use provided text
+  const noticeText = text || NOTICES.map(n => n.text).join(" ••• ");
   const t = TRANSLATIONS[lang];
 
   return (
@@ -20,10 +21,6 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({ lang }) => {
       
       <div className="whitespace-nowrap overflow-hidden w-full ml-24">
         <div className="animate-marquee inline-block">
-          <span className="text-sm font-semibold text-gray-900 mx-4">
-            {noticeText}
-          </span>
-          {/* Duplicate for seamless loop */}
           <span className="text-sm font-semibold text-gray-900 mx-4">
             {noticeText}
           </span>

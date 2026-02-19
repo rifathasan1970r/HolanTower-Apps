@@ -10,6 +10,8 @@ import Assistant from './components/Assistant';
 import { ServiceChargeView } from './components/ServiceChargeView';
 import EmergencyView from './components/EmergencyView';
 
+const MENU_NOTICE = "হলান টাওয়ারে আপনাকে স্বাগতম। আমাদের ভবনের সকল গুরুত্বপূর্ণ তথ্য ও দৈনন্দিন সেবাগুলি এখনে দ্রুত পেয়ে যাবেন। এখানে জরুরী নোটিশ, ইউটিলিটি ও সার্ভিস চার্জ, ডেসকো রিচার্জ, যোগাযোগ ও জরুরী হেল্পলাইন, ম্যাপ ও রুট নির্দেশনা, প্রিপেইড মিটার নাম্বার, লিফট ব্যবহারের নিয়ম, গ্যালারি এবং বাসাভাড়ার তথ্য একসাথে সহজে খুঁজে পাবেন। এটি হলান টাওয়ারের বাসিন্দাদের জন্য একটি দ্রুত, সহজ ও নির্ভরযোগ্য ডিজিটাল সার্ভিস কেন্দ্র।";
+
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
   const [lang, setLang] = useState<'bn' | 'en'>('bn');
@@ -364,13 +366,18 @@ const App: React.FC = () => {
              </button>
           </div>
         </div>
-        {currentView === 'HOME' && <NoticeBoard lang={lang} />}
+        {(currentView === 'HOME' || currentView === 'MENU') && (
+          <NoticeBoard 
+            lang={lang} 
+            text={currentView === 'MENU' ? MENU_NOTICE : undefined} 
+          />
+        )}
       </header>
 
       {/* Main Content Area */}
       <main 
         className={`px-5 relative z-10 transition-all duration-300 ${
-          currentView === 'HOME' ? 'pt-[125px]' : 'pt-[90px]'
+          (currentView === 'HOME' || currentView === 'MENU') ? 'pt-[125px]' : 'pt-[90px]'
         }`}
       >
         <AnimatePresence mode="wait">
