@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Languages } from 'lucide-react';
+import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Languages, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { APP_NAME_BN, APP_NAME_EN, MENU_ITEMS, TRANSLATIONS } from './constants';
@@ -8,6 +8,7 @@ import NoticeBoard from './components/NoticeBoard';
 import BottomNav from './components/BottomNav';
 import Assistant from './components/Assistant';
 import { ServiceChargeView } from './components/ServiceChargeView';
+import EmergencyView from './components/EmergencyView';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -50,6 +51,9 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (currentView) {
+      case 'EMERGENCY':
+        return <EmergencyView />;
+
       case 'SERVICE_CHARGE':
         return <ServiceChargeView lang={lang} />;
       
@@ -115,55 +119,94 @@ const App: React.FC = () => {
         );
 
       case 'CONTACT':
+        const contacts = [
+            {
+                nameBn: 'আইয়ুব খান',
+                nameEn: 'Ayub Khan',
+                phone: '01720503870',
+                displayPhone: '+880 1720-503870',
+                roleBn: 'ম্যানেজমেন্ট',
+                roleEn: 'Management',
+                gradient: 'from-blue-500 to-indigo-600',
+            },
+            {
+                nameBn: 'নজরুল ইসলাম',
+                nameEn: 'Nazrul Islam',
+                phone: '01731597652',
+                displayPhone: '+880 1731-597652',
+                roleBn: 'ম্যানেজমেন্ট',
+                roleEn: 'Management',
+                gradient: 'from-violet-500 to-purple-600',
+            },
+            {
+                nameBn: 'আবু সাঈদ',
+                nameEn: 'Abu Sayed',
+                phone: '01716524033',
+                displayPhone: '+880 1716-524033',
+                roleBn: 'ম্যানেজমেন্ট',
+                roleEn: 'Management',
+                gradient: 'from-cyan-500 to-teal-600',
+            },
+            {
+                nameBn: 'রিফাত',
+                nameEn: 'Rifat',
+                phone: '01310988954',
+                displayPhone: '+880 1310-988954',
+                roleBn: 'নিরাপত্তা ও তত্ত্বাবধানে',
+                roleEn: 'Security & Supervision',
+                gradient: 'from-rose-500 to-pink-600',
+            }
+        ];
+
         return (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-xl font-bold text-gray-800 border-l-4 border-indigo-600 pl-3">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-2 pb-6">
+            <h2 className="text-2xl font-bold text-slate-800 px-1 border-l-4 border-indigo-500 pl-3">
                 {lang === 'bn' ? 'জরুরী যোগাযোগ' : 'Emergency Contact'}
             </h2>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-               {[
-                 { 
-                    name: lang === 'bn' ? 'ম্যানেজার (রহিম সাহেব)' : 'Manager (Mr. Rahim)', 
-                    phone: '01700000000', 
-                    role: lang === 'bn' ? 'ম্যানেজমেন্ট' : 'Management', 
-                    color: 'bg-indigo-100 text-indigo-600' 
-                 },
-                 { 
-                    name: lang === 'bn' ? 'সিকিউরিটি গেট' : 'Security Gate', 
-                    phone: '01911223344', 
-                    role: lang === 'bn' ? 'নিরাপত্তা' : 'Security', 
-                    color: 'bg-rose-100 text-rose-600' 
-                 },
-                 { 
-                    name: lang === 'bn' ? 'লিফট মেইনটেনেন্স' : 'Lift Maintenance', 
-                    phone: '01811556677', 
-                    role: lang === 'bn' ? 'টেকনিক্যাল' : 'Technical', 
-                    color: 'bg-amber-100 text-amber-600' 
-                 },
-                 { 
-                    name: lang === 'bn' ? 'ফায়ার সার্ভিস' : 'Fire Service', 
-                    phone: '999', 
-                    role: lang === 'bn' ? 'জরুরী সেবা' : 'Emergency', 
-                    color: 'bg-red-500 text-white' 
-                 },
-               ].map((contact, i) => (
-                 <div key={i} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                       <div className={`w-10 h-10 ${contact.color} rounded-full flex items-center justify-center shadow-sm`}>
-                          <Phone size={18} />
+            <div className="grid gap-5">
+               {contacts.map((contact, i) => (
+                 <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    key={i} 
+                    className="bg-white rounded-[1.5rem] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative overflow-hidden group"
+                 >
+                    {/* Decorative Gradient Blob */}
+                    <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${contact.gradient} opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity duration-500 -mr-10 -mt-10`}></div>
+
+                    <div className="flex items-center gap-4 relative z-10 mb-5">
+                       <div className={`w-14 h-14 bg-gradient-to-br ${contact.gradient} rounded-2xl flex items-center justify-center shadow-lg text-white transform group-hover:scale-105 transition-transform duration-300`}>
+                          <User size={24} />
                        </div>
                        <div>
-                         <h4 className="font-bold text-gray-800 text-sm">{contact.name}</h4>
-                         <p className="text-[11px] text-gray-500 font-medium">{contact.role}</p>
+                         <h4 className="font-bold text-slate-800 text-lg leading-tight">{lang === 'bn' ? contact.nameBn : contact.nameEn}</h4>
+                         <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                            {lang === 'bn' ? contact.roleBn : contact.roleEn}
+                         </span>
+                         <p className="text-xs text-slate-400 font-mono mt-1 font-medium">{contact.displayPhone}</p>
                        </div>
                     </div>
-                    <a 
-                      href={`tel:${contact.phone}`} 
-                      className="px-4 py-2 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 hover:bg-green-500 hover:text-white transition-all active:scale-95"
-                    >
-                      {lang === 'bn' ? 'কল করুন' : 'Call'}
-                    </a>
-                 </div>
+                    
+                    <div className="flex gap-3 relative z-10"> 
+                        <a 
+                          href={`tel:${contact.phone}`} 
+                          className="flex-1 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-800 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2 group/btn shadow-sm"
+                        >
+                          <Phone size={16} className="group-hover/btn:rotate-12 transition-transform" />
+                          {lang === 'bn' ? 'কল করুন' : 'Call'}
+                        </a>
+                        <a 
+                          href={`https://wa.me/88${contact.phone}`} 
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 py-3 rounded-xl bg-[#DCF8C6]/50 border border-[#25D366]/20 text-[#075E54] font-bold text-sm hover:bg-[#25D366] hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2 group/btn shadow-sm"
+                        >
+                          <MessageCircle size={16} className="group-hover/btn:rotate-12 transition-transform" />
+                          WhatsApp
+                        </a>
+                    </div>
+                 </motion.div>
                ))}
             </div>
           </div>

@@ -9,7 +9,8 @@ import {
   ShieldCheck,
   Droplets,
   Trash2,
-  Bot
+  Bot,
+  Siren
 } from 'lucide-react';
 import { MenuItem, Notice } from './types';
 
@@ -145,6 +146,17 @@ export const MENU_ITEMS: MenuItem[] = [
     description: 'প্রিপেইড মিটার তথ্য',
     descriptionEn: 'Prepaid meter info',
     gradient: 'from-amber-400 to-orange-500'
+  },
+  { 
+    id: 'emergency', 
+    label: 'জরুরী নম্বর', 
+    labelEn: 'Emergency Numbers',
+    icon: Siren, 
+    view: 'EMERGENCY',
+    color: 'bg-red-500',
+    description: 'হেল্পলাইন ও সার্ভিস',
+    descriptionEn: 'Helpline & Services',
+    gradient: 'from-red-500 to-rose-600'
   },
   { 
     id: 'tolet', 

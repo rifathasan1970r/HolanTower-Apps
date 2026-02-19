@@ -1,6 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 
-export type ViewState = 'HOME' | 'SERVICE_CHARGE' | 'DESCO' | 'CONTACT' | 'MENU' | 'TO_LET' | 'AI_ASSISTANT';
+export type ViewState = 'HOME' | 'SERVICE_CHARGE' | 'DESCO' | 'CONTACT' | 'MENU' | 'TO_LET' | 'AI_ASSISTANT' | 'EMERGENCY';
 
 export interface MenuItem {
   id: string;
