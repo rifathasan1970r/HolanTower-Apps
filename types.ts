@@ -9,6 +9,7 @@ export interface MenuItem {
   view: ViewState;
   color?: string;
   description?: string;
+  gradient?: string;
 }
 
 export interface Notice {

@@ -28,7 +28,8 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: CreditCard, 
     view: 'SERVICE_CHARGE',
     color: 'bg-blue-500',
-    description: 'মাসিক বিল ও সার্ভিস চার্জ পেমেন্ট'
+    description: 'মাসিক বিল ও পেমেন্ট',
+    gradient: 'from-blue-500 to-cyan-500'
   },
   { 
     id: 'desco', 
@@ -36,7 +37,8 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: Zap, 
     view: 'DESCO',
     color: 'bg-yellow-500',
-    description: 'প্রিপেইড মিটার রিচার্জ এবং তথ্য'
+    description: 'প্রিপেইড মিটার তথ্য',
+    gradient: 'from-amber-400 to-orange-500'
   },
   { 
     id: 'tolet', 
@@ -44,15 +46,8 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: Key, 
     view: 'TO_LET',
     color: 'bg-emerald-500',
-    description: 'ফ্ল্যাট খালি এবং ভাড়ার তথ্য'
-  },
-  { 
-    id: 'water', 
-    label: 'পানির বিল', 
-    icon: Droplets, 
-    view: 'HOME', // Placeholder
-    color: 'bg-cyan-500',
-    description: 'ওয়াসা বিল সংক্রান্ত তথ্য'
+    description: 'ফ্ল্যাট খালি আছে',
+    gradient: 'from-emerald-400 to-green-600'
   },
   { 
     id: 'security', 
@@ -60,15 +55,26 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: ShieldCheck, 
     view: 'CONTACT',
     color: 'bg-slate-600',
-    description: 'গার্ড এবং নিরাপত্তা নির্দেশিকা'
+    description: 'গার্ড ও জরুরি সেবা',
+    gradient: 'from-slate-600 to-slate-800'
+  },
+  { 
+    id: 'water', 
+    label: 'পানির বিল', 
+    icon: Droplets, 
+    view: 'HOME', // Placeholder
+    color: 'bg-cyan-500',
+    description: 'ওয়াসা বিল তথ্য',
+    gradient: 'from-cyan-400 to-blue-500'
   },
   { 
     id: 'waste', 
     label: 'বর্জ্য ব্যবস্থাপনা', 
     icon: Trash2, 
     view: 'HOME', // Placeholder
-    color: 'bg-orange-500',
-    description: 'ময়লা সংগ্রহ ও পরিচ্ছন্নতা'
+    color: 'bg-rose-500',
+    description: 'ময়লা সংগ্রহ সময়সূচী',
+    gradient: 'from-rose-400 to-pink-600'
   },
 ];
 
