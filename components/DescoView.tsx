@@ -227,7 +227,7 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     key={idx} 
-                    className="bg-white rounded-2xl p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group"
+                    className="bg-white rounded-2xl p-3 sm:p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group"
                   >
                      <div className="flex items-center gap-2 sm:gap-4">
                         {/* Flat Avatar */}
@@ -247,10 +247,10 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                             {/* Copyable Account Chip */}
                             <button 
                                 onClick={() => handleCopy(item.account)}
-                                className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 transition-colors group/acc max-w-full"
+                                className="flex items-center gap-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-1.5 py-1 transition-colors group/acc w-fit"
                             >
                                 <Hash size={10} className="text-slate-400 shrink-0" />
-                                <span className="font-mono text-xs sm:text-sm font-bold text-slate-600 tracking-wide truncate">{item.account}</span>
+                                <span className="font-mono text-[11px] sm:text-sm font-bold text-slate-600 tracking-normal">{item.account}</span>
                                 <Copy size={10} className="text-slate-300 group-hover/acc:text-indigo-500 shrink-0" />
                             </button>
                         </div>
