@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Constants
 const EKPAY_LINK = "https://ekpay.gov.bd/#/payment/electricity-bill";
-const DIRECT_RECHARGE_LINK = "https://holantower-ekpay-payment.netlify.app/";
 const BLOG_LINK = "https://holantower.blogspot.com/p/holantower-electricity-desco-bill.html";
 
 // Desco Data
@@ -39,6 +38,140 @@ const DESCO_DATA = [
   { flat: 'MAIN', name: 'NAZRUL', account: '41371283' }
 ];
 
+// Quick Recharge Modal Component
+const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: typeof DESCO_DATA }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<typeof DESCO_DATA[0] | null>(null);
+  const [toastMsg, setToastMsg] = useState('');
+
+  const filtered = data.filter(d => 
+    (d.flat + " " + d.name).toLowerCase().includes(search.toLowerCase()) || 
+    d.account.includes(search)
+  );
+
+  const handleCopyAndPay = () => {
+     if(!selected) return;
+     navigator.clipboard.writeText(selected.account)
+       .then(() => setToastMsg(`অ্যাকাউন্ট কপি হয়েছে: ${selected.account}`))
+       .catch(() => setToastMsg('কপি ব্যর্থ'));
+     
+     setTimeout(() => {
+        setToastMsg('');
+        window.open(EKPAY_LINK, "_blank");
+     }, 1500);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] font-sans text-[#121212] overflow-y-auto animate-in fade-in duration-300">
+       {/* Background */}
+       <div className="fixed inset-0 bg-[url('https://i.imghippo.com/files/IxR3498AKE.png')] bg-cover bg-center blur-[2px] scale-105 z-[-1]" />
+       <div className="fixed inset-0 bg-white/10 z-[-1]" />
+
+       <div className="min-h-screen flex items-start justify-center p-[18px] pt-[80px]">
+          <div className="w-full max-w-[420px] bg-gradient-to-b from-white to-[#fbfbff] rounded-xl p-[14px] shadow-[0_10px_30px_rgba(60,40,120,0.06)] border border-[#4b2bd8]/5 text-center relative">
+             <button onClick={onClose} className="absolute top-2 right-2 text-slate-400 hover:text-red-500 bg-white/50 rounded-full p-1"><X size={20}/></button>
+             <h2 className="m-0 text-[17px] font-[800]">আপনার ফ্ল্যাট নং সিলেক্ট করুন</h2>
+             
+             {/* Dropdown Toggle */}
+             <div className="relative w-full max-w-[360px] mx-auto mt-[10px] text-left">
+                <button 
+                  onClick={() => setIsOpen(!isOpen)}
+                  className="w-full flex items-center justify-between gap-[10px] p-[10px_12px] rounded-[10px] border border-[#5a46c8]/10 bg-gradient-to-r from-white to-[#fbfbff] cursor-pointer font-[800] text-[#111] shadow-[0_6px_16px_rgba(80,60,200,0.04)]"
+                >
+                   <div className="flex items-center gap-[10px]">
+                      <div className="bg-gradient-to-b from-[#6f49ff] to-[#4b2bd8] text-white p-[6px_10px] rounded-[8px] font-[900] text-[13px] min-w-[48px] text-center shadow-[0_8px_20px_rgba(75,43,216,0.12)]">
+                        {selected ? selected.flat : '—'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] text-[#6b6b7a] overflow-hidden text-ellipsis whitespace-nowrap">
+                           {selected ? selected.name : 'কোনো ফ্ল্যাট সিলেক্ট হয়নি'}
+                        </div>
+                        {selected && <div className="text-[12px] text-[#6b6b7a] font-[700]">{selected.account}</div>}
+                      </div>
+                   </div>
+                   <div className={`w-3 h-3 border-r-2 border-b-2 border-black/35 transform transition-transform ${isOpen ? 'rotate-[225deg]' : 'rotate-45'} ml-[6px] opacity-90`} />
+                </button>
+
+                {/* Dropdown List */}
+                {isOpen && (
+                  <div className="absolute left-0 right-0 mt-[8px] bg-gradient-to-b from-white to-[#fbfbff] rounded-[10px] max-h-[260px] overflow-auto border border-[#5a46c8]/6 shadow-[0_18px_45px_rgba(20,16,60,0.08)] z-50 p-[6px]">
+                     <input 
+                       autoFocus
+                       type="text" 
+                       placeholder="সার্চ (যেমন 2A বা নাম)..." 
+                       className="w-full p-[8px] m-[6px_0] rounded-[8px] border border-[#503cc8]/6 font-[700] outline-none focus:border-[#6f49ff] text-sm"
+                       value={search}
+                       onChange={e => setSearch(e.target.value)}
+                       onClick={e => e.stopPropagation()}
+                     />
+                     <div>
+                       {filtered.map((item, idx) => (
+                         <div 
+                           key={idx}
+                           onClick={() => { setSelected(item); setIsOpen(false); }}
+                           className="flex items-center justify-between gap-[10px] p-[8px_10px] rounded-[8px] cursor-pointer hover:bg-gradient-to-r hover:from-[#f7f6ff] hover:to-[#f1efff] transition-all hover:-translate-y-[1px]"
+                         >
+                            <div className="flex items-center gap-[10px]">
+                               <div className="bg-gradient-to-b from-[#f0e9ff] to-[#f8f6ff] p-[6px_10px] rounded-[8px] font-[900] text-[#111] text-xs">{item.flat}</div>
+                               <div>
+                                  <div className="font-[800] text-[#111] text-[13px]">{item.name}</div>
+                                  <div className="text-[12px] text-[#6b6b7a] font-[700]">{item.account}</div>
+                               </div>
+                            </div>
+                         </div>
+                       ))}
+                       {filtered.length === 0 && <div className="p-2 text-center text-sm text-slate-400">কোনো ফলাফল পাওয়া যায়নি</div>}
+                     </div>
+                  </div>
+                )}
+             </div>
+
+             {/* Info Cards */}
+             {selected && (
+               <div className="animate-in slide-in-from-bottom-2 duration-300">
+                 <div className="flex flex-col gap-[8px] justify-center mt-[12px]">
+                    <div className="w-full bg-gradient-to-b from-white to-[#fbfbff] rounded-[10px] p-[10px] border border-[#5a46c8]/4 shadow-[0_6px_16px_rgba(80,60,200,0.04)] text-center flex flex-col gap-[6px] items-center justify-center">
+                       <div className="text-[12px] text-[#6b6b7a] font-[800]">আপনার ফ্ল্যাট নম্বর</div>
+                       <div className="text-[15px] font-[900] mt-[2px]">{selected.flat}</div>
+                    </div>
+                    <div className="w-full bg-gradient-to-b from-white to-[#fbfbff] rounded-[10px] p-[10px] border border-[#5a46c8]/4 shadow-[0_6px_16px_rgba(80,60,200,0.04)] text-center flex flex-col gap-[6px] items-center justify-center">
+                       <div className="text-[12px] text-[#6b6b7a] font-[800]">মালিকপক্ষের নাম</div>
+                       <div className="text-[15px] font-[900] mt-[2px]">{selected.name}</div>
+                    </div>
+                    <div className="w-full bg-gradient-to-b from-white to-[#fbfbff] rounded-[10px] p-[10px] border border-[#5a46c8]/4 shadow-[0_6px_16px_rgba(80,60,200,0.04)] text-center flex flex-col gap-[6px] items-center justify-center">
+                       <div className="text-[12px] text-[#6b6b7a] font-[800]">ডেসকো অ্যাকাউন্ট নাম্বার</div>
+                       <div className="text-[15px] font-[900] mt-[2px] text-[#6f49ff]">{selected.account}</div>
+                    </div>
+                 </div>
+
+                 <div className="flex gap-[8px] justify-center mt-[10px]">
+                    <button 
+                      onClick={handleCopyAndPay}
+                      className="w-full p-[12px] rounded-[10px] border-none font-[800] cursor-pointer text-[14px] bg-gradient-to-b from-[#6f49ff] to-[#4b2bd8] text-white shadow-lg active:scale-95 transition-transform"
+                    >
+                      রিচার্জ করুন
+                    </button>
+                 </div>
+               </div>
+             )}
+
+          </div>
+       </div>
+
+       {/* Credit */}
+       <div className="fixed right-[10px] bottom-[6px] text-[10px] font-[700] text-white/90 select-none pointer-events-none tracking-[0.2px] z-[101]">Design by A.H.M RIFAT HASAN</div>
+       
+       {/* Toast */}
+       {toastMsg && (
+         <div className="fixed left-1/2 -translate-x-1/2 bottom-[22px] bg-black/85 text-white p-[8px_12px] rounded-[8px] text-[13px] z-[200] whitespace-nowrap">
+            {toastMsg}
+         </div>
+       )}
+    </div>
+  );
+};
+
 interface DescoViewProps {
   lang: 'bn' | 'en';
 }
@@ -53,6 +186,9 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
   // Floating Widget State
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  
+  // NEW: Quick Recharge Modal State
+  const [showQuickRecharge, setShowQuickRecharge] = useState(false);
 
   // Translations
   const t = {
@@ -403,6 +539,16 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
       )}
       </AnimatePresence>
 
+      {/* Quick Recharge Modal Overlay */}
+      <AnimatePresence>
+        {showQuickRecharge && (
+           <QuickRechargeModal 
+             onClose={() => setShowQuickRecharge(false)} 
+             data={DESCO_DATA} 
+           />
+        )}
+      </AnimatePresence>
+
       {/* Floating Action Widget */}
       <style>{`
         @keyframes redPulse {
@@ -472,7 +618,10 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
 
              <div className="flex flex-col gap-2">
                 <button 
-                  onClick={() => window.open(DIRECT_RECHARGE_LINK, '_blank')}
+                  onClick={() => {
+                     setIsPopupOpen(false);
+                     setShowQuickRecharge(true);
+                  }}
                   className="w-full py-2 px-2.5 rounded-lg bg-gradient-to-r from-[#ff7373] to-[#ff3d3d] text-white font-bold text-[13px] border-none shadow-sm hover:opacity-90 active:scale-95 transition-all"
                 >
                   এখনি রিচার্জ করুন
