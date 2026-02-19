@@ -1,0 +1,81 @@
+import { 
+  Home, 
+  Zap, 
+  CreditCard, 
+  Phone, 
+  Menu as MenuIcon, 
+  Key, 
+  Info,
+  ShieldCheck,
+  Droplets,
+  Trash2,
+  Bot
+} from 'lucide-react';
+import { MenuItem, Notice } from './types';
+
+export const APP_NAME = "হলান টাওয়ার";
+
+export const NOTICES: Notice[] = [
+  { id: 1, text: "নোটিশ: আগামী শুক্রবার সকাল ১০টা থেকে ১২টা পর্যন্ত জেনারেটর মেইনটেনেন্স এর কাজ চলবে।", date: "2024-05-20" },
+  { id: 2, text: "জরুরী: এই মাসের সার্ভিস চার্জ ১০ তারিখের মধ্যে পরিশোধ করার অনুরোধ করা হলো।", date: "2024-05-21" },
+  { id: 3, text: "স্বাগতম: হলান টাওয়ার অ্যাপে আপনাকে স্বাগতম। যেকোনো তথ্যের জন্য মেনু ব্যবহার করুন।", date: "2024-05-22" }
+];
+
+export const MENU_ITEMS: MenuItem[] = [
+  { 
+    id: 'service', 
+    label: 'সার্ভিস চার্জ', 
+    icon: CreditCard, 
+    view: 'SERVICE_CHARGE',
+    color: 'bg-blue-500',
+    description: 'মাসিক বিল ও সার্ভিস চার্জ পেমেন্ট'
+  },
+  { 
+    id: 'desco', 
+    label: 'ডেসকো রিচার্জ', 
+    icon: Zap, 
+    view: 'DESCO',
+    color: 'bg-yellow-500',
+    description: 'প্রিপেইড মিটার রিচার্জ এবং তথ্য'
+  },
+  { 
+    id: 'tolet', 
+    label: 'বাসাভাড়া / টু-লেট', 
+    icon: Key, 
+    view: 'TO_LET',
+    color: 'bg-emerald-500',
+    description: 'ফ্ল্যাট খালি এবং ভাড়ার তথ্য'
+  },
+  { 
+    id: 'water', 
+    label: 'পানির বিল', 
+    icon: Droplets, 
+    view: 'HOME', // Placeholder
+    color: 'bg-cyan-500',
+    description: 'ওয়াসা বিল সংক্রান্ত তথ্য'
+  },
+  { 
+    id: 'security', 
+    label: 'নিরাপত্তা', 
+    icon: ShieldCheck, 
+    view: 'CONTACT',
+    color: 'bg-slate-600',
+    description: 'গার্ড এবং নিরাপত্তা নির্দেশিকা'
+  },
+  { 
+    id: 'waste', 
+    label: 'বর্জ্য ব্যবস্থাপনা', 
+    icon: Trash2, 
+    view: 'HOME', // Placeholder
+    color: 'bg-orange-500',
+    description: 'ময়লা সংগ্রহ ও পরিচ্ছন্নতা'
+  },
+];
+
+export const BOTTOM_NAV_ITEMS = [
+  { id: 'service', label: 'সার্ভিস চার্জ', icon: CreditCard, view: 'SERVICE_CHARGE' },
+  { id: 'desco', label: 'ডেসকো', icon: Zap, view: 'DESCO' },
+  { id: 'home', label: 'হোম', icon: Home, view: 'HOME' },
+  { id: 'contact', label: 'যোগাযোগ', icon: Phone, view: 'CONTACT' },
+  { id: 'menu', label: 'মেনু', icon: MenuIcon, view: 'MENU' },
+] as const;

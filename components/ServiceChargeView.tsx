@@ -1,0 +1,592 @@
+import React, { useState, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter } from 'lucide-react';
+
+// কনফিগারেশন: ২৭টি ইউনিট (ফ্লোর ২ থেকে ১০)
+const FLOORS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+const UNITS_PER_FLOOR = ['A', 'B', 'C'];
+const ALL_UNITS = FLOORS.flatMap(f => UNITS_PER_FLOOR.map(u => `${f}${u}`));
+const SERVICE_CHARGE_AMOUNT = 2000;
+
+const MONTHS = [
+  'জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
+  'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
+];
+
+type Status = 'PAID' | 'DUE' | 'UPCOMING';
+
+interface MonthlyRecord {
+  month: string;
+  date: string;
+  amount: number;
+  due: number;
+  status: Status;
+}
+
+// মক ডাটা জেনারেটর - এখন এটি ইউনিটের নাম এবং সালের উপর ভিত্তি করে ডাটা দিবে
+const generateMockData = (unit: string, year: number): MonthlyRecord[] => {
+  // ইউনিটের নাম থেকে একটি ইউনিক নাম্বার তৈরি করা
+  const unitHash = unit.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  // বর্তমান সময় ফিক্স করা হলো ডেমোর জন্য: ফেব্রুয়ারি ২০২৬
+  const currentYear = 2026;
+  const currentMonthIndex = 1; // February is index 1
+
+  return MONTHS.map((month, index) => {
+    let status: Status = 'UPCOMING';
+    let date = '-';
+    let amount = 0;
+    let due = 0;
+
+    // ১. ভবিষ্যৎ মাস নির্ণয় (বর্তমান মাস এবং বছর এর সাপেক্ষে)
+    // যদি বছর বর্তমান বছরের বেশি হয় অথবা (একই বছর হয় এবং মাস বর্তমান মাসের পরে হয়)
+    const isFuture = year > currentYear || (year === currentYear && index > currentMonthIndex);
+
+    if (isFuture) {
+        // আসন্ন মাস: কোনো টাকা বা বকেয়া দেখাবে না
+        status = 'UPCOMING';
+        amount = 0;
+        due = 0;
+    } else {
+        // বর্তমান বা অতীত মাস
+        // ডেমো লজিক: কিছু রেন্ডম পেইড এবং কিছু ডিউ
+        // (unitHash + index + year) ব্যবহার করে একটু ভেরিয়েশন আনা হলো যাতে প্রতি ইউনিটে ভিন্ন ডাটা দেখায়
+        const randomVal = (unitHash + index + year) % 10;
+        
+        // ৭০% পেমেন্ট হয়েছে এমন লজিক
+        const isPaid = randomVal > 2; 
+
+        if (isPaid) {
+            status = 'PAID';
+            amount = SERVICE_CHARGE_AMOUNT; // পরিশোধিত হলে মোট টাকা ২০০০
+            due = 0; // বকেয়া ০
+            date = `১০ ${month}, ${year}`;
+        } else {
+            status = 'DUE';
+            amount = 0; // বকেয়া হলে জমার ঘরে ০
+            due = SERVICE_CHARGE_AMOUNT; // বকেয়ার ঘরে ২০০০
+        }
+    }
+
+    return {
+      month,
+      date,
+      amount,
+      due,
+      status
+    };
+  });
+};
+
+export const ServiceChargeView: React.FC = () => {
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+  const [showSummaryList, setShowSummaryList] = useState<boolean>(false);
+  const [selectedYear, setSelectedYear] = useState<number>(2026);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // সকল ইউনিটের ডেটা এবং সামারি ক্যালকুলেশন
+  const allUnitsSummary = useMemo(() => {
+    return ALL_UNITS.map(unit => {
+        const records = generateMockData(unit, selectedYear);
+        // মোট জমা: শুধুমাত্র status === 'PAID' এর amount যোগ হবে (যা ২০০০)
+        const collected = records.reduce((sum, r) => sum + r.amount, 0);
+        // মোট বকেয়া: শুধুমাত্র status === 'DUE' এর due যোগ হবে (যা ২০০০)
+        const due = records.reduce((sum, r) => sum + r.due, 0);
+        
+        return {
+            unit,
+            collected,
+            due
+        };
+    });
+  }, [selectedYear]);
+
+  const grandTotalCollected = allUnitsSummary.reduce((acc, curr) => acc + curr.collected, 0);
+  const grandTotalDue = allUnitsSummary.reduce((acc, curr) => acc + curr.due, 0);
+
+  const filteredUnitsData = allUnitsSummary.filter(data => 
+    data.unit.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getStatusElement = (status: Status) => {
+    switch (status) {
+      case 'PAID':
+        return (
+            <div className="flex flex-col items-center justify-center">
+                <div className="bg-green-100 text-green-600 p-1 rounded-full mb-0.5">
+                    <CheckCircle2 size={14} />
+                </div>
+                <span className="text-[9px] font-bold text-green-700">পরিশোধিত</span>
+            </div>
+        );
+      case 'DUE':
+        return (
+            <div className="flex flex-col items-center justify-center">
+                <div className="bg-red-100 text-red-600 p-1 rounded-full mb-0.5">
+                    <XCircle size={14} />
+                </div>
+                <span className="text-[9px] font-bold text-red-700">বকেয়া</span>
+            </div>
+        );
+      default:
+        return (
+            <div className="flex flex-col items-center justify-center">
+                <div className="bg-slate-100 text-slate-400 p-1 rounded-full mb-0.5">
+                    <Clock size={14} />
+                </div>
+                <span className="text-[9px] font-medium text-slate-500">আসন্ন</span>
+            </div>
+        );
+    }
+  };
+
+  // VIEW 1: SINGLE UNIT DETAILED VIEW
+  if (selectedUnit) {
+    const currentIndex = ALL_UNITS.indexOf(selectedUnit);
+    const prevUnit = currentIndex > 0 ? ALL_UNITS[currentIndex - 1] : null;
+    const nextUnit = currentIndex < ALL_UNITS.length - 1 ? ALL_UNITS[currentIndex + 1] : null;
+
+    const records = generateMockData(selectedUnit, selectedYear);
+    const totalAmount = records.reduce((sum, r) => sum + r.amount, 0);
+    const totalDue = records.reduce((sum, r) => sum + r.due, 0);
+    
+    // Stats for Graph
+    const paidCount = records.filter(r => r.status === 'PAID').length;
+    const dueCount = records.filter(r => r.status === 'DUE').length;
+    // upcoming counts logic needs to aware of year. For graph simplicity, we count remaining.
+    const upcomingCount = 12 - (paidCount + dueCount);
+    
+    const totalMonths = 12;
+    const radius = 40;
+    const circumference = 2 * Math.PI * radius;
+    const paidOffset = circumference - (paidCount / totalMonths) * circumference;
+    const dueOffset = circumference - (dueCount / totalMonths) * circumference;
+    
+    const isOccupied = selectedUnit.charCodeAt(1) % 2 !== 0; 
+    const occupancyStatus = isOccupied ? 'বসবাসরত' : 'খালি';
+
+    return (
+      <div key={`${selectedUnit}-${selectedYear}`} className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 min-h-screen">
+        {/* Navigation Header Section */}
+        <div className="bg-white sticky top-[60px] z-10 border-b border-slate-100 shadow-sm transition-all">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
+                 <button 
+                  onClick={() => setSelectedUnit(null)}
+                  className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors py-1 group"
+                >
+                  <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+                  <span className="text-base font-bold">ফিরে যান</span>
+                </button>
+                 
+                 <div className="flex bg-slate-100 rounded-xl p-1">
+                    <button 
+                        onClick={() => setSelectedYear(2025)}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${selectedYear === 2025 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500'}`}
+                    >
+                        ২০২৫
+                    </button>
+                    <button 
+                        onClick={() => setSelectedYear(2026)}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${selectedYear === 2026 ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500'}`}
+                    >
+                        ২০২৬
+                    </button>
+                 </div>
+            </div>
+            
+            <div className="flex items-center justify-between px-6 py-3">
+                 <button 
+                    onClick={() => prevUnit && setSelectedUnit(prevUnit)}
+                    disabled={!prevUnit}
+                    className={`p-2 rounded-full transition-all ${!prevUnit ? 'text-slate-100 cursor-not-allowed' : 'text-slate-500 hover:bg-slate-100 active:scale-95 hover:text-primary-600'}`}
+                 >
+                    <ChevronLeft size={32} />
+                 </button>
+                 
+                 <div className="text-center animate-in zoom-in duration-300">
+                    <h2 className="text-3xl font-bold text-slate-800">ইউনিট {selectedUnit}</h2>
+                    <p className="text-xs text-primary-600 font-medium mt-1">হিসাব বর্ষ: {selectedYear}</p>
+                 </div>
+
+                 <button 
+                    onClick={() => nextUnit && setSelectedUnit(nextUnit)}
+                    disabled={!nextUnit}
+                    className={`p-2 rounded-full transition-all ${!nextUnit ? 'text-slate-100 cursor-not-allowed' : 'text-slate-500 hover:bg-slate-100 active:scale-95 hover:text-primary-600'}`}
+                 >
+                    <ChevronRight size={32} />
+                 </button>
+            </div>
+        </div>
+
+        {/* Summary Box */}
+        <div className="px-4 pt-4">
+            <div 
+                className="rounded-2xl p-4 shadow-lg border border-white/10 grid grid-cols-3 gap-2 divide-x divide-white/20 text-white transition-all duration-500"
+                style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
+            >
+                <div className="text-center px-1 flex flex-col items-center justify-center">
+                    <p className="text-[10px] text-white/80 font-medium uppercase mb-1">বসবাসের ধরন</p>
+                    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${occupancyStatus === 'বসবাসরত' ? 'bg-white text-blue-600' : 'bg-white/90 text-orange-600'}`}>
+                        {occupancyStatus === 'বসবাসরত' ? <Users size={12} /> : <Home size={12} />}
+                        {occupancyStatus}
+                    </div>
+                </div>
+                <div className="text-center px-1 flex flex-col items-center justify-center">
+                    <p className="text-[10px] text-white/80 font-medium uppercase mb-1">মোট টাকা</p>
+                    <p className="font-bold text-white text-base">৳ {totalAmount.toLocaleString()}</p>
+                </div>
+                <div className="text-center px-1 flex flex-col items-center justify-center">
+                    <p className="text-[10px] text-white/80 font-medium uppercase mb-1">মোট বাকি</p>
+                    <p className="font-bold text-base text-white">৳ {totalDue.toLocaleString()}</p>
+                </div>
+            </div>
+        </div>
+
+        {/* Ledger Table Section */}
+        <div className="p-4">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                <table className="w-full">
+                    <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100">
+                            <th className="py-3 pl-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[28%]">মাস ও তারিখ</th>
+                            <th className="py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[22%]">মোট টাকা</th>
+                            <th className="py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[22%]">বকেয়া</th>
+                            <th className="py-3 pr-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[28%]">অবস্থা</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {records.map((record, idx) => (
+                            <tr key={idx} className={`hover:bg-slate-50/50 transition-colors ${record.status === 'DUE' ? 'bg-red-50/10' : ''}`}>
+                                <td className="py-3 pl-3 align-middle">
+                                    <div className="font-bold text-slate-800 text-sm">{record.month}</div>
+                                    <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                                        {record.status === 'UPCOMING' ? '---' : record.date}
+                                    </div>
+                                </td>
+                                <td className="py-3 align-middle text-center">
+                                    <div className={`font-semibold text-sm ${record.amount > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
+                                        {record.amount > 0 ? `৳ ${record.amount}` : '-'}
+                                    </div>
+                                </td>
+                                <td className="py-3 align-middle text-center">
+                                     <div className={`font-semibold text-sm ${record.due > 0 ? 'text-red-600' : 'text-slate-300'}`}>
+                                        {record.due > 0 ? `৳ ${record.due}` : '-'}
+                                     </div>
+                                </td>
+                                <td className="py-3 pr-3 align-middle flex justify-end">
+                                    {getStatusElement(record.status)}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                    <tfoot className="bg-slate-50 border-t border-slate-200">
+                        <tr>
+                            <td className="py-3 pl-3 text-sm font-bold text-slate-700">সর্বমোট</td>
+                            <td className="py-3 text-center text-sm font-bold text-slate-700">৳ {totalAmount.toLocaleString()}</td>
+                            <td className="py-3 text-center text-sm font-bold text-red-600">{totalDue > 0 ? `৳ ${totalDue.toLocaleString()}` : '-'}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <div className="flex items-center gap-2 mb-4 border-b border-slate-50 pb-2">
+                    <PieChart size={18} className="text-primary-600" />
+                    <h3 className="font-bold text-slate-700">পেমেন্ট স্ট্যাটাস ({selectedYear})</h3>
+                </div>
+                
+                <div className="flex items-center justify-between gap-4">
+                    <div className="relative w-32 h-32 flex-shrink-0 animate-in spin-in-12 duration-700">
+                         <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="50%" cy="50%" r={radius} stroke="#f1f5f9" strokeWidth="12" fill="transparent"/>
+                            <circle cx="50%" cy="50%" r={radius} stroke="#22c55e" strokeWidth="12" fill="transparent" strokeDasharray={circumference} strokeDashoffset={paidOffset} strokeLinecap="round"/>
+                             <circle cx="50%" cy="50%" r={radius} stroke="#ef4444" strokeWidth="12" fill="transparent" strokeDasharray={circumference} strokeDashoffset={dueOffset} strokeLinecap="round" style={{ transformOrigin: 'center', transform: `rotate(${paidCount * (360/12)}deg)` }}/>
+                         </svg>
+                         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                            <span className="block text-2xl font-bold text-slate-700">{Math.round((paidCount/totalMonths)*100)}%</span>
+                            <span className="text-[10px] text-slate-400 font-medium">পরিশোধ</span>
+                         </div>
+                    </div>
+
+                    <div className="flex-1 space-y-3">
+                         <div className="flex justify-between items-center text-sm">
+                            <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                                <span className="text-slate-600 font-medium">পরিশোধ</span>
+                            </div>
+                            <span className="font-bold text-slate-800">{paidCount} মাস</span>
+                         </div>
+                         <div className="flex justify-between items-center text-sm">
+                            <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                                <span className="text-slate-600 font-medium">বকেয়া</span>
+                            </div>
+                            <span className="font-bold text-slate-800">{dueCount} মাস</span>
+                         </div>
+                         <div className="flex justify-between items-center text-sm">
+                            <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full bg-slate-200"></span>
+                                <span className="text-slate-600 font-medium">আসন্ন</span>
+                            </div>
+                            <span className="font-bold text-slate-800">{upcomingCount} মাস</span>
+                         </div>
+                    </div>
+                </div>
+                <div className="mt-6">
+                    <p className="text-xs text-slate-400 font-medium mb-3 text-center">মাসিক পেমেন্ট চিত্র</p>
+                    <div className="grid grid-cols-4 gap-2">
+                        {records.map((r, i) => {
+                             let bgClass = "bg-slate-100 text-slate-400 border-slate-200";
+                             if (r.status === 'PAID') bgClass = "bg-green-100 text-green-700 border-green-200";
+                             if (r.status === 'DUE') bgClass = "bg-red-100 text-red-600 border-red-200";
+
+                             return (
+                                <div key={i} className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg border ${bgClass} transition-colors duration-300`}>
+                                    <span className="text-[10px] font-bold leading-tight">{r.month}</span>
+                                </div>
+                             )
+                        })}
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+    );
+  }
+
+  // VIEW 2: ALL UNITS SUMMARY LIST
+  if (showSummaryList) {
+    return (
+        <div className="px-4 py-6 pb-24 animate-in slide-in-from-right duration-300">
+             <div className="flex items-center gap-3 mb-4">
+                 <button 
+                  onClick={() => setShowSummaryList(false)}
+                  className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-colors active:scale-95"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div className="flex-1">
+                    <h2 className="text-xl font-bold text-slate-800">সকল ইউনিট হিসাব</h2>
+                    <p className="text-xs text-primary-600 font-medium">অর্থবছর: {selectedYear}</p>
+                </div>
+             </div>
+
+             {/* Year Selection Tabs (Added to List View) */}
+            <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-100 flex mb-6">
+                <button 
+                    onClick={() => setSelectedYear(2025)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                    <CalendarDays size={16} />
+                    ২০২৫
+                </button>
+                <button 
+                    onClick={() => setSelectedYear(2026)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                    <CalendarDays size={16} />
+                    ২০২৬
+                </button>
+            </div>
+
+             {/* Summary Box (Added to List View) */}
+             <div 
+                className="mb-6 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 p-5 text-white"
+                style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
+             >
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <TrendingUp size={100} />
+                </div>
+                
+                <h3 className="text-base font-semibold text-indigo-100 mb-4 flex items-center gap-2">
+                    <Wallet size={18} />
+                    সকল ইউনিট হিসাব ({selectedYear})
+                </h3>
+                
+                <div className="grid grid-cols-3 divide-x divide-white/20">
+                    <div className="pr-4">
+                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">ফ্ল্যাটের ধরন</p>
+                        <p className="text-lg font-bold">সকল</p>
+                    </div>
+                    <div className="px-4 text-center">
+                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">মোট জমা</p>
+                        <p className="text-lg font-bold">৳ {grandTotalCollected.toLocaleString()}</p>
+                    </div>
+                    <div className="pl-4 text-right">
+                        <p className="text-[10px] text-red-200 font-medium uppercase mb-1">মোট বাকি</p>
+                        <p className="text-lg font-bold text-red-100">৳ {grandTotalDue.toLocaleString()}</p>
+                    </div>
+                </div>
+            </div>
+
+             {/* Search Bar in List View */}
+             <div className="relative mb-6">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <input 
+                type="text" 
+                placeholder="ইউনিট খুঁজুন..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary-500 transition-all shadow-sm"
+                />
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-slate-50 border-b border-slate-100">
+                                <th className="py-3 pl-4 text-left text-xs font-bold text-slate-500 uppercase">ইউনিট</th>
+                                <th className="py-3 text-center text-xs font-bold text-slate-500 uppercase">মোট জমা</th>
+                                <th className="py-3 pr-4 text-right text-xs font-bold text-slate-500 uppercase">মোট বাকি</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {filteredUnitsData.map((data, idx) => (
+                                <tr 
+                                    key={idx} 
+                                    onClick={() => setSelectedUnit(data.unit)}
+                                    className="hover:bg-slate-50 transition-colors cursor-pointer active:bg-slate-100 group"
+                                >
+                                    <td className="py-3 pl-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-1.5 rounded-lg text-sm">{data.unit}</span>
+                                            <ArrowUpRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </div>
+                                    </td>
+                                    <td className="py-3 text-center">
+                                        <span className={`text-sm font-semibold ${data.collected > 0 ? 'text-green-600' : 'text-slate-400'}`}>
+                                            {data.collected > 0 ? `৳ ${data.collected.toLocaleString()}` : '-'}
+                                        </span>
+                                    </td>
+                                    <td className="py-3 pr-4 text-right">
+                                        {data.due > 0 ? (
+                                            <span className="text-sm font-bold text-red-500">৳ {data.due.toLocaleString()}</span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                                <CheckCircle2 size={10} /> পরিশোধিত
+                                            </span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredUnitsData.length === 0 && (
+                                <tr>
+                                    <td colSpan={3} className="py-8 text-center text-slate-400 text-sm">
+                                        কোনো ইউনিট পাওয়া যায়নি
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    )
+  }
+
+  // VIEW 3: MAIN GRID DASHBOARD
+  return (
+    <div className="px-4 py-6 pb-24 animate-in slide-in-from-bottom-4 duration-500">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-slate-800">সার্ভিস চার্জ</h2>
+      </div>
+
+      {/* Year Selection Tabs */}
+      <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-100 flex mb-6">
+         <button 
+            onClick={() => setSelectedYear(2025)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+         >
+            <CalendarDays size={16} />
+            ২০২৫
+         </button>
+         <button 
+            onClick={() => setSelectedYear(2026)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+         >
+            <CalendarDays size={16} />
+            ২০২৬
+         </button>
+      </div>
+
+      {/* Grand Summary Box (All Units) - CLICKABLE */}
+      <div 
+        onClick={() => setShowSummaryList(true)}
+        className="mb-6 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 p-5 text-white cursor-pointer active:scale-[0.98] transition-all group"
+        style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
+      >
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <TrendingUp size={100} />
+          </div>
+          
+          <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-semibold text-indigo-100 flex items-center gap-2">
+                <Wallet size={18} />
+                সকল ইউনিট হিসাব ({selectedYear})
+              </h3>
+              <div className="bg-white/20 p-1 rounded-lg">
+                <ListFilter size={16} />
+              </div>
+          </div>
+          
+          <div className="grid grid-cols-3 divide-x divide-white/20">
+              <div className="pr-4">
+                  <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">ফ্ল্যাটের ধরন</p>
+                  <p className="text-lg font-bold">সকল</p>
+              </div>
+              <div className="px-4 text-center">
+                  <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">মোট জমা</p>
+                  <p className="text-lg font-bold">৳ {grandTotalCollected.toLocaleString()}</p>
+              </div>
+              <div className="pl-4 text-right">
+                  <p className="text-[10px] text-red-200 font-medium uppercase mb-1">মোট বাকি</p>
+                  <p className="text-lg font-bold text-red-100">৳ {grandTotalDue.toLocaleString()}</p>
+              </div>
+          </div>
+          <p className="text-[10px] text-indigo-200 mt-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+            বিস্তারিত দেখতে ক্লিক করুন
+          </p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+        <input 
+          type="text" 
+          placeholder="ইউনিট খুঁজুন (যেমন: 2A)" 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all shadow-sm"
+        />
+      </div>
+
+      <div className="flex justify-between items-center mb-4 px-1">
+        <p className="text-sm font-semibold text-slate-600">সকল ইউনিট ({ALL_UNITS.length})</p>
+        <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{selectedYear}</span>
+      </div>
+
+      {/* Grid View */}
+      <div className="grid grid-cols-3 gap-3">
+        {filteredUnitsData.map((data) => (
+          <button
+            key={data.unit}
+            onClick={() => setSelectedUnit(data.unit)}
+            className="group relative bg-white border border-slate-200 hover:border-primary-500 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
+          >
+            <span className="text-lg font-bold text-slate-700 group-hover:text-primary-600">{data.unit}</span>
+            <span className="text-[10px] text-slate-400 mt-1">বিবরণ দেখুন</span>
+            
+            {/* Real-time Status Indicator */}
+            <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${data.due > 0 ? 'bg-red-500' : 'bg-green-500'}`}></span>
+          </button>
+        ))}
+        {filteredUnitsData.length === 0 && (
+             <div className="col-span-3 py-8 text-center text-slate-400 text-sm">
+                 কোনো ইউনিট পাওয়া যায়নি
+             </div>
+        )}
+      </div>
+    </div>
+  );
+};
