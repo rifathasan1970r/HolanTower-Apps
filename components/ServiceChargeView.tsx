@@ -746,6 +746,38 @@ export const ServiceChargeView: React.FC = () => {
                 </div>
              </div>
 
+             {/* Replaced Summary Card matching the Dashboard design */}
+            <div 
+                className="mb-6 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 p-5 text-white transition-all"
+                style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
+            >
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <TrendingUp size={100} />
+                </div>
+                
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-base font-semibold text-indigo-100 flex items-center gap-2">
+                        <Wallet size={18} />
+                        সর্বমোট হিসাব ({selectedYear})
+                    </h3>
+                </div>
+                
+                <div className="grid grid-cols-3 divide-x divide-white/20">
+                    <div className="pr-4">
+                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">মোট ইউনিট</p>
+                        <p className="text-lg font-bold">{ALL_UNITS.length}টি</p>
+                    </div>
+                    <div className="px-4 text-center">
+                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">মোট জমা</p>
+                        <p className="text-lg font-bold">৳ {grandTotalCollected.toLocaleString()}</p>
+                    </div>
+                    <div className="pl-4 text-right">
+                        <p className="text-[10px] text-red-200 font-medium uppercase mb-1">মোট বাকি</p>
+                        <p className="text-lg font-bold text-red-100">৳ {grandTotalDue.toLocaleString()}</p>
+                    </div>
+                </div>
+            </div>
+
              {/* Search Bar */}
              <div className="relative mb-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
