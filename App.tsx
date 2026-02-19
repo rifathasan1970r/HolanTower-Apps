@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Languages, MessageCircle, Bell, BellRing, X, CheckCircle2, Send, Lock, Unlock, Plus, Trash2 } from 'lucide-react';
+import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Languages, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { APP_NAME_BN, APP_NAME_EN, MENU_ITEMS, TRANSLATIONS, NOTICES as FALLBACK_NOTICES } from './constants';
+import { APP_NAME_BN, APP_NAME_EN, MENU_ITEMS, TRANSLATIONS } from './constants';
 import { ViewState } from './types';
 import NoticeBoard from './components/NoticeBoard';
 import BottomNav from './components/BottomNav';
@@ -10,7 +10,6 @@ import Assistant from './components/Assistant';
 import { ServiceChargeView } from './components/ServiceChargeView';
 import EmergencyView from './components/EmergencyView';
 import DescoView from './components/DescoView';
-import { supabase } from './lib/supabaseClient';
 
 const MENU_NOTICE = "হলান টাওয়ারে আপনাকে স্বাগতম। আমাদের ভবনের সকল গুরুত্বপূর্ণ তথ্য ও দৈনন্দিন সেবাগুলি এখনে দ্রুত পেয়ে যাবেন। এখানে জরুরী নোটিশ, ইউটিলিটি ও সার্ভিস চার্জ, ডেসকো রিচার্জ, যোগাযোগ ও জরুরী হেল্পলাইন, ম্যাপ ও রুট নির্দেশনা, প্রিপেইড মিটার নাম্বার, লিফট ব্যবহারের নিয়ম, গ্যালারি এবং বাসাভাড়ার তথ্য একসাথে সহজে খুঁজে পাবেন। এটি হলান টাওয়ারের বাসিন্দাদের জন্য একটি দ্রুত, সহজ ও নির্ভরযোগ্য ডিজিটাল সার্ভিস কেন্দ্র।";
 
@@ -20,20 +19,6 @@ const App: React.FC = () => {
   const [greeting, setGreeting] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [currentTime, setCurrentTime] = useState('');
-  
-  // Notification State
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
-  const [hasUnread, setHasUnread] = useState(false);
-  const [notices, setNotices] = useState<any[]>([]);
-  
-  // Admin Notification State
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [pin, setPin] = useState('');
-  const [composeMode, setComposeMode] = useState(false);
-  const [newNoticeText, setNewNoticeText] = useState('');
-  const [isSending, setIsSending] = useState(false);
 
   const t = TRANSLATIONS[lang];
 
@@ -51,6 +36,7 @@ const App: React.FC = () => {
       setGreeting(t.greeting[greetingKey]);
 
       const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      // Use 'bn-BD' for Bangla, 'en-US' for English
       const locale = lang === 'bn' ? 'bn-BD' : 'en-US';
       setCurrentDate(now.toLocaleDateString(locale, options));
       
@@ -58,152 +44,12 @@ const App: React.FC = () => {
     };
 
     updateTime();
-    const timer = setInterval(updateTime, 1000);
-    
-    if ('Notification' in window) {
-      setNotificationPermission(Notification.permission);
-    }
-
-    // Initial Fetch
-    fetchNotices();
-
-    // Realtime Subscription
-    const channel = supabase
-      .channel('public:notices')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notices' }, (payload) => {
-          const newNotice = payload.new;
-          
-          // Prevent duplicates using functional update and ID check
-          setNotices(prev => {
-             if (prev.some(n => n.id === newNotice.id)) return prev;
-             return [newNotice, ...prev];
-          });
-          
-          setHasUnread(true);
-          
-          // Trigger Browser Notification
-          if (Notification.permission === 'granted') {
-             try {
-               new Notification(APP_NAME_BN, {
-                  body: newNotice.text,
-                  icon: 'https://cdn-icons-png.flaticon.com/512/1827/1827301.png',
-                  tag: 'notice-' + newNotice.id // Prevent duplicate notifications
-               });
-             } catch (e) {
-               console.error("Notification error:", e);
-             }
-          }
-      })
-      .subscribe();
-
-    return () => {
-        clearInterval(timer);
-        supabase.removeChannel(channel);
-    };
+    const timer = setInterval(updateTime, 1000); // Update every second for clock
+    return () => clearInterval(timer);
   }, [lang, t]);
-
-  const fetchNotices = async () => {
-      const { data, error } = await supabase
-        .from('notices')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      if (data && data.length > 0) {
-          setNotices(data);
-      } else {
-          setNotices(FALLBACK_NOTICES);
-      }
-  };
-
-  const handleAdminLogin = () => {
-      if (pin === '1234') {
-          setIsAdmin(true);
-          setShowAdminLogin(false);
-          setPin('');
-      } else {
-          alert('ভুল পিন!');
-      }
-  };
-
-  const handleSendNotice = async () => {
-      if (!newNoticeText.trim()) return;
-      setIsSending(true);
-
-      try {
-          const payload = {
-              text: newNoticeText.trim(),
-              date: new Date().toISOString().split('T')[0],
-              // Let Supabase handle created_at default if column exists, 
-              // otherwise this ISO string works for standard text/timestamp columns
-              created_at: new Date().toISOString()
-          };
-
-          const { data, error } = await supabase
-            .from('notices')
-            .insert(payload)
-            .select();
-
-          if (error) throw error;
-          
-          // Optimistic update handled by Realtime subscription usually, 
-          // but if that fails, we can uncomment below. 
-          // For now, let's rely on realtime for consistency across clients.
-
-          setNewNoticeText('');
-          setComposeMode(false);
-          alert(lang === 'bn' ? 'নোটিফিকেশন সফলভাবে পাঠানো হয়েছে!' : 'Notification sent successfully!');
-      } catch (err: any) {
-          console.error('Send notice error:', err);
-          alert(lang === 'bn' 
-            ? `পাঠানো যায়নি: ${err.message || 'অজানা ত্রুটি'}` 
-            : `Failed to send: ${err.message || 'Unknown error'}`);
-      } finally {
-          setIsSending(false);
-      }
-  };
-
-  const handleDeleteNotice = async (id: number) => {
-      if (!window.confirm('মুছে ফেলতে চান?')) return;
-      
-      try {
-        const { error } = await supabase.from('notices').delete().eq('id', id);
-        if (error) throw error;
-        setNotices(prev => prev.filter(n => n.id !== id));
-      } catch(err) {
-        console.error(err);
-      }
-  };
 
   const toggleLanguage = () => {
     setLang(prev => prev === 'bn' ? 'en' : 'bn');
-  };
-
-  const requestNotificationPermission = async () => {
-    if (!('Notification' in window)) {
-      alert("This browser does not support desktop notification");
-      return;
-    }
-    
-    try {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-      
-      if (permission === 'granted') {
-        new Notification(lang === 'bn' ? "নোটিফিকেশন চালু হয়েছে" : "Notifications Enabled", {
-          body: lang === 'bn' ? "এখন থেকে সকল আপডেট পাবেন।" : "You will receive updates.",
-        });
-      }
-    } catch (error) {
-      console.error("Error requesting permission", error);
-    }
-  };
-
-  const handleNotificationClick = () => {
-    setShowNotifications(!showNotifications);
-    if (!showNotifications) {
-        setHasUnread(false);
-    }
   };
 
   const renderContent = () => {
@@ -453,149 +299,7 @@ const App: React.FC = () => {
               </p>
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-             {/* Notification Bell */}
-             <div className="relative">
-                <button
-                   onClick={handleNotificationClick}
-                   className="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-200 hover:text-indigo-600 transition-all active:scale-95"
-                >
-                   {hasUnread ? <BellRing size={18} className="text-indigo-600" /> : <Bell size={18} />}
-                   {hasUnread && (
-                      <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 border-2 border-white rounded-full animate-pulse"></span>
-                   )}
-                </button>
-
-                {/* Notification Dropdown */}
-                <AnimatePresence>
-                  {showNotifications && (
-                    <motion.div
-                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                       className="absolute right-0 top-full mt-3 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 origin-top-right"
-                    >
-                       <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex justify-between items-center">
-                          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                            {lang === 'bn' ? 'নোটিফিকেশন' : 'Notifications'}
-                            {isAdmin && <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full border border-indigo-200">Admin</span>}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                              {/* Admin Toggle */}
-                              <button 
-                                onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)}
-                                className={`p-1.5 rounded-full transition-colors ${isAdmin ? 'bg-indigo-100 text-indigo-600' : 'text-slate-300 hover:text-slate-500'}`}
-                              >
-                                {isAdmin ? <Unlock size={14} /> : <Lock size={14} />}
-                              </button>
-                              <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-slate-600"><X size={16} /></button>
-                          </div>
-                       </div>
-                       
-                       {/* Admin Login Form inside Dropdown */}
-                       {showAdminLogin && !isAdmin && (
-                         <div className="p-3 bg-slate-50 border-b border-slate-100">
-                            <input 
-                              type="password" 
-                              placeholder="PIN (1234)" 
-                              value={pin}
-                              onChange={e => setPin(e.target.value)}
-                              className="w-full text-xs p-2 rounded border border-slate-200 mb-2"
-                            />
-                            <button onClick={handleAdminLogin} className="w-full bg-slate-800 text-white text-xs py-1.5 rounded font-bold">Login</button>
-                         </div>
-                       )}
-
-                       {/* Compose Area for Admin */}
-                       {isAdmin && (
-                         <div className="p-3 border-b border-slate-100 bg-indigo-50/50">
-                            {!composeMode ? (
-                                <button 
-                                  onClick={() => setComposeMode(true)}
-                                  className="w-full py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1 hover:bg-indigo-700 active:scale-95"
-                                >
-                                   <Plus size={14} /> {lang === 'bn' ? 'নতুন নোটিশ লিখুন' : 'Compose Notice'}
-                                </button>
-                            ) : (
-                                <div className="space-y-2">
-                                    <textarea 
-                                      value={newNoticeText}
-                                      onChange={(e) => setNewNoticeText(e.target.value)}
-                                      placeholder={lang === 'bn' ? 'নোটিশ লিখুন...' : 'Write notice...'}
-                                      className="w-full text-xs p-2 rounded-lg border border-indigo-200 focus:outline-none focus:border-indigo-500 min-h-[60px]"
-                                    />
-                                    <div className="flex gap-2">
-                                        <button 
-                                          onClick={() => setComposeMode(false)}
-                                          className="flex-1 py-1.5 bg-slate-200 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-300"
-                                        >
-                                           বাতিল
-                                        </button>
-                                        <button 
-                                          onClick={handleSendNotice}
-                                          disabled={isSending}
-                                          className="flex-1 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-1"
-                                        >
-                                           {isSending ? 'পাঠানো হচ্ছে...' : 'সেন্ড করুন'} <Send size={12} />
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                         </div>
-                       )}
-
-                       {/* Permission Request Banner */}
-                       {notificationPermission !== 'granted' && (
-                         <div className="p-3 bg-orange-50 border-b border-orange-100">
-                            <p className="text-xs text-orange-800 mb-2 font-medium">
-                               {lang === 'bn' ? 'নতুন আপডেট মিস না করতে পুশ নোটিফিকেশন চালু করুন।' : 'Enable push notifications to never miss an update.'}
-                            </p>
-                            <button 
-                              onClick={requestNotificationPermission}
-                              className="w-full py-1.5 bg-orange-500 text-white text-xs font-bold rounded-lg hover:bg-orange-600 active:scale-95"
-                            >
-                               {lang === 'bn' ? 'চালু করুন' : 'Enable'}
-                            </button>
-                         </div>
-                       )}
-
-                       <div className="max-h-[300px] overflow-y-auto p-2 space-y-2">
-                          {notices.length > 0 ? (
-                             notices.map((notice, idx) => (
-                                 <div key={notice.id || idx} className="p-3 bg-white rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-sm relative group">
-                                    <div className="flex gap-2.5 items-start">
-                                       <div className="mt-0.5 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                                          <Bell size={12} />
-                                       </div>
-                                       <div className="flex-1">
-                                          <p className="text-xs text-slate-700 leading-relaxed font-medium">{notice.text}</p>
-                                          <p className="text-[10px] text-slate-400 mt-1.5 font-bold flex justify-between items-center">
-                                            <span>{notice.date}</span>
-                                            {/* Delete button for Admin */}
-                                            {isAdmin && notice.id && (
-                                                <button 
-                                                  onClick={(e) => { e.stopPropagation(); handleDeleteNotice(notice.id); }}
-                                                  className="text-red-400 hover:text-red-600 p-1"
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            )}
-                                          </p>
-                                       </div>
-                                    </div>
-                                 </div>
-                               ))
-                          ) : (
-                            <div className="py-8 text-center text-slate-400 text-xs">
-                               {lang === 'bn' ? 'কোনো নোটিফিকেশন নেই' : 'No notifications'}
-                            </div>
-                          )}
-                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-             </div>
-
+          <div className="ml-auto">
              <button 
                 onClick={toggleLanguage}
                 className="h-9 px-3 rounded-full bg-slate-100 border border-slate-200 flex items-center gap-2 text-slate-600 hover:bg-slate-200 hover:text-primary-700 transition-all active:scale-95"
