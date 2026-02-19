@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Zap, Filter, Check, Copy, Hash, ExternalLink, ShieldCheck, Lightbulb, ChevronRight, X, User, Info, CreditCard } from 'lucide-react';
+import { Search, Zap, Filter, Check, Copy, Hash, ExternalLink, ShieldCheck, Lightbulb, ChevronRight, X, User, Info, CreditCard, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Constants
 const EKPAY_LINK = "https://ekpay.gov.bd/#/payment/electricity-bill";
+const DIRECT_RECHARGE_LINK = "https://holantower-ekpay-payment.netlify.app/";
+const BLOG_LINK = "https://holantower.blogspot.com/p/holantower-electricity-desco-bill.html";
 
 // Desco Data
 const DESCO_DATA = [
@@ -47,6 +49,10 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
   const [selectedFloor, setSelectedFloor] = useState('');
   const [confirmModalData, setConfirmModalData] = useState<{flat: string, name: string, account: string} | null>(null);
   const [showToast, setShowToast] = useState(false);
+  
+  // Floating Widget State
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   // Translations
   const t = {
@@ -177,14 +183,14 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                         placeholder={t.searchPlaceholder}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-white border border-slate-100 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-400 h-12"
+                        className="w-full bg-white border border-slate-100 rounded-2xl py-2.5 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-400 h-10"
                     />
                 </div>
                 <div className="relative w-[32%] shadow-lg shadow-slate-200/50 rounded-2xl">
                     <select 
                         value={selectedFloor}
                         onChange={(e) => setSelectedFloor(e.target.value)}
-                        className="w-full bg-indigo-600 border border-indigo-500 text-white font-bold text-xs h-12 rounded-2xl px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-center"
+                        className="w-full bg-indigo-600 border border-indigo-500 text-white font-bold text-xs h-10 rounded-2xl px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-center"
                     >
                         <option value="" className="text-slate-800 bg-white">{t.allFloors}</option>
                         {[2,3,4,5,6,7,8,9,10].map(f => (
@@ -396,6 +402,102 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
         </motion.div>
       )}
       </AnimatePresence>
+
+      {/* Floating Action Widget */}
+      <style>{`
+        @keyframes redPulse {
+          0% { box-shadow:0 0 8px rgba(255,0,0,.6),0 0 16px rgba(255,0,0,.7),0 0 28px rgba(255,0,0,.8); }
+          50% { box-shadow:0 0 14px rgba(255,0,0,1),0 0 28px rgba(255,0,0,1),0 0 45px rgba(255,0,0,1); }
+          100% { box-shadow:0 0 8px rgba(255,0,0,.6),0 0 16px rgba(255,0,0,.7),0 0 28px rgba(255,0,0,.8); }
+        }
+        .eb-icon-custom {
+          animation: redPulse 3s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* Floating Button */}
+      <div 
+        onClick={() => setIsPopupOpen(!isPopupOpen)}
+        className="fixed right-[18px] bottom-[90px] w-[40px] h-[40px] rounded-[10px] bg-gradient-to-br from-[#6a11cb] to-[#2575fc] flex items-center justify-center cursor-pointer z-[60] border border-white/35 eb-icon-custom transition-transform active:scale-110"
+      >
+        <svg 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          className={`w-5 h-5 text-white transition-transform duration-500 ${isPopupOpen ? 'rotate-180' : ''}`}
+        >
+          <path d="M13 2L3 14h7l-1 8L21 10h-7l-0.999-8z" fill="currentColor"></path>
+        </svg>
+      </div>
+
+      {/* Popup */}
+      <AnimatePresence>
+        {isPopupOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="fixed right-[18px] bottom-[140px] w-[280px] sm:w-[300px] p-3 bg-gradient-to-br from-[#6a11cb] to-[#2575fc] rounded-[10px] border border-black/5 shadow-2xl z-[60]"
+          >
+             <h4 className="m-0 mb-1.5 text-base text-white font-extrabold">বিদ্যুৎ বিল রিচার্জ</h4>
+             
+             <div className="bg-white p-2.5 rounded-lg border border-black/5 mb-2.5">
+                <p className="m-0 mb-2 p-0 text-[#333] text-[13px] leading-snug font-semibold">
+                  আপনার বিদ্যুৎ বিল দ্রুত ও সহজে রিচার্জ করুন — এখনই ekPay এ যেয়ে।
+                </p>
+                <strong className="block text-[#b32222] font-bold text-[13px] mt-1.5 mb-2">(নোট: অবশ্যই DESCO PREPAID সিলেক্ট করবেন।)</strong>
+                
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setIsDetailsOpen(!isDetailsOpen); }}
+                  className="w-full py-2 px-2.5 bg-[#fff7e6] rounded-md border border-black/10 font-bold text-left text-[13px] flex items-center justify-between gap-2 text-slate-800"
+                >
+                  <span>{isDetailsOpen ? 'বিস্তারিত লুকান' : 'বিস্তারিত দেখুন'}</span>
+                  <ChevronRight size={16} className={`transition-transform duration-200 ${isDetailsOpen ? 'rotate-90' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {isDetailsOpen && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                       <div className="bg-[#fff7e6] mt-1.5 p-2 rounded-md border border-black/5 text-xs font-semibold text-[#111] leading-relaxed">
+                          সেবা প্রদানকারী প্রতিষ্ঠানের নাম (DESCO PREPAID) সিলেক্ট করতে হবে। এরপর সঠিকভাবে অ্যাকাউন্ট নম্বর, রিচার্জের পরিমাণ, মোবাইল নম্বর দিতে হবে। তারপর প্রদানকারীর তথ্য দিতে হবে। এরপর মোবাইল ব্যাংকিং সিলেক্ট করে বিকাশ / নগদ / উপায় / রকেট এর মাধ্যমে পেমেন্ট সম্পূর্ণ করতে হবে।
+                       </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+             </div>
+
+             <div className="flex flex-col gap-2">
+                <button 
+                  onClick={() => window.open(DIRECT_RECHARGE_LINK, '_blank')}
+                  className="w-full py-2 px-2.5 rounded-lg bg-gradient-to-r from-[#ff7373] to-[#ff3d3d] text-white font-bold text-[13px] border-none shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                >
+                  এখনি রিচার্জ করুন
+                </button>
+
+                <a 
+                  href={BLOG_LINK}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full py-2 px-2.5 rounded-lg bg-white text-[#222] font-bold text-[13px] border border-black/5 shadow-sm text-center no-underline hover:bg-gray-50 active:scale-95 transition-all"
+                >
+                  মোবাইল ব্যাংকিং/অ্যাপস এর মাধ্যমে
+                </a>
+
+                <button 
+                  onClick={() => setIsPopupOpen(false)}
+                  className="w-full py-2 px-2.5 rounded-lg bg-white text-[#444] font-bold text-[13px] border border-black/10 shadow-sm hover:bg-gray-50 active:scale-95 transition-all"
+                >
+                   বাতিল করুন
+                </button>
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
