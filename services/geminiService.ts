@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY;
+// Safely access API key, handling environments where process might be undefined
+const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
 
 // Initialize Gemini only if API key is present
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
@@ -12,7 +13,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getGeminiResponse = async (prompt: string): Promise<string> => {
   if (!ai) {
-    return "দুঃখিত, এআই সিস্টেম বর্তমানে উপলব্ধ নয়। দয়া করে পরে আবার চেষ্টা করুন। (API Key Missing)";
+    return "দুঃখিত, এআই সিস্টেম বর্তমানে উপলব্ধ নয়। (API Key Missing or System Error)";
   }
 
   const model = ai.models;
