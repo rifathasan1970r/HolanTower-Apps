@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Zap, Filter, Check, Copy, Hash, ExternalLink, ShieldCheck, Lightbulb, ChevronRight, X, User } from 'lucide-react';
+import { Search, Zap, Filter, Check, Copy, Hash, ExternalLink, ShieldCheck, Lightbulb, ChevronRight, X, User, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Constants
@@ -275,6 +275,30 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                 <p className="font-bold text-slate-400">কোনো মিটার পাওয়া যায়নি</p>
             </div>
         )}
+      </div>
+
+      {/* Premium Disclaimer Note */}
+      <div className="px-4 mt-6 relative z-10">
+        <div className="relative bg-white rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(99,102,241,0.15)] border border-indigo-50 overflow-hidden">
+            {/* Background Gradient Accents */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-indigo-500/5 to-violet-500/5 rounded-full blur-xl -ml-8 -mb-8"></div>
+            
+            <div className="relative z-10 flex gap-4 items-start">
+                <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
+                    <Info size={20} />
+                </div>
+                <div className="flex-1">
+                    <h4 className="text-sm font-bold text-slate-800 mb-1 flex items-center gap-2">
+                        বিশেষ দ্রষ্টব্য
+                        <div className="h-px flex-1 bg-gradient-to-r from-indigo-100 to-transparent"></div>
+                    </h4>
+                    <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                        শুধু মাত্র <span className="text-indigo-600 font-bold">❝হলান টাওয়ার❞</span> এর মোট ২৭ টি ইউনিট এর ডেসকো মিটার নম্বর দেওয়া হয়েছে রিচার্জ করার সুবিধা জন্য। <span className="text-rose-500 font-bold">ভুল নম্বরে রিচার্জ করলে কর্তৃপক্ষ দায়ী থাকবে না।</span>
+                    </p>
+                </div>
+            </div>
+        </div>
       </div>
 
       {/* Confirmation Modal - Bottom Sheet Style */}
