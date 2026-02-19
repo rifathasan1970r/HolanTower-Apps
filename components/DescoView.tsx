@@ -426,6 +426,39 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                 <p className="font-bold text-slate-400">কোনো মিটার পাওয়া যায়নি</p>
             </div>
         )}
+
+        {/* Disclaimer Note - Enhanced Graphic Version */}
+        <div className="mx-4 mt-8 mb-6">
+            <div className="relative bg-white rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(239,68,68,0.15)] border border-red-100 overflow-hidden group">
+                {/* Background Pattern */}
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-red-50 rounded-full blur-2xl opacity-50 pointer-events-none group-hover:bg-red-100 transition-colors duration-500"></div>
+                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-orange-50 rounded-full blur-2xl opacity-50 pointer-events-none group-hover:bg-orange-100 transition-colors duration-500"></div>
+
+                <div className="relative z-10 flex flex-col items-center text-center">
+                    <div className="mb-3 p-2.5 bg-gradient-to-br from-red-50 to-white rounded-full ring-1 ring-red-100 shadow-sm">
+                         <ShieldCheck className="text-red-500" size={24} />
+                    </div>
+                    
+                    <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed mb-3">
+                        শুধুমাত্র <span className="font-extrabold text-slate-800 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">❝হলান টাওয়ার❞</span> এর মোট ২৭ টি ইউনিট এর ডেসকো মিটার নম্বর দেওয়া হয়েছে রিচার্জ করার সুবিধার জন্য।
+                    </p>
+                    
+                    <div className="w-full h-px bg-gradient-to-r from-transparent via-red-200 to-transparent mb-3 opacity-50"></div>
+                    
+                    <p className="text-[11px] font-bold text-red-600 flex items-center justify-center gap-1.5 bg-red-50 px-4 py-2 rounded-lg border border-red-100">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                        ভুল নম্বরে রিচার্জ করলে কর্তৃপক্ষ দায়ী থাকবে না
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {/* Footer Credit */}
+        <div className="py-4 text-center">
+            <p className="text-[10px] font-bold text-slate-400/60 tracking-widest select-none">
+                Design by A.H.M RIFAT HASAN
+            </p>
+        </div>
       </div>
 
       {/* Confirmation Modal - Centered Style */}
