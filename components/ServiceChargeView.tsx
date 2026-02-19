@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 // কনফিগারেশন: ২৭টি ইউনিট (ফ্লোর ২ থেকে ১০)
@@ -29,7 +29,13 @@ interface PaymentData {
   month_name: string;
   year_num: number;
   amount: number;
+  due: number;
   paid_date: string;
+}
+
+interface UnitInfo {
+  unit_text: string;
+  is_occupied: boolean;
 }
 
 export const ServiceChargeView: React.FC = () => {
@@ -40,6 +46,7 @@ export const ServiceChargeView: React.FC = () => {
   
   // Supabase State
   const [dbData, setDbData] = useState<PaymentData[]>([]);
+  const [unitsInfo, setUnitsInfo] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [useMock, setUseMock] = useState<boolean>(false);
 
@@ -49,26 +56,47 @@ export const ServiceChargeView: React.FC = () => {
   const [pinInput, setPinInput] = useState<string>('');
   const [processingUpdate, setProcessingUpdate] = useState<boolean>(false);
 
+  // Inline Edit State
+  const [editingMonth, setEditingMonth] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState({ amount: 2000, due: 0, date: '' });
+
+  // Date Helper
+  const getBanglaDate = () => {
+    return new Date().toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/,/g, '');
+  };
+
   // Fetch data from Supabase
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch Payments
+      const { data: payData, error: payError } = await supabase
         .from('payments')
         .select('*')
         .eq('year_num', selectedYear);
 
-      if (error) throw error;
+      if (payError) throw payError;
+      if (payData) setDbData(payData as PaymentData[]);
+
+      // Fetch Units Occupancy Info
+      const { data: uData, error: uError } = await supabase
+        .from('units_info')
+        .select('*');
       
-      if (data) {
-        setDbData(data as PaymentData[]);
-        setUseMock(false);
+      if (uError) {
+          console.warn("units_info table not found, using default occupancy logic.");
+      } else if (uData) {
+          const mapping: Record<string, boolean> = {};
+          uData.forEach((u: UnitInfo) => mapping[u.unit_text] = u.is_occupied);
+          setUnitsInfo(mapping);
       }
+      
+      setUseMock(false);
     } catch (error) {
       console.error('Error fetching data:', error);
       setUseMock(true);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -78,7 +106,7 @@ export const ServiceChargeView: React.FC = () => {
 
   // Admin Logic
   const handleLogin = () => {
-    if (pinInput === '1234') { // Simple PIN for demo
+    if (pinInput === '1234') { 
       setIsAdmin(true);
       setShowLogin(false);
       setPinInput('');
@@ -87,56 +115,146 @@ export const ServiceChargeView: React.FC = () => {
     }
   };
 
-  const handleTogglePayment = async (unit: string, month: string) => {
+  const handleToggleOccupancy = async (unit: string) => {
     if (!isAdmin || processingUpdate) return;
-
     setProcessingUpdate(true);
     
-    // Check if already paid
-    const existingRecord = dbData.find(d => d.unit_text === unit && d.month_name === month && d.year_num === selectedYear);
+    const currentVal = unitsInfo[unit] ?? (unit.charCodeAt(1) % 2 !== 0);
+    const newVal = !currentVal;
 
     try {
-      if (existingRecord) {
-        // DELETE (Unpay)
         const { error } = await supabase
-          .from('payments')
-          .delete()
-          .eq('id', existingRecord.id);
+            .from('units_info')
+            .upsert({ unit_text: unit, is_occupied: newVal }, { onConflict: 'unit_text' });
 
         if (error) throw error;
-        
-        // Optimistic Update
-        setDbData(prev => prev.filter(d => d.id !== existingRecord.id));
+        setUnitsInfo(prev => ({ ...prev, [unit]: newVal }));
+    } catch (err) {
+        console.error("Error updating occupancy:", err);
+    } finally {
+        setProcessingUpdate(false);
+    }
+  };
 
+  const startEditing = (unit: string, month: string) => {
+    if (!isAdmin) return;
+    const existing = dbData.find(d => d.unit_text === unit && d.month_name === month && d.year_num === selectedYear);
+    
+    setEditingMonth(month);
+    setEditFormData({
+      amount: existing?.amount ?? 2000,
+      due: existing?.due ?? 0,
+      date: existing?.paid_date ?? getBanglaDate()
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingMonth(null);
+    setEditFormData({ amount: 2000, due: 0, date: '' });
+  };
+
+  const handleInlineSave = async (unit: string, month: string) => {
+    if (processingUpdate) return;
+    setProcessingUpdate(true);
+
+    try {
+      // ১. প্রথমে চেক করি এই মাস ও ইউনিটের ডাটা সার্ভারে আগে থেকেই আছে কিনা
+      const { data: existingData, error: fetchError } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('unit_text', unit)
+        .eq('month_name', month)
+        .eq('year_num', selectedYear)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      let error = null;
+
+      if (existingData) {
+        // UPDATE (যদি ডাটা থাকে)
+        const res = await supabase
+          .from('payments')
+          .update({
+            amount: editFormData.amount,
+            due: editFormData.due,
+            paid_date: editFormData.date
+          })
+          .eq('id', existingData.id);
+        error = res.error;
       } else {
-        // INSERT (Pay)
-        const paidDate = new Date().toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
+        // INSERT (যদি ডাটা না থাকে)
         const newRecord = {
           unit_text: unit,
           month_name: month,
           year_num: selectedYear,
-          amount: SERVICE_CHARGE_AMOUNT,
-          paid_date: paidDate
+          amount: editFormData.amount,
+          due: editFormData.due,
+          paid_date: editFormData.date
         };
 
-        const { data, error } = await supabase
+        const res = await supabase
           .from('payments')
-          .insert(newRecord)
-          .select();
-
-        if (error) throw error;
-
-        // Optimistic Update
-        if (data) {
-             setDbData(prev => [...prev, data[0] as PaymentData]);
-        }
+          .insert(newRecord);
+        error = res.error;
       }
-    } catch (err) {
-      console.error("Error updating payment:", err);
-      alert("আপডেট ব্যর্থ হয়েছে। ইন্টারনেট সংযোগ পরীক্ষা করুন।");
+
+      if (error) throw error;
+
+      // রিফ্রেশ ডাটা (সরাসরি সার্ভার থেকে) - যাতে আপডেট নিশ্চিত হয়
+      await fetchData(false); 
+      setEditingMonth(null);
+      
+    } catch (err: any) {
+      console.error("Error saving payment:", err);
+      alert(`আপডেট ব্যর্থ হয়েছে: ${err.message || "অজানা সমস্যা"}`);
     } finally {
       setProcessingUpdate(false);
     }
+  };
+
+  const handleQuickStatusToggle = async (unit: string, month: string) => {
+      if (!isAdmin || processingUpdate) return;
+      setProcessingUpdate(true);
+
+      try {
+          // ১. চেক করি ডাটা আছে কিনা
+          const { data: existingData } = await supabase
+            .from('payments')
+            .select('id')
+            .eq('unit_text', unit)
+            .eq('month_name', month)
+            .eq('year_num', selectedYear)
+            .maybeSingle();
+
+          if (existingData) {
+              // Toggle to DUE: ডাটা ডিলিট করে বকেয়া বানানো
+              const { error } = await supabase.from('payments').delete().eq('id', existingData.id);
+              if (error) throw error;
+              
+              // UI আপডেট
+              setDbData(prev => prev.filter(d => d.id !== existingData.id));
+          } else {
+              // Toggle to PAID: নতুন এন্ট্রি তৈরি করা
+              const paidDate = getBanglaDate();
+              const { data, error } = await supabase.from('payments').insert({
+                  unit_text: unit,
+                  month_name: month,
+                  year_num: selectedYear,
+                  amount: 2000,
+                  due: 0,
+                  paid_date: paidDate
+              }).select();
+              
+              if (error) throw error;
+              if (data) setDbData(prev => [...prev, data[0] as PaymentData]);
+          }
+      } catch (err: any) {
+          console.error(err);
+          alert("স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে।");
+      } finally {
+          setProcessingUpdate(false);
+      }
   };
 
   // Generate Data
@@ -148,61 +266,25 @@ export const ServiceChargeView: React.FC = () => {
     return MONTHS.map((month, index) => {
       let paymentRecord: PaymentData | undefined;
       
-      if (!useMock) {
-        paymentRecord = dbData.find(
-          d => d.unit_text === unit && d.month_name === month
-        );
-      } else {
-        const unitHash = unit.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const mockCurrentYear = 2026; 
-        const mockCurrentMonthIdx = 1; 
-        const isFutureMock = selectedYear > mockCurrentYear || (selectedYear === mockCurrentYear && index > mockCurrentMonthIdx);
-        
-        if (!isFutureMock) {
-           const randomVal = (unitHash + index + selectedYear) % 10;
-           if (randomVal > 2) {
-             paymentRecord = {
-               unit_text: unit,
-               month_name: month,
-               year_num: selectedYear,
-               amount: SERVICE_CHARGE_AMOUNT,
-               paid_date: `১০ ${month}, ${selectedYear}`
-             };
-           }
-        }
-      }
+      paymentRecord = dbData.find(
+        d => d.unit_text === unit && d.month_name === month
+      );
 
       if (paymentRecord) {
         return {
           month,
           date: paymentRecord.paid_date || '-',
-          amount: paymentRecord.amount || SERVICE_CHARGE_AMOUNT,
-          due: 0,
-          status: 'PAID'
+          amount: paymentRecord.amount,
+          due: paymentRecord.due,
+          status: paymentRecord.amount > 0 ? 'PAID' : 'DUE'
         };
       }
 
       const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && index > currentRealMonthIdx);
-      const effectiveFuture = useMock 
-        ? (selectedYear > 2026 || (selectedYear === 2026 && index > 1))
-        : isFuture;
-
-      if (effectiveFuture) {
-        return {
-          month,
-          date: '-',
-          amount: 0,
-          due: 0,
-          status: 'UPCOMING'
-        };
+      if (isFuture) {
+        return { month, date: '-', amount: 0, due: 0, status: 'UPCOMING' };
       } else {
-        return {
-          month,
-          date: '-',
-          amount: 0,
-          due: SERVICE_CHARGE_AMOUNT,
-          status: 'DUE'
-        };
+        return { month, date: '-', amount: 0, due: SERVICE_CHARGE_AMOUNT, status: 'DUE' };
       }
     });
   };
@@ -210,16 +292,11 @@ export const ServiceChargeView: React.FC = () => {
   const allUnitsSummary = useMemo(() => {
     return ALL_UNITS.map(unit => {
         const records = getUnitData(unit);
-        const collected = records.filter(r => r.status === 'PAID').reduce((sum, r) => sum + r.amount, 0);
-        const due = records.filter(r => r.status === 'DUE').reduce((sum, r) => sum + r.due, 0);
-        
-        return {
-            unit,
-            collected,
-            due
-        };
+        const collected = records.reduce((sum, r) => sum + (r.status === 'PAID' ? r.amount : 0), 0);
+        const due = records.reduce((sum, r) => sum + r.due, 0);
+        return { unit, collected, due };
     });
-  }, [selectedYear, dbData, useMock]);
+  }, [selectedYear, dbData, unitsInfo]);
 
   const grandTotalCollected = allUnitsSummary.reduce((acc, curr) => acc + curr.collected, 0);
   const grandTotalDue = allUnitsSummary.reduce((acc, curr) => acc + curr.due, 0);
@@ -303,7 +380,6 @@ export const ServiceChargeView: React.FC = () => {
     // Stats for Graph
     const paidCount = records.filter(r => r.status === 'PAID').length;
     const dueCount = records.filter(r => r.status === 'DUE').length;
-    const upcomingCount = records.filter(r => r.status === 'UPCOMING').length;
     
     const totalMonths = 12;
     const radius = 40;
@@ -311,7 +387,7 @@ export const ServiceChargeView: React.FC = () => {
     const paidOffset = circumference - (paidCount / totalMonths) * circumference;
     const dueOffset = circumference - (dueCount / totalMonths) * circumference;
     
-    const isOccupied = selectedUnit.charCodeAt(1) % 2 !== 0; 
+    const isOccupied = unitsInfo[selectedUnit] ?? (selectedUnit.charCodeAt(1) % 2 !== 0); 
     const occupancyStatus = isOccupied ? 'বসবাসরত' : 'খালি';
 
     return (
@@ -349,7 +425,6 @@ export const ServiceChargeView: React.FC = () => {
                  
                  <div className="text-center animate-in zoom-in duration-300">
                     <h2 className="text-3xl font-bold text-slate-800">ইউনিট {selectedUnit}</h2>
-                    {/* Year is now in the toggle below, so we can remove it here or keep it as subtitle */}
                  </div>
 
                  <button 
@@ -364,27 +439,25 @@ export const ServiceChargeView: React.FC = () => {
 
         {/* Admin Tip */}
         {isAdmin && (
-           <div className="bg-indigo-600 text-white text-xs py-2 px-4 text-center font-bold animate-in slide-in-from-top">
-             অ্যাডমিন মোড চালু: স্ট্যাটাস পরিবর্তন করতে লিস্টে ক্লিক করুন
+           <div className="bg-indigo-600 text-white text-[10px] py-1.5 px-4 text-center font-bold animate-in slide-in-from-top flex items-center justify-center gap-2">
+             <Edit3 size={12} /> তথ্য পরিবর্তন করতে যেকোনো লাইনে ক্লিক করুন
            </div>
         )}
 
-        {/* Year Selection Tabs (Added Back) */}
+        {/* Year Selection Tabs */}
         <div className="px-4 pt-4 pb-0">
              <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-100 flex">
                 <button 
                     onClick={() => setSelectedYear(2025)}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                    <CalendarDays size={16} />
-                    ২০২৫
+                    <CalendarDays size={16} /> ২০২৫
                 </button>
                 <button 
                     onClick={() => setSelectedYear(2026)}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                    <CalendarDays size={16} />
-                    ২০২৬
+                    <CalendarDays size={16} /> ২০২৬
                 </button>
             </div>
         </div>
@@ -395,13 +468,17 @@ export const ServiceChargeView: React.FC = () => {
                 className="rounded-2xl p-4 shadow-lg border border-white/10 grid grid-cols-3 gap-2 divide-x divide-white/20 text-white transition-all duration-500"
                 style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
             >
-                <div className="text-center px-1 flex flex-col items-center justify-center">
+                <button 
+                    onClick={() => handleToggleOccupancy(selectedUnit)}
+                    disabled={!isAdmin}
+                    className={`text-center px-1 flex flex-col items-center justify-center transition-all ${isAdmin ? 'active:scale-95 cursor-pointer' : ''}`}
+                >
                     <p className="text-[10px] text-white/80 font-medium uppercase mb-1">বসবাসের ধরন</p>
                     <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${occupancyStatus === 'বসবাসরত' ? 'bg-white text-blue-600' : 'bg-white/90 text-orange-600'}`}>
                         {occupancyStatus === 'বসবাসরত' ? <Users size={12} /> : <Home size={12} />}
                         {occupancyStatus}
                     </div>
-                </div>
+                </button>
                 <div className="text-center px-1 flex flex-col items-center justify-center">
                     <p className="text-[10px] text-white/80 font-medium uppercase mb-1">মোট টাকা</p>
                     <p className="font-bold text-white text-base">৳ {totalAmount.toLocaleString()}</p>
@@ -427,54 +504,108 @@ export const ServiceChargeView: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {records.map((record, idx) => {
-                            const isClickable = isAdmin && !processingUpdate;
+                            const isEditable = isAdmin && !processingUpdate;
+                            const isEditing = editingMonth === record.month;
+
                             return (
                               <tr 
                                 key={idx} 
-                                onClick={() => isClickable && handleTogglePayment(selectedUnit, record.month)}
                                 className={`
                                   transition-all duration-200 
                                   ${record.status === 'DUE' ? 'bg-red-50/10' : ''}
-                                  ${isClickable ? 'cursor-pointer hover:bg-indigo-50 active:scale-[0.99]' : 'hover:bg-slate-50/50'}
+                                  ${isEditable && !isEditing ? 'hover:bg-indigo-50 active:bg-indigo-100/50' : 'hover:bg-slate-50/50'}
+                                  ${isEditing ? 'bg-indigo-50/50' : ''}
                                 `}
                               >
-                                  <td className="py-3 pl-3 align-middle">
-                                      <div className="font-bold text-slate-800 text-sm">{record.month}</div>
-                                      <div className="text-[10px] text-slate-400 font-medium mt-0.5">
-                                          {record.status === 'UPCOMING' && !isAdmin ? '---' : record.date}
-                                      </div>
-                                  </td>
-                                  <td className="py-3 align-middle text-center">
-                                      <div className={`font-semibold text-sm ${record.amount > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
-                                          {record.amount > 0 ? `৳${record.amount}` : '-'}
-                                      </div>
-                                  </td>
-                                  <td className="py-3 align-middle text-center">
-                                       <div className={`font-semibold text-sm ${record.due > 0 ? 'text-red-600' : 'text-slate-300'}`}>
-                                          {record.due > 0 ? `৳${record.due}` : '-'}
-                                       </div>
-                                  </td>
-                                  <td className="py-3 pr-3 align-middle flex justify-end">
-                                      {isAdmin ? (
-                                        <div className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center gap-1.5 ${
-                                          record.status === 'PAID' 
-                                            ? 'bg-green-100 text-green-700 border-green-200' 
-                                            : 'bg-white text-slate-500 border-slate-200 shadow-sm'
-                                        }`}>
-                                          {record.status === 'PAID' ? (
-                                            <>
-                                              <CheckCircle2 size={12} /> পরিশোধিত
-                                            </>
-                                          ) : (
-                                            <>
-                                              <div className="w-3 h-3 rounded-full border-2 border-slate-300"></div> বাকি
-                                            </>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        getStatusElement(record.status)
-                                      )}
-                                  </td>
+                                  {isEditing ? (
+                                    <>
+                                      <td className="py-2 pl-2 align-middle">
+                                          <div className="font-bold text-slate-800 text-xs mb-1">{record.month}</div>
+                                          <input 
+                                            type="text" 
+                                            value={editFormData.date}
+                                            onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
+                                            className="w-full text-[10px] border border-slate-300 rounded px-1 py-1 focus:border-indigo-500 outline-none"
+                                            placeholder="তারিখ"
+                                            autoFocus
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                      </td>
+                                      <td className="py-2 align-middle text-center px-1">
+                                          <input 
+                                            type="number" 
+                                            value={editFormData.amount}
+                                            onChange={(e) => setEditFormData({...editFormData, amount: Number(e.target.value)})}
+                                            className="w-full text-xs font-bold text-center border border-slate-300 rounded px-1 py-1 focus:border-indigo-500 outline-none text-slate-700"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                      </td>
+                                      <td className="py-2 align-middle text-center px-1">
+                                          <input 
+                                            type="number" 
+                                            value={editFormData.due}
+                                            onChange={(e) => setEditFormData({...editFormData, due: Number(e.target.value)})}
+                                            className="w-full text-xs font-bold text-center border border-slate-300 rounded px-1 py-1 focus:border-indigo-500 outline-none text-red-600"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                      </td>
+                                      <td className="py-2 pr-2 align-middle text-right">
+                                         <div className="flex justify-end gap-1">
+                                            <button 
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleInlineSave(selectedUnit, record.month);
+                                              }}
+                                              className="p-1.5 bg-green-500 text-white rounded shadow-sm hover:bg-green-600 active:scale-95"
+                                            >
+                                              <Check size={14} />
+                                            </button>
+                                            <button 
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                cancelEditing();
+                                              }}
+                                              className="p-1.5 bg-slate-200 text-slate-500 rounded shadow-sm hover:bg-slate-300 active:scale-95"
+                                            >
+                                              <X size={14} />
+                                            </button>
+                                         </div>
+                                      </td>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <td onClick={() => isEditable && startEditing(selectedUnit, record.month)} className="py-3 pl-3 align-middle cursor-pointer">
+                                          <div className="font-bold text-slate-800 text-sm">{record.month}</div>
+                                          <div className="text-[10px] text-slate-400 font-medium mt-0.5 whitespace-nowrap">{record.date}</div>
+                                      </td>
+                                      <td onClick={() => isEditable && startEditing(selectedUnit, record.month)} className="py-3 align-middle text-center cursor-pointer">
+                                          <div className={`font-semibold text-sm ${record.amount > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
+                                              {record.amount > 0 ? `৳${record.amount}` : '-'}
+                                          </div>
+                                      </td>
+                                      <td onClick={() => isEditable && startEditing(selectedUnit, record.month)} className="py-3 align-middle text-center cursor-pointer">
+                                           <div className={`font-semibold text-sm ${record.due > 0 ? 'text-red-600' : 'text-slate-300'}`}>
+                                              {record.due > 0 ? `৳${record.due}` : '-'}
+                                           </div>
+                                      </td>
+                                      <td className="py-3 pr-3 align-middle flex justify-end">
+                                          <div onClick={() => isEditable && handleQuickStatusToggle(selectedUnit, record.month)}>
+                                            {isAdmin ? (
+                                                <div className={`px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                                                record.status === 'PAID' 
+                                                    ? 'bg-green-100 text-green-700 border-green-200 shadow-sm' 
+                                                    : 'bg-white text-red-500 border-red-200 shadow-sm'
+                                                }`}>
+                                                {record.status === 'PAID' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
+                                                {record.status === 'PAID' ? 'পরিশোধিত' : 'বকেয়া'}
+                                                </div>
+                                            ) : (
+                                                getStatusElement(record.status)
+                                            )}
+                                          </div>
+                                      </td>
+                                    </>
+                                  )}
                               </tr>
                           );
                         })}
@@ -534,7 +665,7 @@ export const ServiceChargeView: React.FC = () => {
                     {records.map((record, idx) => (
                         <div
                             key={idx}
-                            onClick={() => isAdmin && !processingUpdate && handleTogglePayment(selectedUnit, record.month)}
+                            onClick={() => isAdmin && !processingUpdate && handleQuickStatusToggle(selectedUnit, record.month)}
                             className={`
                                 aspect-[4/3] rounded-lg flex flex-col items-center justify-center text-center transition-all relative overflow-hidden shadow-sm border
                                 ${record.status === 'PAID' ? 'bg-green-500 text-white border-green-600' : ''}
@@ -594,7 +725,7 @@ export const ServiceChargeView: React.FC = () => {
              </div>
              <div>
                <p className="text-sm font-bold text-indigo-900">অ্যাডমিন ড্যাশবোর্ড</p>
-               <p className="text-xs text-indigo-600 mt-1">যেকোনো ইউনিটে ক্লিক করে পেমেন্ট স্ট্যাটাস পরিবর্তন করুন।</p>
+               <p className="text-xs text-indigo-600 mt-1">টেবিলে ক্লিক করে তথ্য এডিট করুন।</p>
              </div>
          </div>
       )}
@@ -614,24 +745,6 @@ export const ServiceChargeView: React.FC = () => {
                     <p className="text-xs text-primary-600 font-medium">অর্থবছর: {selectedYear}</p>
                 </div>
              </div>
-
-             {/* Year Selection Tabs */}
-            <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-100 flex mb-6">
-                <button 
-                    onClick={() => setSelectedYear(2025)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
-                >
-                    <CalendarDays size={16} />
-                    ২০২৫
-                </button>
-                <button 
-                    onClick={() => setSelectedYear(2026)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
-                >
-                    <CalendarDays size={16} />
-                    ২০২৬
-                </button>
-            </div>
 
              {/* Search Bar */}
              <div className="relative mb-6">
@@ -698,15 +811,13 @@ export const ServiceChargeView: React.FC = () => {
                     onClick={() => setSelectedYear(2025)}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                    <CalendarDays size={16} />
-                    ২০২৫
+                    <CalendarDays size={16} /> ২০২৫
                 </button>
                 <button 
                     onClick={() => setSelectedYear(2026)}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                    <CalendarDays size={16} />
-                    ২০২৬
+                    <CalendarDays size={16} /> ২০২৬
                 </button>
             </div>
 
@@ -757,7 +868,7 @@ export const ServiceChargeView: React.FC = () => {
                 placeholder="ইউনিট খুঁজুন (যেমন: 2A)" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all shadow-sm"
+                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary-500 transition-all shadow-sm"
                 />
             </div>
 
@@ -781,11 +892,6 @@ export const ServiceChargeView: React.FC = () => {
                     <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${data.due > 0 ? 'bg-red-500' : 'bg-green-500'}`}></span>
                 </button>
                 ))}
-                {filteredUnitsData.length === 0 && (
-                    <div className="col-span-3 py-8 text-center text-slate-400 text-sm">
-                        কোনো ইউনিট পাওয়া যায়নি
-                    </div>
-                )}
             </div>
         </div>
       )}
