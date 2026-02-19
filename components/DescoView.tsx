@@ -229,16 +229,16 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                     key={idx} 
                     className="bg-white rounded-2xl p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group"
                   >
-                     <div className="flex items-center gap-4">
+                     <div className="flex items-center gap-2 sm:gap-4">
                         {/* Flat Avatar */}
-                        <div className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center text-lg font-black text-white shadow-md ${isMain ? 'bg-slate-700' : 'bg-gradient-to-br from-indigo-500 to-blue-600'}`}>
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl flex items-center justify-center text-base sm:text-lg font-black text-white shadow-md ${isMain ? 'bg-slate-700' : 'bg-gradient-to-br from-indigo-500 to-blue-600'}`}>
                             {item.flat}
                         </div>
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                                <h3 className="font-bold text-slate-800 truncate">{item.name}</h3>
+                                <h3 className="font-bold text-slate-800 truncate text-sm sm:text-base">{item.name}</h3>
                                 {isMain && <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 rounded border border-slate-200 font-bold">POST</span>}
                             </div>
                             
@@ -247,11 +247,11 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                             {/* Copyable Account Chip */}
                             <button 
                                 onClick={() => handleCopy(item.account)}
-                                className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 transition-colors group/acc"
+                                className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 transition-colors group/acc max-w-full"
                             >
-                                <Hash size={10} className="text-slate-400" />
-                                <span className="font-mono text-sm font-bold text-slate-600 tracking-wide">{item.account}</span>
-                                <Copy size={10} className="text-slate-300 group-hover/acc:text-indigo-500" />
+                                <Hash size={10} className="text-slate-400 shrink-0" />
+                                <span className="font-mono text-xs sm:text-sm font-bold text-slate-600 tracking-wide truncate">{item.account}</span>
+                                <Copy size={10} className="text-slate-300 group-hover/acc:text-indigo-500 shrink-0" />
                             </button>
                         </div>
 
@@ -259,10 +259,10 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                         {!isMain && (
                             <button 
                                 onClick={() => setConfirmModalData(item)}
-                                className="shrink-0 flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-lg hover:shadow-indigo-200 text-white px-4 py-2.5 rounded-xl transition-all active:scale-95 shadow-md group/btn"
+                                className="shrink-0 flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-lg hover:shadow-indigo-200 text-white px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-xl transition-all active:scale-95 shadow-md group/btn"
                             >
-                                <Zap size={16} className="text-yellow-300 fill-yellow-300 group-hover/btn:scale-110 transition-transform" />
-                                <span className="text-xs font-bold">{t.recharge}</span>
+                                <Zap size={14} className="text-yellow-300 fill-yellow-300 group-hover/btn:scale-110 transition-transform" />
+                                <span className="text-[10px] sm:text-xs font-bold whitespace-nowrap">{t.recharge}</span>
                             </button>
                         )}
                      </div>
