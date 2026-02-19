@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Zap, Filter, Check, Copy, Hash, ExternalLink, ShieldCheck, Lightbulb, ChevronRight, X, User, Info } from 'lucide-react';
+import { Search, Zap, Filter, Check, Copy, Hash, ExternalLink, ShieldCheck, Lightbulb, ChevronRight, X, User, Info, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Constants
@@ -60,16 +60,17 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
     flat: lang === 'bn' ? 'ফ্ল্যাট' : 'Flat',
     confirmTitle: lang === 'bn' ? 'পেমেন্ট নিশ্চিতকরণ' : 'Confirm Payment',
     confirmDesc: lang === 'bn' ? 'সঠিক মিটারে রিচার্জ করতে তথ্য মিলিয়ে নিন' : 'Verify details to recharge correct meter',
-    payNow: lang === 'bn' ? 'পেমেন্ট গেটওয়েতে যান' : 'Go to Payment Gateway',
+    payNow: lang === 'bn' ? 'একপে (EkPay) তে পেমেন্ট করুন' : 'Pay via EkPay',
     copySuccess: lang === 'bn' ? 'কপি হয়েছে!' : 'Copied!',
     notice: lang === 'bn' 
       ? 'জরুরী: টাকা পাঠানোর আগে মিটার নম্বর অবশ্যই মিলিয়ে নিবেন।'
       : 'Important: Verify meter number before sending money.',
     floor: lang === 'bn' ? 'তলা' : 'Floor',
-    paymentNote: lang === 'bn' ? 'পরবর্তী ধাপে বিকাশ/নগদ/রকেট বা কার্ড সিলেক্ট করুন' : 'Select bKash/Nagad/Rocket or Card in next step',
+    paymentNote: lang === 'bn' ? 'নিচের বাটনে ক্লিক করে একপে (EkPay) তে যান এবং পেমেন্ট সম্পন্ন করুন।' : 'Click the button below to go to EkPay and complete payment.',
     mainMeter: lang === 'bn' ? 'মেইন মিটার' : 'Main Meter',
     postpaid: 'POSTPAID',
-    prepaid: 'PREPAID'
+    prepaid: 'PREPAID',
+    tapToCopy: lang === 'bn' ? 'কপি করতে ট্যাপ করুন' : 'Tap to copy'
   };
 
   // Grouping Logic
@@ -114,17 +115,21 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
     }
   };
 
-  const handleProceedToPayment = async () => {
+  const handleProceedToPayment = () => {
     if (!confirmModalData) return;
     
-    // Copy first
-    handleCopy(confirmModalData.account);
+    // Copy account number
+    navigator.clipboard.writeText(confirmModalData.account);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
       
-    // Open EkPay in new tab
+    // Open EkPay in new tab immediately
+    window.open(EKPAY_LINK, '_blank');
+    
+    // Close modal after a short delay
     setTimeout(() => {
-      window.open(EKPAY_LINK, '_blank');
       setConfirmModalData(null);
-    }, 800);
+    }, 500);
   };
 
   const getFloorLabel = (key: string) => {
@@ -244,7 +249,7 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                             
                             <p className="text-[9px] text-slate-400 font-bold mb-0.5 ml-0.5">{t.account}</p>
 
-                            {/* Copyable Account Chip */}
+                            {/* Copyable Account Chip - Removed truncate, adjusted font size */}
                             <button 
                                 onClick={() => handleCopy(item.account)}
                                 className="flex items-center gap-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-1.5 py-1 transition-colors group/acc w-fit"
@@ -281,90 +286,79 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
         )}
       </div>
 
-      {/* Premium Disclaimer Note */}
-      <div className="px-4 mt-6 relative z-10">
-        <div className="relative bg-white rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(99,102,241,0.15)] border border-indigo-50 overflow-hidden">
-            {/* Background Gradient Accents */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-indigo-500/5 to-violet-500/5 rounded-full blur-xl -ml-8 -mb-8"></div>
-            
-            <div className="relative z-10 flex gap-4 items-start">
-                <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
-                    <Info size={20} />
-                </div>
-                <div className="flex-1">
-                    <h4 className="text-sm font-bold text-slate-800 mb-1 flex items-center gap-2">
-                        বিশেষ দ্রষ্টব্য
-                        <div className="h-px flex-1 bg-gradient-to-r from-indigo-100 to-transparent"></div>
-                    </h4>
-                    <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                        শুধু মাত্র <span className="text-indigo-600 font-bold">❝হলান টাওয়ার❞</span> এর মোট ২৭ টি ইউনিট এর ডেসকো মিটার নম্বর দেওয়া হয়েছে রিচার্জ করার সুবিধা জন্য। <span className="text-rose-500 font-bold">ভুল নম্বরে রিচার্জ করলে কর্তৃপক্ষ দায়ী থাকবে না।</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-      </div>
-
-      {/* Confirmation Modal - Bottom Sheet Style */}
+      {/* Confirmation Modal - Centered Style */}
       <AnimatePresence>
       {confirmModalData && (
         <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-end justify-center sm:items-center p-0 sm:p-4"
+            className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
         >
            <motion.div 
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-t-[2rem] sm:rounded-3xl w-full max-w-sm shadow-2xl relative overflow-hidden"
+              className="bg-white rounded-3xl w-full max-w-sm shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto no-scrollbar"
            >
               {/* Header */}
-              <div className="px-6 pt-6 pb-4 bg-slate-50 border-b border-slate-100 flex justify-between items-start">
+              <div className="px-6 pt-6 pb-4 flex justify-between items-center">
                   <div>
                       <h3 className="text-xl font-bold text-slate-800">{t.confirmTitle}</h3>
-                      <p className="text-xs text-slate-500 mt-1">{t.confirmDesc}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{t.confirmDesc}</p>
                   </div>
                   <button 
                     onClick={() => setConfirmModalData(null)}
-                    className="p-2 bg-white rounded-full text-slate-400 hover:text-red-500 shadow-sm border border-slate-100"
+                    className="p-2 bg-slate-50 rounded-full text-slate-400 hover:bg-slate-100 hover:text-red-500 transition-colors"
                   >
                     <X size={20} />
                   </button>
               </div>
 
-              <div className="p-6 space-y-6">
-                 {/* Meter Details Card */}
-                 <div className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 shadow-sm bg-white">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex flex-col items-center justify-center shadow-lg">
-                        <span className="text-xs font-medium text-indigo-100 uppercase">{t.flat}</span>
-                        <span className="text-2xl font-black">{confirmModalData.flat}</span>
-                    </div>
-                    <div className="flex-1 space-y-2">
-                        <div>
-                            <p className="text-[10px] uppercase font-bold text-slate-400">{t.owner}</p>
-                            <p className="font-bold text-slate-700">{confirmModalData.name}</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase font-bold text-slate-400">{t.account}</p>
-                            <div className="flex items-center gap-2">
-                                <p className="font-mono text-lg font-bold text-indigo-600 tracking-wider">{confirmModalData.account}</p>
-                            </div>
-                        </div>
-                    </div>
+              <div className="p-6 pt-2 space-y-6">
+                 
+                 {/* Account Number Hero Card */}
+                 <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-6 text-white shadow-xl shadow-indigo-200 relative overflow-hidden group">
+                     {/* Background patterns */}
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full blur-xl -ml-8 -mb-8 pointer-events-none"></div>
+
+                     <div className="relative z-10 text-center space-y-2">
+                         <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest">{t.account}</p>
+                         <div 
+                            onClick={() => handleCopy(confirmModalData.account)}
+                            className="flex items-center justify-center gap-3 cursor-pointer active:scale-95 transition-transform"
+                         >
+                             <span className="text-3xl font-mono font-bold tracking-wider">{confirmModalData.account}</span>
+                             <Copy size={20} className="text-indigo-300" />
+                         </div>
+                         <p className="text-[10px] text-indigo-300 pt-1">{t.tapToCopy}</p>
+                     </div>
+                 </div>
+
+                 {/* Details Grid */}
+                 <div className="grid grid-cols-2 gap-4">
+                     <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-center">
+                         <span className="block text-[10px] text-slate-400 font-bold uppercase mb-1">{t.flat}</span>
+                         <span className="block text-2xl font-black text-slate-700">{confirmModalData.flat}</span>
+                     </div>
+                     <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-center">
+                         <span className="block text-[10px] text-slate-400 font-bold uppercase mb-1">{t.owner}</span>
+                         <span className="block text-lg font-bold text-slate-700 truncate">{confirmModalData.name}</span>
+                     </div>
                  </div>
 
                  {/* Instructions */}
-                 <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                     <p className="text-xs text-blue-700 text-center font-medium leading-relaxed">
+                 <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 flex gap-3 items-start">
+                     <Info size={16} className="text-orange-500 shrink-0 mt-0.5" />
+                     <p className="text-xs text-orange-800 font-medium leading-relaxed">
                         {t.paymentNote}
                      </p>
                  </div>
 
                  {/* Action Buttons */}
-                 <div className="flex flex-col gap-3">
+                 <div className="flex flex-col gap-4">
                     <button 
                         onClick={handleProceedToPayment}
                         className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-200 hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
@@ -372,17 +366,17 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                         <span>{t.payNow}</span>
                         <ExternalLink size={18} />
                     </button>
+
+                    {/* Payment Methods Footer - visual cue */}
+                    <div className="flex items-center justify-center gap-3 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
+                        <span className="text-[10px] font-bold text-slate-400">Supported:</span>
+                        <div className="h-5 px-1.5 bg-pink-600 text-white text-[10px] font-bold rounded flex items-center">bKash</div>
+                        <div className="h-5 px-1.5 bg-orange-500 text-white text-[10px] font-bold rounded flex items-center">Nagad</div>
+                        <div className="h-5 px-1.5 bg-purple-600 text-white text-[10px] font-bold rounded flex items-center">Rocket</div>
+                        <div className="h-5 px-1.5 bg-blue-600 text-white text-[10px] font-bold rounded flex items-center">Visa</div>
+                    </div>
                  </div>
               </div>
-              
-              {/* Payment Methods Footer */}
-              <div className="bg-slate-50 p-4 border-t border-slate-100 flex justify-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all">
-                  <div className="h-6 w-10 bg-pink-600 rounded"></div>
-                  <div className="h-6 w-10 bg-orange-500 rounded"></div>
-                  <div className="h-6 w-10 bg-purple-600 rounded"></div>
-                  <div className="h-6 w-10 bg-blue-600 rounded"></div>
-              </div>
-
            </motion.div>
         </motion.div>
       )}
