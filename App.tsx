@@ -9,6 +9,7 @@ import BottomNav from './components/BottomNav';
 import Assistant from './components/Assistant';
 import { ServiceChargeView } from './components/ServiceChargeView';
 import EmergencyView from './components/EmergencyView';
+import DescoView from './components/DescoView';
 
 const MENU_NOTICE = "হলান টাওয়ারে আপনাকে স্বাগতম। আমাদের ভবনের সকল গুরুত্বপূর্ণ তথ্য ও দৈনন্দিন সেবাগুলি এখনে দ্রুত পেয়ে যাবেন। এখানে জরুরী নোটিশ, ইউটিলিটি ও সার্ভিস চার্জ, ডেসকো রিচার্জ, যোগাযোগ ও জরুরী হেল্পলাইন, ম্যাপ ও রুট নির্দেশনা, প্রিপেইড মিটার নাম্বার, লিফট ব্যবহারের নিয়ম, গ্যালারি এবং বাসাভাড়ার তথ্য একসাথে সহজে খুঁজে পাবেন। এটি হলান টাওয়ারের বাসিন্দাদের জন্য একটি দ্রুত, সহজ ও নির্ভরযোগ্য ডিজিটাল সার্ভিস কেন্দ্র।";
 
@@ -60,65 +61,7 @@ const App: React.FC = () => {
         return <ServiceChargeView lang={lang} />;
       
       case 'DESCO':
-        return (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-xl font-bold text-gray-800 border-l-4 border-yellow-500 pl-3">
-                {lang === 'bn' ? 'ডেসকো প্রিপেইড' : 'Desco Prepaid'}
-            </h2>
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-5">
-                 <Zap size={150} />
-               </div>
-              <p className="text-yellow-400 text-xs font-medium mb-1 tracking-wider uppercase">
-                  {lang === 'bn' ? 'মিটার নম্বর' : 'Meter Number'}
-              </p>
-              <p className="text-xl font-mono mb-6 tracking-widest">8899 3322 110</p>
-              
-              <div className="flex flex-col gap-1">
-                 <span className="text-slate-400 text-xs">
-                     {lang === 'bn' ? 'বর্তমান ব্যালেন্স' : 'Current Balance'}
-                 </span>
-                 <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">৳৮৫০</span>
-                    <span className="text-sm font-medium text-slate-400">.০০</span>
-                 </div>
-              </div>
-
-              <div className="mt-6 flex gap-3">
-                 <div className="bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                    <p className="text-[10px] text-slate-400">
-                        {lang === 'bn' ? 'ইউনিট অবশিষ্ট' : 'Remaining Units'}
-                    </p>
-                    <p className="font-bold text-sm">
-                        {lang === 'bn' ? '১২৪.৫০' : '124.50'}
-                    </p>
-                 </div>
-                 <div className="bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                    <p className="text-[10px] text-slate-400">
-                        {lang === 'bn' ? 'সর্বশেষ রিচার্জ' : 'Last Recharge'}
-                    </p>
-                    <p className="font-bold text-sm">
-                        {lang === 'bn' ? '১০ মে' : '10 May'}
-                    </p>
-                 </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-               <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                 <Zap size={18} className="text-yellow-500" />
-                 {lang === 'bn' ? 'দ্রুত রিচার্জ' : 'Quick Recharge'}
-               </h3>
-               <div className="grid grid-cols-3 gap-3">
-                 {[500, 1000, 2000].map(amount => (
-                   <button key={amount} className="border border-gray-200 py-3 rounded-xl hover:bg-yellow-50 hover:border-yellow-400 transition-all text-sm font-bold text-gray-600 active:scale-95 shadow-sm">
-                     ৳{amount}
-                   </button>
-                 ))}
-               </div>
-            </div>
-          </div>
-        );
+        return <DescoView lang={lang} />;
 
       case 'CONTACT':
         const contacts = [
