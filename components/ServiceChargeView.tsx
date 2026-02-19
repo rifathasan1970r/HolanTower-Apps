@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { TRANSLATIONS } from '../constants';
 
 // কনফিগারেশন: ২৭টি ইউনিট (ফ্লোর ২ থেকে ১০)
 const FLOORS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -8,7 +9,8 @@ const UNITS_PER_FLOOR = ['A', 'B', 'C'];
 const ALL_UNITS = FLOORS.flatMap(f => UNITS_PER_FLOOR.map(u => `${f}${u}`));
 const SERVICE_CHARGE_AMOUNT = 2000;
 
-const MONTHS = [
+// English months array to map logic consistently, UI will use translated array
+const MONTHS_LOGIC = [
   'জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
   'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
 ];
@@ -17,6 +19,7 @@ type Status = 'PAID' | 'DUE' | 'UPCOMING';
 
 interface MonthlyRecord {
   month: string;
+  monthIndex: number;
   date: string;
   amount: number;
   due: number;
@@ -38,7 +41,11 @@ interface UnitInfo {
   is_occupied: boolean;
 }
 
-export const ServiceChargeView: React.FC = () => {
+interface ServiceChargeViewProps {
+  lang?: 'bn' | 'en';
+}
+
+export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn' }) => {
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [showSummaryList, setShowSummaryList] = useState<boolean>(false);
   const [selectedYear, setSelectedYear] = useState<number>(2026);
@@ -60,9 +67,13 @@ export const ServiceChargeView: React.FC = () => {
   const [editingMonth, setEditingMonth] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState({ amount: 2000, due: 0, date: '' });
 
+  const t = TRANSLATIONS[lang];
+
   // Date Helper
   const getBanglaDate = () => {
-    return new Date().toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/,/g, '');
+    // Just using standard localized date based on lang
+    const locale = lang === 'bn' ? 'bn-BD' : 'en-US';
+    return new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }).replace(/,/g, '');
   };
 
   // Fetch data from Supabase
@@ -111,7 +122,7 @@ export const ServiceChargeView: React.FC = () => {
       setShowLogin(false);
       setPinInput('');
     } else {
-      alert('ভুল পিন!');
+      alert('PIN Error!');
     }
   };
 
@@ -207,7 +218,7 @@ export const ServiceChargeView: React.FC = () => {
       
     } catch (err: any) {
       console.error("Error saving payment:", err);
-      alert(`আপডেট ব্যর্থ হয়েছে: ${err.message || "অজানা সমস্যা"}`);
+      alert(`${t.saveFail}: ${err.message}`);
     } finally {
       setProcessingUpdate(false);
     }
@@ -251,7 +262,7 @@ export const ServiceChargeView: React.FC = () => {
           }
       } catch (err: any) {
           console.error(err);
-          alert("স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে।");
+          alert(t.statusChangeFail);
       } finally {
           setProcessingUpdate(false);
       }
@@ -263,16 +274,20 @@ export const ServiceChargeView: React.FC = () => {
     const currentRealYear = now.getFullYear();
     const currentRealMonthIdx = now.getMonth();
 
-    return MONTHS.map((month, index) => {
+    return MONTHS_LOGIC.map((month, index) => {
       let paymentRecord: PaymentData | undefined;
       
       paymentRecord = dbData.find(
         d => d.unit_text === unit && d.month_name === month
       );
 
+      // UI display month string
+      const displayMonth = t.months[index];
+
       if (paymentRecord) {
         return {
-          month,
+          month: displayMonth, // Use translated month for display
+          monthIndex: index,
           date: paymentRecord.paid_date || '-',
           amount: paymentRecord.amount,
           due: paymentRecord.due,
@@ -282,9 +297,9 @@ export const ServiceChargeView: React.FC = () => {
 
       const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && index > currentRealMonthIdx);
       if (isFuture) {
-        return { month, date: '-', amount: 0, due: 0, status: 'UPCOMING' };
+        return { month: displayMonth, monthIndex: index, date: '-', amount: 0, due: 0, status: 'UPCOMING' };
       } else {
-        return { month, date: '-', amount: 0, due: SERVICE_CHARGE_AMOUNT, status: 'DUE' };
+        return { month: displayMonth, monthIndex: index, date: '-', amount: 0, due: SERVICE_CHARGE_AMOUNT, status: 'DUE' };
       }
     });
   };
@@ -296,7 +311,7 @@ export const ServiceChargeView: React.FC = () => {
         const due = records.reduce((sum, r) => sum + r.due, 0);
         return { unit, collected, due };
     });
-  }, [selectedYear, dbData, unitsInfo]);
+  }, [selectedYear, dbData, unitsInfo, lang]); // Added lang dependency to re-calculate month names
 
   const grandTotalCollected = allUnitsSummary.reduce((acc, curr) => acc + curr.collected, 0);
   const grandTotalDue = allUnitsSummary.reduce((acc, curr) => acc + curr.due, 0);
@@ -313,7 +328,7 @@ export const ServiceChargeView: React.FC = () => {
                 <div className="bg-green-100 text-green-600 p-1 rounded-full mb-0.5">
                     <CheckCircle2 size={14} />
                 </div>
-                <span className="text-[9px] font-bold text-green-700">পরিশোধিত</span>
+                <span className="text-[9px] font-bold text-green-700">{t.paid}</span>
             </div>
         );
       case 'DUE':
@@ -322,7 +337,7 @@ export const ServiceChargeView: React.FC = () => {
                 <div className="bg-red-100 text-red-600 p-1 rounded-full mb-0.5">
                     <XCircle size={14} />
                 </div>
-                <span className="text-[9px] font-bold text-red-700">বকেয়া</span>
+                <span className="text-[9px] font-bold text-red-700">{t.due}</span>
             </div>
         );
       default:
@@ -331,7 +346,7 @@ export const ServiceChargeView: React.FC = () => {
                 <div className="bg-slate-100 text-slate-400 p-1 rounded-full mb-0.5">
                     <Clock size={14} />
                 </div>
-                <span className="text-[9px] font-medium text-slate-500">আসন্ন</span>
+                <span className="text-[9px] font-medium text-slate-500">{t.upcoming}</span>
             </div>
         );
     }
@@ -342,12 +357,12 @@ export const ServiceChargeView: React.FC = () => {
     <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl animate-in zoom-in duration-200">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-slate-800">অ্যাডমিন লগইন</h3>
+          <h3 className="text-lg font-bold text-slate-800">{t.adminLogin}</h3>
           <button onClick={() => setShowLogin(false)} className="text-slate-400 hover:text-red-500">
             <X size={20} />
           </button>
         </div>
-        <p className="text-sm text-slate-500 mb-4">ডেটা এডিট করতে পিন কোড দিন:</p>
+        <p className="text-sm text-slate-500 mb-4">{t.loginPrompt}:</p>
         <input 
           type="password" 
           value={pinInput}
@@ -361,7 +376,7 @@ export const ServiceChargeView: React.FC = () => {
           onClick={handleLogin}
           className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 active:scale-95 transition-all"
         >
-          লগইন করুন
+          {t.loginBtn}
         </button>
       </div>
     </div>
@@ -388,7 +403,7 @@ export const ServiceChargeView: React.FC = () => {
     const dueOffset = circumference - (dueCount / totalMonths) * circumference;
     
     const isOccupied = unitsInfo[selectedUnit] ?? (selectedUnit.charCodeAt(1) % 2 !== 0); 
-    const occupancyStatus = isOccupied ? 'বসবাসরত' : 'খালি';
+    const occupancyStatus = isOccupied ? t.occupied : t.vacant;
 
     return (
       <div key={`${selectedUnit}-${selectedYear}`} className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 min-h-screen relative">
@@ -402,7 +417,7 @@ export const ServiceChargeView: React.FC = () => {
                   className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors py-1 group"
                 >
                   <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
-                  <span className="text-base font-bold">ফিরে যান</span>
+                  <span className="text-base font-bold">{t.back}</span>
                 </button>
 
                 {/* Admin Toggle in Unit View */}
@@ -424,7 +439,7 @@ export const ServiceChargeView: React.FC = () => {
                  </button>
                  
                  <div className="text-center animate-in zoom-in duration-300">
-                    <h2 className="text-3xl font-bold text-slate-800">ইউনিট {selectedUnit}</h2>
+                    <h2 className="text-3xl font-bold text-slate-800">{t.unit} {selectedUnit}</h2>
                  </div>
 
                  <button 
@@ -440,7 +455,7 @@ export const ServiceChargeView: React.FC = () => {
         {/* Admin Tip */}
         {isAdmin && (
            <div className="bg-indigo-600 text-white text-[10px] py-1.5 px-4 text-center font-bold animate-in slide-in-from-top flex items-center justify-center gap-2">
-             <Edit3 size={12} /> তথ্য পরিবর্তন করতে যেকোনো লাইনে ক্লিক করুন
+             <Edit3 size={12} /> {t.editInfo}
            </div>
         )}
 
@@ -451,13 +466,13 @@ export const ServiceChargeView: React.FC = () => {
                     onClick={() => setSelectedYear(2025)}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                    <CalendarDays size={16} /> ২০২৫
+                    <CalendarDays size={16} /> 2025
                 </button>
                 <button 
                     onClick={() => setSelectedYear(2026)}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                    <CalendarDays size={16} /> ২০২৬
+                    <CalendarDays size={16} /> 2026
                 </button>
             </div>
         </div>
@@ -473,18 +488,18 @@ export const ServiceChargeView: React.FC = () => {
                     disabled={!isAdmin}
                     className={`text-center px-1 flex flex-col items-center justify-center transition-all ${isAdmin ? 'active:scale-95 cursor-pointer' : ''}`}
                 >
-                    <p className="text-[10px] text-white/80 font-medium uppercase mb-1">বসবাসের ধরন</p>
-                    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${occupancyStatus === 'বসবাসরত' ? 'bg-white text-blue-600' : 'bg-white/90 text-orange-600'}`}>
-                        {occupancyStatus === 'বসবাসরত' ? <Users size={12} /> : <Home size={12} />}
+                    <p className="text-[10px] text-white/80 font-medium uppercase mb-1">{t.occupancy}</p>
+                    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${occupancyStatus === t.occupied ? 'bg-white text-blue-600' : 'bg-white/90 text-orange-600'}`}>
+                        {occupancyStatus === t.occupied ? <Users size={12} /> : <Home size={12} />}
                         {occupancyStatus}
                     </div>
                 </button>
                 <div className="text-center px-1 flex flex-col items-center justify-center">
-                    <p className="text-[10px] text-white/80 font-medium uppercase mb-1">মোট টাকা</p>
+                    <p className="text-[10px] text-white/80 font-medium uppercase mb-1">{t.totalAmount}</p>
                     <p className="font-bold text-white text-base">৳ {totalAmount.toLocaleString()}</p>
                 </div>
                 <div className="text-center px-1 flex flex-col items-center justify-center">
-                    <p className="text-[10px] text-white/80 font-medium uppercase mb-1">মোট বাকি</p>
+                    <p className="text-[10px] text-white/80 font-medium uppercase mb-1">{t.totalDue}</p>
                     <p className="font-bold text-base text-white">৳ {totalDue.toLocaleString()}</p>
                 </div>
             </div>
@@ -496,16 +511,18 @@ export const ServiceChargeView: React.FC = () => {
                 <table className="w-full">
                     <thead>
                         <tr className="bg-slate-50 border-b border-slate-100">
-                            <th className="py-3 pl-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[28%]">মাস ও তারিখ</th>
-                            <th className="py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[22%]">টাকা</th>
-                            <th className="py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[22%]">বকেয়া</th>
-                            <th className="py-3 pr-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[28%]">অবস্থা</th>
+                            <th className="py-3 pl-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[28%]">{t.monthDate}</th>
+                            <th className="py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[22%]">{t.amount}</th>
+                            <th className="py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[22%]">{t.due}</th>
+                            <th className="py-3 pr-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[28%]">{t.status}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {records.map((record, idx) => {
                             const isEditable = isAdmin && !processingUpdate;
-                            const isEditing = editingMonth === record.month;
+                            // For DB operations, we need the original month name (Bangla)
+                            const dbMonth = MONTHS_LOGIC[record.monthIndex];
+                            const isEditing = editingMonth === dbMonth;
 
                             return (
                               <tr 
@@ -526,7 +543,7 @@ export const ServiceChargeView: React.FC = () => {
                                             value={editFormData.date}
                                             onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
                                             className="w-full text-[10px] border border-slate-300 rounded px-1 py-1 focus:border-indigo-500 outline-none"
-                                            placeholder="তারিখ"
+                                            placeholder="Date"
                                             autoFocus
                                             onClick={(e) => e.stopPropagation()}
                                           />
@@ -554,7 +571,7 @@ export const ServiceChargeView: React.FC = () => {
                                             <button 
                                               onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleInlineSave(selectedUnit, record.month);
+                                                handleInlineSave(selectedUnit, dbMonth);
                                               }}
                                               className="p-1.5 bg-green-500 text-white rounded shadow-sm hover:bg-green-600 active:scale-95"
                                             >
@@ -574,22 +591,22 @@ export const ServiceChargeView: React.FC = () => {
                                     </>
                                   ) : (
                                     <>
-                                      <td onClick={() => isEditable && startEditing(selectedUnit, record.month)} className="py-3 pl-3 align-middle cursor-pointer">
+                                      <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 pl-3 align-middle cursor-pointer">
                                           <div className="font-bold text-slate-800 text-sm">{record.month}</div>
                                           <div className="text-[10px] text-slate-400 font-medium mt-0.5 whitespace-nowrap">{record.date}</div>
                                       </td>
-                                      <td onClick={() => isEditable && startEditing(selectedUnit, record.month)} className="py-3 align-middle text-center cursor-pointer">
+                                      <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 align-middle text-center cursor-pointer">
                                           <div className={`font-semibold text-sm ${record.amount > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
                                               {record.amount > 0 ? `৳${record.amount}` : '-'}
                                           </div>
                                       </td>
-                                      <td onClick={() => isEditable && startEditing(selectedUnit, record.month)} className="py-3 align-middle text-center cursor-pointer">
+                                      <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 align-middle text-center cursor-pointer">
                                            <div className={`font-semibold text-sm ${record.due > 0 ? 'text-red-600' : 'text-slate-300'}`}>
                                               {record.due > 0 ? `৳${record.due}` : '-'}
                                            </div>
                                       </td>
                                       <td className="py-3 pr-3 align-middle flex justify-end">
-                                          <div onClick={() => isEditable && handleQuickStatusToggle(selectedUnit, record.month)}>
+                                          <div onClick={() => isEditable && handleQuickStatusToggle(selectedUnit, dbMonth)}>
                                             {isAdmin ? (
                                                 <div className={`px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                                                 record.status === 'PAID' 
@@ -597,7 +614,7 @@ export const ServiceChargeView: React.FC = () => {
                                                     : 'bg-white text-red-500 border-red-200 shadow-sm'
                                                 }`}>
                                                 {record.status === 'PAID' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
-                                                {record.status === 'PAID' ? 'পরিশোধিত' : 'বকেয়া'}
+                                                {record.status === 'PAID' ? t.paid : t.due}
                                                 </div>
                                             ) : (
                                                 getStatusElement(record.status)
@@ -612,7 +629,7 @@ export const ServiceChargeView: React.FC = () => {
                     </tbody>
                     <tfoot className="bg-slate-50 border-t border-slate-200">
                         <tr>
-                            <td className="py-3 pl-3 text-sm font-bold text-slate-700">সর্বমোট</td>
+                            <td className="py-3 pl-3 text-sm font-bold text-slate-700">{t.total}</td>
                             <td className="py-3 text-center text-sm font-bold text-slate-700">৳ {totalAmount.toLocaleString()}</td>
                             <td className="py-3 text-center text-sm font-bold text-red-600">{totalDue > 0 ? `৳ ${totalDue.toLocaleString()}` : '-'}</td>
                             <td></td>
@@ -625,7 +642,7 @@ export const ServiceChargeView: React.FC = () => {
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
                   <div className="flex items-center gap-2 mb-4 border-b border-slate-50 pb-2">
                       <PieChart size={18} className="text-primary-600" />
-                      <h3 className="font-bold text-slate-700">পেমেন্ট স্ট্যাটাস ({selectedYear})</h3>
+                      <h3 className="font-bold text-slate-700">{t.paymentStatus} ({selectedYear})</h3>
                   </div>
                   
                   {/* Pie Chart & Legend */}
@@ -638,7 +655,7 @@ export const ServiceChargeView: React.FC = () => {
                           </svg>
                           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
                               <span className="block text-2xl font-bold text-slate-700">{Math.round((paidCount/totalMonths)*100)}%</span>
-                              <span className="text-[10px] text-slate-400 font-medium">পরিশোধ</span>
+                              <span className="text-[10px] text-slate-400 font-medium">{t.paid}</span>
                           </div>
                       </div>
 
@@ -646,26 +663,29 @@ export const ServiceChargeView: React.FC = () => {
                           <div className="flex justify-between items-center text-sm">
                               <div className="flex items-center gap-2">
                                   <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                                  <span className="text-slate-600 font-medium">পরিশোধ</span>
+                                  <span className="text-slate-600 font-medium">{t.paid}</span>
                               </div>
-                              <span className="font-bold text-slate-800">{paidCount} মাস</span>
+                              <span className="font-bold text-slate-800">{paidCount} {t.month}</span>
                           </div>
                           <div className="flex justify-between items-center text-sm">
                               <div className="flex items-center gap-2">
                                   <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                                  <span className="text-slate-600 font-medium">বকেয়া</span>
+                                  <span className="text-slate-600 font-medium">{t.due}</span>
                               </div>
-                              <span className="font-bold text-slate-800">{dueCount} মাস</span>
+                              <span className="font-bold text-slate-800">{dueCount} {t.month}</span>
                           </div>
                       </div>
                   </div>
 
                   {/* Month Grid */}
                   <div className="grid grid-cols-4 gap-2 border-t border-slate-50 pt-4">
-                    {records.map((record, idx) => (
+                    {records.map((record, idx) => {
+                        // Use correct month logic for clicking
+                        const dbMonth = MONTHS_LOGIC[record.monthIndex];
+                        return (
                         <div
                             key={idx}
-                            onClick={() => isAdmin && !processingUpdate && handleQuickStatusToggle(selectedUnit, record.month)}
+                            onClick={() => isAdmin && !processingUpdate && handleQuickStatusToggle(selectedUnit, dbMonth)}
                             className={`
                                 aspect-[4/3] rounded-lg flex flex-col items-center justify-center text-center transition-all relative overflow-hidden shadow-sm border
                                 ${record.status === 'PAID' ? 'bg-green-500 text-white border-green-600' : ''}
@@ -679,10 +699,11 @@ export const ServiceChargeView: React.FC = () => {
                                 <div className="mt-0.5"><CheckCircle2 size={12} /></div>
                             )}
                              {record.status === 'DUE' && (
-                                <span className="text-[9px] mt-0.5 font-bold opacity-90">বাকি</span>
+                                <span className="text-[9px] mt-0.5 font-bold opacity-90">{t.due}</span>
                             )}
                         </div>
-                    ))}
+                    );
+                    })}
                   </div>
               </div>
         </div>
@@ -704,10 +725,10 @@ export const ServiceChargeView: React.FC = () => {
 
       {/* Main Header */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-slate-800">সার্ভিস চার্জ</h2>
+        <h2 className="text-2xl font-bold text-slate-800">{t.serviceCharge}</h2>
         <div className="flex items-center gap-2">
            {useMock && (
-             <span className="text-[9px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full border border-yellow-200">ডেমো</span>
+             <span className="text-[9px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full border border-yellow-200">{t.demo}</span>
            )}
            <button 
              onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)}
@@ -724,8 +745,8 @@ export const ServiceChargeView: React.FC = () => {
                <Edit3 size={16} />
              </div>
              <div>
-               <p className="text-sm font-bold text-indigo-900">অ্যাডমিন ড্যাশবোর্ড</p>
-               <p className="text-xs text-indigo-600 mt-1">টেবিলে ক্লিক করে তথ্য এডিট করুন।</p>
+               <p className="text-sm font-bold text-indigo-900">{t.adminDashboard}</p>
+               <p className="text-xs text-indigo-600 mt-1">{t.editInfo}</p>
              </div>
          </div>
       )}
@@ -741,8 +762,8 @@ export const ServiceChargeView: React.FC = () => {
                   <ArrowLeft size={20} />
                 </button>
                 <div className="flex-1">
-                    <h2 className="text-xl font-bold text-slate-800">সকল ইউনিট হিসাব</h2>
-                    <p className="text-xs text-primary-600 font-medium">অর্থবছর: {selectedYear}</p>
+                    <h2 className="text-xl font-bold text-slate-800">{t.allUnitsCalc}</h2>
+                    <p className="text-xs text-primary-600 font-medium">{t.financialYear}: {selectedYear}</p>
                 </div>
              </div>
 
@@ -752,13 +773,13 @@ export const ServiceChargeView: React.FC = () => {
                     onClick={() => setSelectedYear(2025)}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                    <CalendarDays size={16} /> ২০২৫
+                    <CalendarDays size={16} /> 2025
                 </button>
                 <button 
                     onClick={() => setSelectedYear(2026)}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                    <CalendarDays size={16} /> ২০২৬
+                    <CalendarDays size={16} /> 2026
                 </button>
             </div>
 
@@ -774,21 +795,21 @@ export const ServiceChargeView: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-base font-semibold text-indigo-100 flex items-center gap-2">
                         <Wallet size={18} />
-                        সর্বমোট হিসাব ({selectedYear})
+                        {t.total} {t.status} ({selectedYear})
                     </h3>
                 </div>
                 
                 <div className="grid grid-cols-3 divide-x divide-white/20">
                     <div className="pr-4">
-                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">মোট ইউনিট</p>
-                        <p className="text-lg font-bold">{ALL_UNITS.length}টি</p>
+                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">{t.unit}</p>
+                        <p className="text-lg font-bold">{ALL_UNITS.length}</p>
                     </div>
                     <div className="px-4 text-center">
-                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">মোট জমা</p>
+                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">{t.totalCollected}</p>
                         <p className="text-lg font-bold">৳ {grandTotalCollected.toLocaleString()}</p>
                     </div>
                     <div className="pl-4 text-right">
-                        <p className="text-[10px] text-red-200 font-medium uppercase mb-1">মোট বাকি</p>
+                        <p className="text-[10px] text-red-200 font-medium uppercase mb-1">{t.totalDue}</p>
                         <p className="text-lg font-bold text-red-100">৳ {grandTotalDue.toLocaleString()}</p>
                     </div>
                 </div>
@@ -799,7 +820,7 @@ export const ServiceChargeView: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                 <input 
                 type="text" 
-                placeholder="ইউনিট খুঁজুন..." 
+                placeholder={t.searchUnit}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary-500 transition-all shadow-sm"
@@ -811,9 +832,9 @@ export const ServiceChargeView: React.FC = () => {
                     <table className="w-full">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-100">
-                                <th className="py-3 pl-4 text-left text-xs font-bold text-slate-500 uppercase">ইউনিট</th>
-                                <th className="py-3 text-center text-xs font-bold text-slate-500 uppercase">মোট জমা</th>
-                                <th className="py-3 pr-4 text-right text-xs font-bold text-slate-500 uppercase">মোট বাকি</th>
+                                <th className="py-3 pl-4 text-left text-xs font-bold text-slate-500 uppercase">{t.unit}</th>
+                                <th className="py-3 text-center text-xs font-bold text-slate-500 uppercase">{t.totalCollected}</th>
+                                <th className="py-3 pr-4 text-right text-xs font-bold text-slate-500 uppercase">{t.totalDue}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -839,7 +860,7 @@ export const ServiceChargeView: React.FC = () => {
                                             <span className="text-sm font-bold text-red-500">৳ {data.due.toLocaleString()}</span>
                                         ) : (
                                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                                                <CheckCircle2 size={10} /> পরিশোধিত
+                                                <CheckCircle2 size={10} /> {t.paid}
                                             </span>
                                         )}
                                     </td>
@@ -859,13 +880,13 @@ export const ServiceChargeView: React.FC = () => {
                     onClick={() => setSelectedYear(2025)}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                    <CalendarDays size={16} /> ২০২৫
+                    <CalendarDays size={16} /> 2025
                 </button>
                 <button 
                     onClick={() => setSelectedYear(2026)}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                    <CalendarDays size={16} /> ২০২৬
+                    <CalendarDays size={16} /> 2026
                 </button>
             </div>
 
@@ -882,7 +903,7 @@ export const ServiceChargeView: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-base font-semibold text-indigo-100 flex items-center gap-2">
                         <Wallet size={18} />
-                        সকল ইউনিট হিসাব ({selectedYear})
+                        {t.allUnitsCalc} ({selectedYear})
                     </h3>
                     <div className="bg-white/20 p-1 rounded-lg">
                         <ListFilter size={16} />
@@ -891,20 +912,20 @@ export const ServiceChargeView: React.FC = () => {
                 
                 <div className="grid grid-cols-3 divide-x divide-white/20">
                     <div className="pr-4">
-                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">ফ্ল্যাটের ধরন</p>
-                        <p className="text-lg font-bold">সকল</p>
+                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">{t.flatType}</p>
+                        <p className="text-lg font-bold">{t.all}</p>
                     </div>
                     <div className="px-4 text-center">
-                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">মোট জমা</p>
+                        <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">{t.totalCollected}</p>
                         <p className="text-lg font-bold">৳ {grandTotalCollected.toLocaleString()}</p>
                     </div>
                     <div className="pl-4 text-right">
-                        <p className="text-[10px] text-red-200 font-medium uppercase mb-1">মোট বাকি</p>
+                        <p className="text-[10px] text-red-200 font-medium uppercase mb-1">{t.totalDue}</p>
                         <p className="text-lg font-bold text-red-100">৳ {grandTotalDue.toLocaleString()}</p>
                     </div>
                 </div>
                 <p className="text-[10px] text-indigo-200 mt-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    বিস্তারিত দেখতে ক্লিক করুন
+                    {t.details}
                 </p>
             </div>
 
@@ -913,7 +934,7 @@ export const ServiceChargeView: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                 <input 
                 type="text" 
-                placeholder="ইউনিট খুঁজুন (যেমন: 2A)" 
+                placeholder={t.searchUnit}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary-500 transition-all shadow-sm"
@@ -921,7 +942,7 @@ export const ServiceChargeView: React.FC = () => {
             </div>
 
             <div className="flex justify-between items-center mb-4 px-1">
-                <p className="text-sm font-semibold text-slate-600">সকল ইউনিট ({ALL_UNITS.length})</p>
+                <p className="text-sm font-semibold text-slate-600">{t.all} {t.unit} ({ALL_UNITS.length})</p>
                 <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{selectedYear}</span>
             </div>
 
@@ -934,7 +955,7 @@ export const ServiceChargeView: React.FC = () => {
                     className="group relative bg-white border border-slate-200 hover:border-primary-500 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
                 >
                     <span className="text-lg font-bold text-slate-700 group-hover:text-primary-600">{data.unit}</span>
-                    <span className="text-[10px] text-slate-400 mt-1">বিবরণ দেখুন</span>
+                    <span className="text-[10px] text-slate-400 mt-1">{t.details}</span>
                     
                     {/* Real-time Status Indicator */}
                     <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${data.due > 0 ? 'bg-red-500' : 'bg-green-500'}`}></span>

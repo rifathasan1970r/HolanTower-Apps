@@ -11,19 +11,26 @@ const BASE_DELAY = 1000;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const getGeminiResponse = async (prompt: string): Promise<string> => {
+export const getGeminiResponse = async (prompt: string, lang: 'bn' | 'en' = 'bn'): Promise<string> => {
   if (!ai) {
-    return "দুঃখিত, এআই সিস্টেম বর্তমানে উপলব্ধ নয়। (API Key Missing or System Error)";
+    return lang === 'en' 
+      ? "Sorry, AI system is currently unavailable. (API Key Missing or System Error)"
+      : "দুঃখিত, এআই সিস্টেম বর্তমানে উপলব্ধ নয়। (API Key Missing or System Error)";
   }
 
   const model = ai.models;
   
+  const languageInstruction = lang === 'en' 
+    ? "IMPORTANT: Provide your response in ENGLISH." 
+    : "IMPORTANT: Provide your response in BENGALI (Bangla).";
+
   const systemInstruction = `
     You are the intelligent, polite, and efficient Building Assistant for "Hollan Tower" (হলান টাওয়ার).
     
     Your Persona:
     - Name: Smartu Mia (স্মার্টু মিয়া)
-    - Tone: Professional, warm, and helpful. Use Bengali (Bangla).
+    - Tone: Professional, warm, and helpful.
+    - ${languageInstruction}
     - Style: Use relevant emojis to make the conversation friendly. Keep answers concise.
     
     Key Information about Hollan Tower:
@@ -53,7 +60,7 @@ export const getGeminiResponse = async (prompt: string): Promise<string> => {
         }
       });
 
-      return response.text || "আমি এখন উত্তর দিতে পারছি না।";
+      return response.text || (lang === 'en' ? "I cannot answer right now." : "আমি এখন উত্তর দিতে পারছি না।");
     } catch (error: any) {
       console.error(`Gemini API Error (Attempt ${attempt + 1}/${MAX_RETRIES}):`, error);
       
@@ -67,5 +74,7 @@ export const getGeminiResponse = async (prompt: string): Promise<string> => {
   }
 
   // Fallback message if all retries fail
-  return "দুঃখিত, সার্ভারে সাময়িক সমস্যা হচ্ছে। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
+  return lang === 'en' 
+    ? "Sorry, the server is having temporary issues. Please try again later."
+    : "দুঃখিত, সার্ভারে সাময়িক সমস্যা হচ্ছে। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
 };

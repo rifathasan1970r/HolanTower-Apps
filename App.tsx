@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap } from 'lucide-react';
+import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Languages } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { APP_NAME, MENU_ITEMS } from './constants';
+import { APP_NAME_BN, APP_NAME_EN, MENU_ITEMS, TRANSLATIONS } from './constants';
 import { ViewState } from './types';
 import NoticeBoard from './components/NoticeBoard';
 import BottomNav from './components/BottomNav';
@@ -11,49 +11,67 @@ import { ServiceChargeView } from './components/ServiceChargeView';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
+  const [lang, setLang] = useState<'bn' | 'en'>('bn');
   const [greeting, setGreeting] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [currentTime, setCurrentTime] = useState('');
+
+  const t = TRANSLATIONS[lang];
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
       const hour = now.getHours();
       
-      if (hour < 12) setGreeting('শুভ সকাল');
-      else if (hour < 17) setGreeting('শুভ দুপুর');
-      else if (hour < 20) setGreeting('শুভ বিকেল');
-      else setGreeting('শুভ সন্ধ্যা');
+      let greetingKey: keyof typeof t.greeting = 'morning';
+      if (hour < 12) greetingKey = 'morning';
+      else if (hour < 17) greetingKey = 'afternoon';
+      else if (hour < 20) greetingKey = 'evening';
+      else greetingKey = 'night';
+      
+      setGreeting(t.greeting[greetingKey]);
 
       const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      setCurrentDate(now.toLocaleDateString('bn-BD', options));
+      // Use 'bn-BD' for Bangla, 'en-US' for English
+      const locale = lang === 'bn' ? 'bn-BD' : 'en-US';
+      setCurrentDate(now.toLocaleDateString(locale, options));
       
-      setCurrentTime(now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }));
+      setCurrentTime(now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }));
     };
 
     updateTime();
-    const timer = setInterval(updateTime, 60000);
+    const timer = setInterval(updateTime, 1000); // Update every second for clock
     return () => clearInterval(timer);
-  }, []);
+  }, [lang, t]);
+
+  const toggleLanguage = () => {
+    setLang(prev => prev === 'bn' ? 'en' : 'bn');
+  };
 
   const renderContent = () => {
     switch (currentView) {
       case 'SERVICE_CHARGE':
-        return <ServiceChargeView />;
+        return <ServiceChargeView lang={lang} />;
       
       case 'DESCO':
         return (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-xl font-bold text-gray-800 border-l-4 border-yellow-500 pl-3">ডেসকো প্রিপেইড</h2>
+            <h2 className="text-xl font-bold text-gray-800 border-l-4 border-yellow-500 pl-3">
+                {lang === 'bn' ? 'ডেসকো প্রিপেইড' : 'Desco Prepaid'}
+            </h2>
             <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden">
                <div className="absolute top-0 right-0 p-4 opacity-5">
                  <Zap size={150} />
                </div>
-              <p className="text-yellow-400 text-xs font-medium mb-1 tracking-wider uppercase">মিটার নম্বর</p>
+              <p className="text-yellow-400 text-xs font-medium mb-1 tracking-wider uppercase">
+                  {lang === 'bn' ? 'মিটার নম্বর' : 'Meter Number'}
+              </p>
               <p className="text-xl font-mono mb-6 tracking-widest">8899 3322 110</p>
               
               <div className="flex flex-col gap-1">
-                 <span className="text-slate-400 text-xs">বর্তমান ব্যালেন্স</span>
+                 <span className="text-slate-400 text-xs">
+                     {lang === 'bn' ? 'বর্তমান ব্যালেন্স' : 'Current Balance'}
+                 </span>
                  <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-bold">৳৮৫০</span>
                     <span className="text-sm font-medium text-slate-400">.০০</span>
@@ -62,12 +80,20 @@ const App: React.FC = () => {
 
               <div className="mt-6 flex gap-3">
                  <div className="bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                    <p className="text-[10px] text-slate-400">ইউনিট অবশিষ্ট</p>
-                    <p className="font-bold text-sm">১২৪.৫০</p>
+                    <p className="text-[10px] text-slate-400">
+                        {lang === 'bn' ? 'ইউনিট অবশিষ্ট' : 'Remaining Units'}
+                    </p>
+                    <p className="font-bold text-sm">
+                        {lang === 'bn' ? '১২৪.৫০' : '124.50'}
+                    </p>
                  </div>
                  <div className="bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                    <p className="text-[10px] text-slate-400">সর্বশেষ রিচার্জ</p>
-                    <p className="font-bold text-sm">১০ মে</p>
+                    <p className="text-[10px] text-slate-400">
+                        {lang === 'bn' ? 'সর্বশেষ রিচার্জ' : 'Last Recharge'}
+                    </p>
+                    <p className="font-bold text-sm">
+                        {lang === 'bn' ? '১০ মে' : '10 May'}
+                    </p>
                  </div>
               </div>
             </div>
@@ -75,7 +101,7 @@ const App: React.FC = () => {
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
                  <Zap size={18} className="text-yellow-500" />
-                 দ্রুত রিচার্জ
+                 {lang === 'bn' ? 'দ্রুত রিচার্জ' : 'Quick Recharge'}
                </h3>
                <div className="grid grid-cols-3 gap-3">
                  {[500, 1000, 2000].map(amount => (
@@ -91,13 +117,35 @@ const App: React.FC = () => {
       case 'CONTACT':
         return (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-xl font-bold text-gray-800 border-l-4 border-indigo-600 pl-3">জরুরী যোগাযোগ</h2>
+            <h2 className="text-xl font-bold text-gray-800 border-l-4 border-indigo-600 pl-3">
+                {lang === 'bn' ? 'জরুরী যোগাযোগ' : 'Emergency Contact'}
+            </h2>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
                {[
-                 { name: 'ম্যানেজার (রহিম সাহেব)', phone: '০১৭১১-০০০০০০', role: 'ম্যানেজমেন্ট', color: 'bg-indigo-100 text-indigo-600' },
-                 { name: 'সিকিউরিটি গেট', phone: '০১৯১১-২২৩৩৪৪', role: 'নিরাপত্তা', color: 'bg-rose-100 text-rose-600' },
-                 { name: 'লিফট মেইনটেনেন্স', phone: '০১৮১১-৫৫৬৬৭৭', role: 'টেকনিক্যাল', color: 'bg-amber-100 text-amber-600' },
-                 { name: 'ফায়ার সার্ভিস', phone: '৯৯৯', role: 'জরুরী সেবা', color: 'bg-red-500 text-white' },
+                 { 
+                    name: lang === 'bn' ? 'ম্যানেজার (রহিম সাহেব)' : 'Manager (Mr. Rahim)', 
+                    phone: '01700000000', 
+                    role: lang === 'bn' ? 'ম্যানেজমেন্ট' : 'Management', 
+                    color: 'bg-indigo-100 text-indigo-600' 
+                 },
+                 { 
+                    name: lang === 'bn' ? 'সিকিউরিটি গেট' : 'Security Gate', 
+                    phone: '01911223344', 
+                    role: lang === 'bn' ? 'নিরাপত্তা' : 'Security', 
+                    color: 'bg-rose-100 text-rose-600' 
+                 },
+                 { 
+                    name: lang === 'bn' ? 'লিফট মেইনটেনেন্স' : 'Lift Maintenance', 
+                    phone: '01811556677', 
+                    role: lang === 'bn' ? 'টেকনিক্যাল' : 'Technical', 
+                    color: 'bg-amber-100 text-amber-600' 
+                 },
+                 { 
+                    name: lang === 'bn' ? 'ফায়ার সার্ভিস' : 'Fire Service', 
+                    phone: '999', 
+                    role: lang === 'bn' ? 'জরুরী সেবা' : 'Emergency', 
+                    color: 'bg-red-500 text-white' 
+                 },
                ].map((contact, i) => (
                  <div key={i} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-3">
@@ -113,7 +161,7 @@ const App: React.FC = () => {
                       href={`tel:${contact.phone}`} 
                       className="px-4 py-2 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 hover:bg-green-500 hover:text-white transition-all active:scale-95"
                     >
-                      কল করুন
+                      {lang === 'bn' ? 'কল করুন' : 'Call'}
                     </a>
                  </div>
                ))}
@@ -138,7 +186,7 @@ const App: React.FC = () => {
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <h2 className="text-xl font-light opacity-90 mb-1">{greeting},</h2>
-                      <h1 className="text-2xl font-bold tracking-tight">বাসিন্দা</h1>
+                      <h1 className="text-2xl font-bold tracking-tight">{t.role}</h1>
                     </div>
                     <div className="bg-white/10 backdrop-blur-md p-2 rounded-full border border-white/20 shadow-lg">
                       <CloudSun size={24} className="text-yellow-300" />
@@ -151,7 +199,7 @@ const App: React.FC = () => {
                            <Calendar size={20} className="text-white" />
                         </div>
                         <div>
-                           <p className="text-[10px] opacity-70 uppercase tracking-wider font-semibold">আজকের তারিখ</p>
+                           <p className="text-[10px] opacity-70 uppercase tracking-wider font-semibold">{t.dateLabel}</p>
                            <p className="text-sm font-bold leading-tight">{currentDate}</p>
                         </div>
                      </div>
@@ -167,11 +215,11 @@ const App: React.FC = () => {
             <div>
               <div className="flex justify-between items-end mb-4 px-1">
                  <h3 className="text-lg font-bold text-slate-800">
-                   {currentView === 'MENU' ? 'সকল সেবা' : 'কুইক অ্যাক্সেস'}
+                   {currentView === 'MENU' ? t.allServices : t.quickAccess}
                  </h3>
                  {currentView === 'HOME' && (
                    <button onClick={() => setCurrentView('MENU')} className="text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors">
-                     সব দেখুন
+                     {t.seeAll}
                    </button>
                  )}
               </div>
@@ -196,8 +244,12 @@ const App: React.FC = () => {
                     </div>
                     
                     <div>
-                      <h4 className="font-bold text-slate-800 text-sm mb-0.5 group-hover:text-primary-700 transition-colors">{item.label}</h4>
-                      <p className="text-[10px] text-slate-400 font-medium line-clamp-1">{item.description}</p>
+                      <h4 className="font-bold text-slate-800 text-sm mb-0.5 group-hover:text-primary-700 transition-colors">
+                          {lang === 'bn' ? item.label : item.labelEn}
+                      </h4>
+                      <p className="text-[10px] text-slate-400 font-medium line-clamp-1">
+                          {lang === 'bn' ? item.description : item.descriptionEn}
+                      </p>
                     </div>
                   </motion.button>
                 ))}
@@ -208,7 +260,7 @@ const App: React.FC = () => {
             {currentView === 'HOME' && (
               <div className="pb-4">
                 <div className="flex justify-between items-center mb-3 px-1">
-                  <h3 className="text-lg font-bold text-gray-800">সর্বশেষ লেনদেন</h3>
+                  <h3 className="text-lg font-bold text-gray-800">{t.recentTransactions}</h3>
                 </div>
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
                   {[1, 2].map((_, i) => (
@@ -217,8 +269,12 @@ const App: React.FC = () => {
                         <User size={18} />
                       </div>
                       <div className="flex-1">
-                        <h4 className="text-sm font-bold text-gray-800">সার্ভিস চার্জ (এপ্রিল)</h4>
-                        <p className="text-[10px] text-gray-400 font-medium">১০ মে, ২০২৪ • ৩:৩০ অপরাহ্ন</p>
+                        <h4 className="text-sm font-bold text-gray-800">
+                            {lang === 'bn' ? 'সার্ভিস চার্জ (এপ্রিল)' : 'Service Charge (April)'}
+                        </h4>
+                        <p className="text-[10px] text-gray-400 font-medium">
+                            {lang === 'bn' ? '১০ মে, ২০২৪ • ৩:৩০ অপরাহ্ন' : '10 May, 2024 • 3:30 PM'}
+                        </p>
                       </div>
                       <span className="text-sm font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded-md">-৳৩,৫০০</span>
                     </div>
@@ -248,20 +304,24 @@ const App: React.FC = () => {
             </div>
             <div>
               <h1 className="text-lg font-extrabold text-slate-800 leading-tight">
-                {APP_NAME}
+                {lang === 'bn' ? APP_NAME_BN : APP_NAME_EN}
               </h1>
               <p className="text-[10px] text-slate-500 font-semibold flex items-center gap-1">
-                <MapPin size={10} /> হলান, দক্ষিণখান
+                <MapPin size={10} /> {t.location}
               </p>
             </div>
           </div>
           <div className="ml-auto">
-             <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
-                <User size={16} />
-             </div>
+             <button 
+                onClick={toggleLanguage}
+                className="h-9 px-3 rounded-full bg-slate-100 border border-slate-200 flex items-center gap-2 text-slate-600 hover:bg-slate-200 hover:text-primary-700 transition-all active:scale-95"
+             >
+                <Languages size={16} />
+                <span className="text-xs font-bold">{lang === 'bn' ? 'বাংলা' : 'English'}</span>
+             </button>
           </div>
         </div>
-        {currentView === 'HOME' && <NoticeBoard />}
+        {currentView === 'HOME' && <NoticeBoard lang={lang} />}
       </header>
 
       {/* Main Content Area */}
@@ -284,10 +344,10 @@ const App: React.FC = () => {
       </main>
 
       {/* Gemini Assistant - Only visible on HOME view */}
-      <Assistant isVisible={currentView === 'HOME'} />
+      <Assistant isVisible={currentView === 'HOME'} lang={lang} />
 
       {/* Bottom Navigation */}
-      <BottomNav currentView={currentView} setView={setCurrentView} />
+      <BottomNav currentView={currentView} setView={setCurrentView} lang={lang} />
     </div>
   );
 };

@@ -5,10 +5,12 @@ export type ViewState = 'HOME' | 'SERVICE_CHARGE' | 'DESCO' | 'CONTACT' | 'MENU'
 export interface MenuItem {
   id: string;
   label: string;
+  labelEn: string;
   icon: LucideIcon;
   view: ViewState;
   color?: string;
   description?: string;
+  descriptionEn?: string;
   gradient?: string;
 }
 

@@ -10,9 +10,10 @@ interface Message {
 
 interface AssistantProps {
   isVisible: boolean;
+  lang: 'bn' | 'en';
 }
 
-const SUGGESTIONS = [
+const SUGGESTIONS_BN = [
   "সার্ভিস চার্জ কত?",
   "ম্যানেজারের নাম্বার",
   "আজকের নোটিশ",
@@ -26,14 +27,39 @@ const SUGGESTIONS = [
   "লোকেশন ম্যাপ"
 ];
 
-const Assistant: React.FC<AssistantProps> = ({ isVisible }) => {
+const SUGGESTIONS_EN = [
+  "Service charge amount?",
+  "Manager number",
+  "Today's notice",
+  "Gate closing time?",
+  "Garbage collection time",
+  "WiFi password",
+  "Lift broken?",
+  "Gas bill",
+  "Emergency contact",
+  "To-Let info",
+  "Location map"
+];
+
+const Assistant: React.FC<AssistantProps> = ({ isVisible, lang }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', text: 'আসসালামু আলাইকুম! আমি হলান টাওয়ারের স্মার্টু মিয়া। আমি কীভাবে আপনাকে সাহায্য করতে পারি?' }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize welcome message when language or visibility changes
+  useEffect(() => {
+    const initialMsg = lang === 'bn' 
+        ? 'আসসালামু আলাইকুম! আমি হলান টাওয়ারের স্মার্টু মিয়া। আমি কীভাবে আপনাকে সাহায্য করতে পারি?'
+        : 'Assalamu Alaikum! I am Smartu Mia of Hollan Tower. How can I assist you today?';
+    
+    // Only reset if empty to avoid wiping conversation, or just add a system note? 
+    // For simplicity, we just check if it's empty.
+    if (messages.length === 0) {
+        setMessages([{ role: 'assistant', text: initialMsg }]);
+    }
+  }, [lang]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,11 +84,13 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible }) => {
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
 
-    const response = await getGeminiResponse(userMessage);
+    const response = await getGeminiResponse(userMessage, lang);
 
     setMessages(prev => [...prev, { role: 'assistant', text: response }]);
     setIsLoading(false);
   };
+
+  const suggestions = lang === 'bn' ? SUGGESTIONS_BN : SUGGESTIONS_EN;
 
   // যদি হোম পেজে না থাকে এবং চ্যাট ওপেন না থাকে, তবে কিছুই রেন্ডার করার দরকার নেই
   if (!isVisible && !isOpen) return null;
@@ -115,10 +143,12 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible }) => {
                     <Zap size={18} className="text-yellow-300 fill-yellow-300" />
                   </div>
                   <div>
-                    <span className="font-bold text-base block leading-tight tracking-wide">স্মার্টু মিয়া</span>
+                    <span className="font-bold text-base block leading-tight tracking-wide">
+                        {lang === 'bn' ? 'স্মার্টু মিয়া' : 'Smartu Mia'}
+                    </span>
                     <span className="text-[10px] text-indigo-100 flex items-center gap-1 opacity-90">
                       <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_5px_rgba(74,222,128,0.8)]"></span>
-                      সক্রিয় আছে
+                      {lang === 'bn' ? 'সক্রিয় আছে' : 'Active Now'}
                     </span>
                   </div>
                 </div>
@@ -175,7 +205,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible }) => {
               {/* Suggestions Chips */}
               {!isLoading && (
                 <div className="px-3 py-2 bg-slate-50 flex gap-2 overflow-x-auto no-scrollbar border-t border-gray-100">
-                  {SUGGESTIONS.map((suggestion, idx) => (
+                  {suggestions.map((suggestion, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleSend(suggestion)}
@@ -194,7 +224,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible }) => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="এখানে লিখুন..."
+                  placeholder={lang === 'bn' ? "এখানে লিখুন..." : "Type here..."}
                   className="flex-1 bg-gray-100 border border-transparent focus:bg-white focus:border-indigo-200 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder:text-gray-400 text-gray-700"
                 />
                 <button
