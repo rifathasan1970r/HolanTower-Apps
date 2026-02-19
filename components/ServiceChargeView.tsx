@@ -746,6 +746,22 @@ export const ServiceChargeView: React.FC = () => {
                 </div>
              </div>
 
+             {/* Year Selection Tabs - Added for All Units Summary */}
+             <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-100 flex mb-4">
+                <button 
+                    onClick={() => setSelectedYear(2025)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                    <CalendarDays size={16} /> ২০২৫
+                </button>
+                <button 
+                    onClick={() => setSelectedYear(2026)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                    <CalendarDays size={16} /> ২০২৬
+                </button>
+            </div>
+
              {/* Replaced Summary Card matching the Dashboard design */}
             <div 
                 className="mb-6 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 p-5 text-white transition-all"

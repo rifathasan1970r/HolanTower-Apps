@@ -30,7 +30,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', text: 'আসসালামু আলাইকুম! আমি হলান টাওয়ারের স্মার্ট অ্যাসিস্ট্যান্ট। আমি কীভাবে আপনাকে সাহায্য করতে পারি?' }
+    { role: 'assistant', text: 'আসসালামু আলাইকুম! আমি হলান টাওয়ারের স্মার্টু মিয়া। আমি কীভাবে আপনাকে সাহায্য করতে পারি?' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -79,13 +79,13 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible }) => {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-24 right-5 z-40 p-4 rounded-full shadow-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-violet-600 text-white flex items-center justify-center border-2 border-white/30 backdrop-blur-md group"
+            className="fixed bottom-24 right-5 z-40 p-3 rounded-full shadow-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-violet-600 text-white flex items-center justify-center border-2 border-white/30 backdrop-blur-md group"
           >
             <div className="relative">
-                 <Bot size={28} className="text-white drop-shadow-md" />
-                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                 <Bot size={24} className="text-white drop-shadow-md" />
+                 <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-white"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border border-white"></span>
                  </span>
             </div>
           </motion.button>
@@ -107,7 +107,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible }) => {
               {/* Header */}
               <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-3.5 flex justify-between items-center text-white shadow-md relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <Bot size={80} />
+                    <Bot size={60} />
                 </div>
 
                 <div className="flex items-center gap-3 relative z-10">
@@ -115,7 +115,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible }) => {
                     <Zap size={18} className="text-yellow-300 fill-yellow-300" />
                   </div>
                   <div>
-                    <span className="font-bold text-base block leading-tight tracking-wide">স্মার্ট অ্যাসিস্ট্যান্ট</span>
+                    <span className="font-bold text-base block leading-tight tracking-wide">স্মার্টু মিয়া</span>
                     <span className="text-[10px] text-indigo-100 flex items-center gap-1 opacity-90">
                       <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_5px_rgba(74,222,128,0.8)]"></span>
                       সক্রিয় আছে
