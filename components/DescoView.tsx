@@ -162,34 +162,36 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
             </div>
         </div>
 
-        {/* Search & Filter Bar */}
-        <div className="flex gap-3 sticky top-[70px] z-30">
-            <div className="relative flex-1 group shadow-lg shadow-slate-200/50 rounded-2xl">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input 
-                    type="text" 
-                    placeholder={t.searchPlaceholder}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-white border border-slate-100 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-400 h-12"
-                />
-            </div>
-            <div className="relative w-[32%] shadow-lg shadow-slate-200/50 rounded-2xl">
-                <select 
-                    value={selectedFloor}
-                    onChange={(e) => setSelectedFloor(e.target.value)}
-                    className="w-full bg-indigo-600 border border-indigo-500 text-white font-bold text-xs h-12 rounded-2xl px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-center"
-                >
-                    <option value="" className="text-slate-800 bg-white">{t.allFloors}</option>
-                    {[2,3,4,5,6,7,8,9,10].map(f => (
-                        <option key={f} value={f.toString()} className="text-slate-800 bg-white">
-                            {lang === 'bn' ? `${['২','৩','৪','৫','৬','৭','৮','৯','১০'][f-2]} তলা` : `${f}th Floor`}
-                        </option>
-                    ))}
-                    <option value="main" className="text-slate-800 bg-white">{t.mainMeter}</option>
-                </select>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/80">
-                    <Filter size={12} />
+        {/* Search & Filter Bar - Fixed: Added background and padding to mask content behind */}
+        <div className="sticky top-[64px] z-30 bg-slate-50/95 backdrop-blur-md py-2 -mx-4 px-4 mb-2 transition-all shadow-sm">
+            <div className="flex gap-3">
+                <div className="relative flex-1 group shadow-lg shadow-slate-200/50 rounded-2xl">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                        type="text" 
+                        placeholder={t.searchPlaceholder}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-white border border-slate-100 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-400 h-12"
+                    />
+                </div>
+                <div className="relative w-[32%] shadow-lg shadow-slate-200/50 rounded-2xl">
+                    <select 
+                        value={selectedFloor}
+                        onChange={(e) => setSelectedFloor(e.target.value)}
+                        className="w-full bg-indigo-600 border border-indigo-500 text-white font-bold text-xs h-12 rounded-2xl px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-center"
+                    >
+                        <option value="" className="text-slate-800 bg-white">{t.allFloors}</option>
+                        {[2,3,4,5,6,7,8,9,10].map(f => (
+                            <option key={f} value={f.toString()} className="text-slate-800 bg-white">
+                                {lang === 'bn' ? `${['২','৩','৪','৫','৬','৭','৮','৯','১০'][f-2]} তলা` : `${f}th Floor`}
+                            </option>
+                        ))}
+                        <option value="main" className="text-slate-800 bg-white">{t.mainMeter}</option>
+                    </select>
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/80">
+                        <Filter size={12} />
+                    </div>
                 </div>
             </div>
         </div>
@@ -240,6 +242,8 @@ const DescoView: React.FC<DescoViewProps> = ({ lang }) => {
                                 {isMain && <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 rounded border border-slate-200 font-bold">POST</span>}
                             </div>
                             
+                            <p className="text-[9px] text-slate-400 font-bold mb-0.5 ml-0.5">{t.account}</p>
+
                             {/* Copyable Account Chip */}
                             <button 
                                 onClick={() => handleCopy(item.account)}
