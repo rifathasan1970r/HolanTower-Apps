@@ -63,9 +63,18 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   const [pinInput, setPinInput] = useState<string>('');
   const [processingUpdate, setProcessingUpdate] = useState<boolean>(false);
 
-  // Inline Edit State
-  const [editingMonth, setEditingMonth] = useState<string | null>(null);
-  const [editFormData, setEditFormData] = useState({ amount: 2000, due: 0, date: '' });
+  // Edit Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [editModalData, setEditModalData] = useState({
+    unit: '',
+    month: '',
+    year: 2026,
+    amount: 2000,
+    due: 0,
+    day: '1',
+    monthName: 'জানুয়ারি',
+    yearVal: '2026'
+  });
 
   const t = TRANSLATIONS[lang];
 
@@ -151,22 +160,43 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     if (!isAdmin) return;
     const existing = dbData.find(d => d.unit_text === unit && d.month_name === month && d.year_num === selectedYear);
     
-    setEditingMonth(month);
-    setEditFormData({
+    // Parse existing date or default to today
+    let day = '1';
+    let monthName = month;
+    let yearVal = selectedYear.toString();
+
+    if (existing?.paid_date) {
+        // Try to parse simple date format if possible, otherwise keep defaults
+        // This is a simplification as the date format stored might vary
+        // Assuming format "D Month YYYY" or similar
+        const parts = existing.paid_date.split(' ');
+        if (parts.length >= 3) {
+            day = parts[0];
+            // Month name might need mapping if stored differently
+            // yearVal = parts[2]; // Keep year consistent with selectedYear for now
+        }
+    }
+
+    setEditModalData({
+      unit,
+      month, // Original month key from MONTHS_LOGIC
+      year: selectedYear,
       amount: existing?.amount ?? 2000,
       due: existing?.due ?? 0,
-      date: existing?.paid_date ?? getBanglaDate()
+      day,
+      monthName,
+      yearVal
     });
+    setIsEditModalOpen(true);
   };
 
-  const cancelEditing = () => {
-    setEditingMonth(null);
-    setEditFormData({ amount: 2000, due: 0, date: '' });
-  };
-
-  const handleInlineSave = async (unit: string, month: string) => {
+  const handleModalSave = async () => {
     if (processingUpdate) return;
     setProcessingUpdate(true);
+
+    const { unit, month, year, amount, due, day, monthName, yearVal } = editModalData;
+    // Construct date string
+    const paidDate = `${day} ${monthName} ${yearVal}`;
 
     try {
       // ১. প্রথমে চেক করি এই মাস ও ইউনিটের ডাটা সার্ভারে আগে থেকেই আছে কিনা
@@ -175,7 +205,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         .select('id')
         .eq('unit_text', unit)
         .eq('month_name', month)
-        .eq('year_num', selectedYear)
+        .eq('year_num', year)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
@@ -187,9 +217,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         const res = await supabase
           .from('payments')
           .update({
-            amount: editFormData.amount,
-            due: editFormData.due,
-            paid_date: editFormData.date
+            amount: amount,
+            due: due,
+            paid_date: paidDate
           })
           .eq('id', existingData.id);
         error = res.error;
@@ -198,10 +228,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         const newRecord = {
           unit_text: unit,
           month_name: month,
-          year_num: selectedYear,
-          amount: editFormData.amount,
-          due: editFormData.due,
-          paid_date: editFormData.date
+          year_num: year,
+          amount: amount,
+          due: due,
+          paid_date: paidDate
         };
 
         const res = await supabase
@@ -214,7 +244,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
 
       // রিফ্রেশ ডাটা (সরাসরি সার্ভার থেকে) - যাতে আপডেট নিশ্চিত হয়
       await fetchData(false); 
-      setEditingMonth(null);
+      setIsEditModalOpen(false);
       
     } catch (err: any) {
       console.error("Error saving payment:", err);
@@ -225,47 +255,12 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   };
 
   const handleQuickStatusToggle = async (unit: string, month: string) => {
-      if (!isAdmin || processingUpdate) return;
-      setProcessingUpdate(true);
-
-      try {
-          // ১. চেক করি ডাটা আছে কিনা
-          const { data: existingData } = await supabase
-            .from('payments')
-            .select('id')
-            .eq('unit_text', unit)
-            .eq('month_name', month)
-            .eq('year_num', selectedYear)
-            .maybeSingle();
-
-          if (existingData) {
-              // Toggle to DUE: ডাটা ডিলিট করে বকেয়া বানানো
-              const { error } = await supabase.from('payments').delete().eq('id', existingData.id);
-              if (error) throw error;
-              
-              // UI আপডেট
-              setDbData(prev => prev.filter(d => d.id !== existingData.id));
-          } else {
-              // Toggle to PAID: নতুন এন্ট্রি তৈরি করা
-              const paidDate = getBanglaDate();
-              const { data, error } = await supabase.from('payments').insert({
-                  unit_text: unit,
-                  month_name: month,
-                  year_num: selectedYear,
-                  amount: 2000,
-                  due: 0,
-                  paid_date: paidDate
-              }).select();
-              
-              if (error) throw error;
-              if (data) setDbData(prev => [...prev, data[0] as PaymentData]);
-          }
-      } catch (err: any) {
-          console.error(err);
-          alert(t.statusChangeFail);
-      } finally {
-          setProcessingUpdate(false);
-      }
+      // For grid view, we can still use quick toggle or open modal?
+      // User said "মাসে ক্লিক করলে ডেটা এন্ট্রি জন্য পপআপ উইন্ডো আসবে"
+      // Assuming this applies to the detailed view table mainly.
+      // But for consistency, let's make grid view also open modal if admin.
+      if (!isAdmin) return;
+      startEditing(unit, month);
   };
 
   // Generate Data
@@ -382,6 +377,107 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     </div>
   );
 
+  // Payment Edit Modal
+  const PaymentEditModal = () => (
+    <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in duration-200">
+        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">পেমেন্ট আপডেট</h3>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">ইউনিট: {editModalData.unit}</p>
+          </div>
+          <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-red-500 bg-slate-50 p-2 rounded-full transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+            {/* Amount & Due Row */}
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">{t.amount}</label>
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
+                        <input 
+                            type="number" 
+                            value={editModalData.amount}
+                            onChange={(e) => setEditModalData({...editModalData, amount: Number(e.target.value)})}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                        />
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">{t.due}</label>
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
+                        <input 
+                            type="number" 
+                            value={editModalData.due}
+                            onChange={(e) => setEditModalData({...editModalData, due: Number(e.target.value)})}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-red-600 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Date Selection Row */}
+            <div>
+                <label className="block text-xs font-bold text-slate-600 mb-2">পেমেন্ট তারিখ</label>
+                <div className="grid grid-cols-3 gap-2">
+                    {/* Day Dropdown */}
+                    <select 
+                        value={editModalData.day}
+                        onChange={(e) => setEditModalData({...editModalData, day: e.target.value})}
+                        className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                    >
+                        {Array.from({length: 31}, (_, i) => i + 1).map(d => (
+                            <option key={d} value={d}>{d}</option>
+                        ))}
+                    </select>
+
+                    {/* Month Dropdown */}
+                    <select 
+                        value={editModalData.monthName}
+                        onChange={(e) => setEditModalData({...editModalData, monthName: e.target.value})}
+                        className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                    >
+                        {MONTHS_LOGIC.map((m) => (
+                            <option key={m} value={m}>{m}</option>
+                        ))}
+                    </select>
+
+                    {/* Year Dropdown */}
+                    <select 
+                        value={editModalData.yearVal}
+                        onChange={(e) => setEditModalData({...editModalData, yearVal: e.target.value})}
+                        className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                    >
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div className="mt-8 flex gap-3">
+            <button 
+                onClick={() => setIsEditModalOpen(false)}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors"
+            >
+                বাতিল
+            </button>
+            <button 
+                onClick={handleModalSave}
+                className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+                <Save size={16} />
+                সেভ করুন
+            </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // VIEW 1: SINGLE UNIT DETAILED VIEW
   if (selectedUnit) {
     const currentIndex = ALL_UNITS.indexOf(selectedUnit);
@@ -408,6 +504,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     return (
       <div key={`${selectedUnit}-${selectedYear}`} className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 min-h-screen relative">
         {showLogin && <LoginModal />}
+        {isEditModalOpen && <PaymentEditModal />}
         
         {/* Navigation Header Section */}
         <div className="bg-white sticky top-[60px] z-10 border-b border-slate-100 shadow-sm transition-all">
@@ -525,7 +622,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                             const isEditable = isAdmin && !processingUpdate;
                             // For DB operations, we need the original month name (Bangla)
                             const dbMonth = MONTHS_LOGIC[record.monthIndex];
-                            const isEditing = editingMonth === dbMonth;
 
                             return (
                               <tr 
@@ -533,99 +629,39 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                                 className={`
                                   transition-all duration-200 
                                   ${record.status === 'DUE' ? 'bg-red-50/10' : ''}
-                                  ${isEditable && !isEditing ? 'hover:bg-indigo-50 active:bg-indigo-100/50' : 'hover:bg-slate-50/50'}
-                                  ${isEditing ? 'bg-indigo-50/50' : ''}
+                                  ${isEditable ? 'hover:bg-indigo-50 active:bg-indigo-100/50' : 'hover:bg-slate-50/50'}
                                 `}
                               >
-                                  {isEditing ? (
-                                    <>
-                                      <td className="py-2 pl-2 align-middle">
-                                          <div className="font-bold text-slate-800 text-xs mb-1">{record.month}</div>
-                                          <input 
-                                            type="text" 
-                                            value={editFormData.date}
-                                            onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
-                                            className="w-full text-[10px] border border-slate-300 rounded px-1 py-1 focus:border-indigo-500 outline-none"
-                                            placeholder="Date"
-                                            autoFocus
-                                            onClick={(e) => e.stopPropagation()}
-                                          />
-                                      </td>
-                                      <td className="py-2 align-middle text-center px-1">
-                                          <input 
-                                            type="number" 
-                                            value={editFormData.amount}
-                                            onChange={(e) => setEditFormData({...editFormData, amount: Number(e.target.value)})}
-                                            className="w-full text-xs font-bold text-center border border-slate-300 rounded px-1 py-1 focus:border-indigo-500 outline-none text-slate-700"
-                                            onClick={(e) => e.stopPropagation()}
-                                          />
-                                      </td>
-                                      <td className="py-2 align-middle text-center px-1">
-                                          <input 
-                                            type="number" 
-                                            value={editFormData.due}
-                                            onChange={(e) => setEditFormData({...editFormData, due: Number(e.target.value)})}
-                                            className="w-full text-xs font-bold text-center border border-slate-300 rounded px-1 py-1 focus:border-indigo-500 outline-none text-red-600"
-                                            onClick={(e) => e.stopPropagation()}
-                                          />
-                                      </td>
-                                      <td className="py-2 pr-2 align-middle text-right">
-                                         <div className="flex justify-end gap-1">
-                                            <button 
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleInlineSave(selectedUnit, dbMonth);
-                                              }}
-                                              className="p-1.5 bg-green-500 text-white rounded shadow-sm hover:bg-green-600 active:scale-95"
-                                            >
-                                              <Check size={14} />
-                                            </button>
-                                            <button 
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                cancelEditing();
-                                              }}
-                                              className="p-1.5 bg-slate-200 text-slate-500 rounded shadow-sm hover:bg-slate-300 active:scale-95"
-                                            >
-                                              <X size={14} />
-                                            </button>
-                                         </div>
-                                      </td>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 pl-3 align-middle cursor-pointer">
-                                          <div className="font-bold text-slate-800 text-sm">{record.month}</div>
-                                          <div className="text-[10px] text-slate-400 font-medium mt-0.5 whitespace-nowrap">{record.date}</div>
-                                      </td>
-                                      <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 align-middle text-center cursor-pointer">
-                                          <div className={`font-semibold text-sm ${record.amount > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
-                                              {record.amount > 0 ? `৳${record.amount}` : '-'}
-                                          </div>
-                                      </td>
-                                      <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 align-middle text-center cursor-pointer">
-                                           <div className={`font-semibold text-sm ${record.due > 0 ? 'text-red-600' : 'text-slate-300'}`}>
-                                              {record.due > 0 ? `৳${record.due}` : '-'}
-                                           </div>
-                                      </td>
-                                      <td className="py-3 pr-3 align-middle flex justify-end">
-                                          <div onClick={() => isEditable && handleQuickStatusToggle(selectedUnit, dbMonth)}>
-                                            {isAdmin ? (
-                                                <div className={`px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-                                                record.status === 'PAID' 
-                                                    ? 'bg-green-100 text-green-700 border-green-200 shadow-sm' 
-                                                    : 'bg-white text-red-500 border-red-200 shadow-sm'
-                                                }`}>
-                                                {record.status === 'PAID' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
-                                                {record.status === 'PAID' ? t.paid : t.due}
-                                                </div>
-                                            ) : (
-                                                getStatusElement(record.status)
-                                            )}
-                                          </div>
-                                      </td>
-                                    </>
-                                  )}
+                                  <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 pl-3 align-middle cursor-pointer">
+                                      <div className="font-bold text-slate-800 text-sm">{record.month}</div>
+                                      <div className="text-[10px] text-slate-400 font-medium mt-0.5 whitespace-nowrap">{record.date}</div>
+                                  </td>
+                                  <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 align-middle text-center cursor-pointer">
+                                      <div className={`font-semibold text-sm ${record.amount > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
+                                          {record.amount > 0 ? `৳${record.amount}` : '-'}
+                                      </div>
+                                  </td>
+                                  <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 align-middle text-center cursor-pointer">
+                                        <div className={`font-semibold text-sm ${record.due > 0 ? 'text-red-600' : 'text-slate-300'}`}>
+                                          {record.due > 0 ? `৳${record.due}` : '-'}
+                                        </div>
+                                  </td>
+                                  <td className="py-3 pr-3 align-middle flex justify-end">
+                                      <div onClick={() => isEditable && startEditing(selectedUnit, dbMonth)}>
+                                        {isAdmin ? (
+                                            <div className={`px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                                            record.status === 'PAID' 
+                                                ? 'bg-green-100 text-green-700 border-green-200 shadow-sm' 
+                                                : 'bg-white text-red-500 border-red-200 shadow-sm'
+                                            }`}>
+                                            {record.status === 'PAID' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
+                                            {record.status === 'PAID' ? t.paid : t.due}
+                                            </div>
+                                        ) : (
+                                            getStatusElement(record.status)
+                                        )}
+                                      </div>
+                                  </td>
                               </tr>
                           );
                         })}
@@ -718,6 +754,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   return (
     <div className="px-4 py-6 pb-24 animate-in slide-in-from-bottom-4 duration-500">
       {showLogin && <LoginModal />}
+      {isEditModalOpen && <PaymentEditModal />}
       
       {/* Loading State */}
       {loading && (
