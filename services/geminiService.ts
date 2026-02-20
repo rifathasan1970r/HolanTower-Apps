@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY;
+const apiKey = process.env.GEMINI_API_KEY;
 
 // Initialize Gemini only if API key is present
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;

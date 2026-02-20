@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap } from 'lucide-react';
+import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { APP_NAME, MENU_ITEMS } from './constants';
@@ -7,6 +7,7 @@ import { ViewState } from './types';
 import NoticeBoard from './components/NoticeBoard';
 import BottomNav from './components/BottomNav';
 import Assistant from './components/Assistant';
+import { DescoView } from './components/DescoView';
 import { ServiceChargeView } from './components/ServiceChargeView';
 
 const App: React.FC = () => {
@@ -42,47 +43,61 @@ const App: React.FC = () => {
         return <ServiceChargeView />;
       
       case 'DESCO':
+        return <DescoView />;
+
+      case 'TO_LET':
         return (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-xl font-bold text-gray-800 border-l-4 border-yellow-500 pl-3">ডেসকো প্রিপেইড</h2>
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-5">
-                 <Zap size={150} />
+            <h2 className="text-xl font-bold text-gray-800 border-l-4 border-emerald-500 pl-3">বাসাভাড়া / টু-লেট</h2>
+            
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+               <div className="p-4 border-b border-gray-50">
+                  <div className="flex justify-between items-start">
+                     <div>
+                        <h3 className="text-lg font-bold text-gray-800">ফ্ল্যাট ৩-বি (৩য় তলা)</h3>
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                           <MapPin size={12} /> দক্ষিণ পাশ, রোড ভিউ
+                        </p>
+                     </div>
+                     <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-full border border-emerald-200">
+                        ভাড়া হবে
+                     </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 mt-4 text-gray-600">
+                     <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-lg">
+                        <Maximize size={14} />
+                        <span className="text-xs font-bold">১২৫০ বর্গফুট</span>
+                     </div>
+                     <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-lg">
+                        <Bed size={14} />
+                        <span className="text-xs font-bold">৩ বেড</span>
+                     </div>
+                     <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-lg">
+                        <Bath size={14} />
+                        <span className="text-xs font-bold">৩ বাথ</span>
+                     </div>
+                  </div>
                </div>
-              <p className="text-yellow-400 text-xs font-medium mb-1 tracking-wider uppercase">মিটার নম্বর</p>
-              <p className="text-xl font-mono mb-6 tracking-widest">8899 3322 110</p>
-              
-              <div className="flex flex-col gap-1">
-                 <span className="text-slate-400 text-xs">বর্তমান ব্যালেন্স</span>
-                 <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">৳৮৫০</span>
-                    <span className="text-sm font-medium text-slate-400">.০০</span>
-                 </div>
-              </div>
-
-              <div className="mt-6 flex gap-3">
-                 <div className="bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                    <p className="text-[10px] text-slate-400">ইউনিট অবশিষ্ট</p>
-                    <p className="font-bold text-sm">১২৪.৫০</p>
-                 </div>
-                 <div className="bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                    <p className="text-[10px] text-slate-400">সর্বশেষ রিচার্জ</p>
-                    <p className="font-bold text-sm">১০ মে</p>
-                 </div>
-              </div>
+               
+               <div className="p-4 bg-gray-50 flex justify-between items-center">
+                  <div>
+                     <p className="text-[10px] text-gray-400 font-medium uppercase">মাসিক ভাড়া</p>
+                     <p className="text-xl font-bold text-gray-800">৳ ১৮,০০০</p>
+                  </div>
+                  <button className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-emerald-700 active:scale-95 transition-all">
+                     বিস্তারিত দেখুন
+                  </button>
+               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-               <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                 <Zap size={18} className="text-yellow-500" />
-                 দ্রুত রিচার্জ
-               </h3>
-               <div className="grid grid-cols-3 gap-3">
-                 {[500, 1000, 2000].map(amount => (
-                   <button key={amount} className="border border-gray-200 py-3 rounded-xl hover:bg-yellow-50 hover:border-yellow-400 transition-all text-sm font-bold text-gray-600 active:scale-95 shadow-sm">
-                     ৳{amount}
-                   </button>
-                 ))}
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+               <div className="bg-blue-100 p-2 rounded-full text-blue-600 mt-0.5">
+                  <Key size={16} />
+               </div>
+               <div>
+                  <p className="text-sm font-bold text-blue-900">বিজ্ঞাপন দিতে চান?</p>
+                  <p className="text-xs text-blue-700 mt-1">আপনার ফ্ল্যাট ভাড়া দিতে চাইলে ম্যানেজারের সাথে যোগাযোগ করুন।</p>
                </div>
             </div>
           </div>
