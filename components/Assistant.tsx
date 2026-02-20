@@ -84,7 +84,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
 
-    const response = await getGeminiResponse(userMessage, lang);
+    const response = await getGeminiResponse(userMessage, lang as 'bn' | 'en');
 
     setMessages(prev => [...prev, { role: 'assistant', text: response }]);
     setIsLoading(false);

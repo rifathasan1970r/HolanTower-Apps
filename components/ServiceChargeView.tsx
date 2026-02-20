@@ -74,7 +74,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     day: '1',
     monthName: 'জানুয়ারি',
     yearVal: '2026',
-    isDateEnabled: true
+    isDateEnabled: true,
+    status: 'PAID' as 'PAID' | 'DUE' | 'UPCOMING'
   });
 
   const t = TRANSLATIONS[lang];
@@ -161,37 +162,80 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     if (!isAdmin) return;
     const existing = dbData.find(d => d.unit_text === unit && d.month_name === month && d.year_num === selectedYear);
     
-    // Parse existing date or default to today
+    const monthIndex = MONTHS_LOGIC.indexOf(month);
+    let nextMonthIndex = monthIndex + 1;
+    let nextYear = selectedYear;
+    if (nextMonthIndex > 11) {
+        nextMonthIndex = 0;
+        nextYear += 1;
+    }
+    
     let day = '1';
-    let monthName = month;
-    let yearVal = selectedYear.toString();
-
+    let monthName = MONTHS_LOGIC[nextMonthIndex];
+    let yearVal = nextYear.toString();
     let isDateEnabled = true;
 
     if (existing?.paid_date) {
-        // Try to parse simple date format if possible, otherwise keep defaults
-        // This is a simplification as the date format stored might vary
-        // Assuming format "D Month YYYY" or similar
         const parts = existing.paid_date.split(' ');
         if (parts.length >= 3) {
             day = parts[0];
-            // Month name might need mapping if stored differently
-            // yearVal = parts[2]; // Keep year consistent with selectedYear for now
+            monthName = parts[1];
+            yearVal = parts[2];
         }
     } else if (existing && !existing.paid_date) {
         isDateEnabled = false;
     }
 
+    let initialStatus: 'PAID' | 'DUE' | 'UPCOMING' = 'PAID';
+    let initialAmount = 2000;
+    let initialDue = 0;
+
+    if (existing) {
+        if (existing.amount > 0) {
+            initialStatus = 'PAID';
+            initialAmount = existing.amount;
+            initialDue = existing.due;
+        } else if (existing.due > 0) {
+            initialStatus = 'DUE';
+            initialAmount = 0;
+            initialDue = existing.due;
+            if (!existing.paid_date) isDateEnabled = false;
+        } else {
+            initialStatus = 'UPCOMING';
+            initialAmount = 0;
+            initialDue = 0;
+            isDateEnabled = false;
+        }
+    } else {
+        const now = new Date();
+        const currentRealYear = now.getFullYear();
+        const currentRealMonthIdx = now.getMonth();
+        const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && monthIndex > currentRealMonthIdx);
+        
+        if (isFuture) {
+            initialStatus = 'UPCOMING';
+            initialAmount = 0;
+            initialDue = 0;
+            isDateEnabled = false;
+        } else {
+            initialStatus = 'DUE';
+            initialAmount = 0;
+            initialDue = 2000;
+            isDateEnabled = false;
+        }
+    }
+
     setEditModalData({
       unit,
-      month, // Original month key from MONTHS_LOGIC
+      month,
       year: selectedYear,
-      amount: existing?.amount ?? 2000,
-      due: existing?.due ?? 0,
+      amount: initialAmount,
+      due: initialDue,
       day,
       monthName,
       yearVal,
-      isDateEnabled
+      isDateEnabled,
+      status: initialStatus
     });
     setIsEditModalOpen(true);
   };
@@ -200,9 +244,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     if (processingUpdate) return;
     setProcessingUpdate(true);
 
-    const { unit, month, year, amount, due, day, monthName, yearVal, isDateEnabled } = editModalData;
+    const { unit, month, year, amount, due, day, monthName, yearVal, isDateEnabled, status } = editModalData;
     // Construct date string
-    const paidDate = isDateEnabled ? `${day} ${monthName} ${yearVal}` : '';
+    const paidDate = (isDateEnabled && status !== 'UPCOMING') ? `${day} ${monthName} ${yearVal}` : '';
+    const finalAmount = status === 'UPCOMING' ? 0 : amount;
+    const finalDue = status === 'UPCOMING' ? 0 : due;
 
     try {
       // ১. প্রথমে চেক করি এই মাস ও ইউনিটের ডাটা সার্ভারে আগে থেকেই আছে কিনা
@@ -223,8 +269,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         const res = await supabase
           .from('payments')
           .update({
-            amount: amount,
-            due: due,
+            amount: finalAmount,
+            due: finalDue,
             paid_date: paidDate
           })
           .eq('id', existingData.id);
@@ -235,8 +281,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
           unit_text: unit,
           month_name: month,
           year_num: year,
-          amount: amount,
-          due: due,
+          amount: finalAmount,
+          due: finalDue,
           paid_date: paidDate
         };
 
@@ -286,13 +332,17 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
       const displayMonth = t.months[index];
 
       if (paymentRecord) {
+        let recStatus: Status = 'DUE';
+        if (paymentRecord.amount > 0) recStatus = 'PAID';
+        else if (paymentRecord.amount === 0 && paymentRecord.due === 0) recStatus = 'UPCOMING';
+
         return {
           month: displayMonth, // Use translated month for display
           monthIndex: index,
           date: paymentRecord.paid_date || '-',
           amount: paymentRecord.amount,
           due: paymentRecord.due,
-          status: paymentRecord.amount > 0 ? 'PAID' : 'DUE'
+          status: recStatus
         };
       }
 
@@ -383,6 +433,16 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     </div>
   );
 
+  const handleStatusChange = (newStatus: 'PAID' | 'DUE' | 'UPCOMING') => {
+      if (newStatus === 'PAID') {
+          setEditModalData(prev => ({ ...prev, status: newStatus, amount: 2000, due: 0, isDateEnabled: true }));
+      } else if (newStatus === 'DUE') {
+          setEditModalData(prev => ({ ...prev, status: newStatus, amount: 0, due: 2000, isDateEnabled: false }));
+      } else if (newStatus === 'UPCOMING') {
+          setEditModalData(prev => ({ ...prev, status: newStatus, amount: 0, due: 0, isDateEnabled: false }));
+      }
+  };
+
   // Payment Edit Modal
   const paymentEditModalContent = isEditModalOpen && (
     <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -390,7 +450,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
           <div>
             <h3 className="text-lg font-bold text-slate-800">পেমেন্ট আপডেট</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">ইউনিট: {editModalData.unit}</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              ইউনিট: <span className="font-bold text-slate-700">{editModalData.unit}</span> | মাস: <span className="font-bold text-slate-700">{editModalData.month} {editModalData.year}</span>
+            </p>
           </div>
           <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-red-500 bg-slate-50 p-2 rounded-full transition-colors">
             <X size={20} />
@@ -398,82 +460,117 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         </div>
 
         <div className="space-y-4">
-            {/* Amount & Due Row */}
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1.5">{t.amount}</label>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
-                        <input 
-                            type="number" 
-                            value={editModalData.amount}
-                            onChange={(e) => setEditModalData({...editModalData, amount: Number(e.target.value)})}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                        />
-                    </div>
-                </div>
-                <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1.5">{t.due}</label>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
-                        <input 
-                            type="number" 
-                            value={editModalData.due}
-                            onChange={(e) => setEditModalData({...editModalData, due: Number(e.target.value)})}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-red-600 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all"
-                        />
-                    </div>
-                </div>
+            {/* Status Selection */}
+            <div className="flex bg-slate-100 p-1 rounded-xl">
+                <button 
+                    onClick={() => handleStatusChange('PAID')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'PAID' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    পরিশোধিত
+                </button>
+                <button 
+                    onClick={() => handleStatusChange('DUE')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'DUE' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    বকেয়া
+                </button>
+                <button 
+                    onClick={() => handleStatusChange('UPCOMING')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'UPCOMING' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    আসন্ন
+                </button>
             </div>
 
-            {/* Date Selection Row */}
-            <div>
-                <div className="flex justify-between items-center mb-2">
-                    <label className="block text-xs font-bold text-slate-600">পেমেন্ট তারিখ</label>
-                    <button 
-                        onClick={() => setEditModalData({...editModalData, isDateEnabled: !editModalData.isDateEnabled})}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${editModalData.isDateEnabled ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}
-                    >
-                        {editModalData.isDateEnabled ? 'অন আছে' : 'অফ আছে'}
-                    </button>
-                </div>
-                
-                {editModalData.isDateEnabled && (
-                    <div className="grid grid-cols-3 gap-2">
-                        {/* Day Dropdown */}
-                        <select 
-                            value={editModalData.day}
-                            onChange={(e) => setEditModalData({...editModalData, day: e.target.value})}
-                            className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
-                        >
-                            {Array.from({length: 31}, (_, i) => i + 1).map(d => (
-                                <option key={d} value={d}>{d}</option>
-                            ))}
-                        </select>
-
-                        {/* Month Dropdown */}
-                        <select 
-                            value={editModalData.monthName}
-                            onChange={(e) => setEditModalData({...editModalData, monthName: e.target.value})}
-                            className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
-                        >
-                            {MONTHS_LOGIC.map((m) => (
-                                <option key={m} value={m}>{m}</option>
-                            ))}
-                        </select>
-
-                        {/* Year Dropdown */}
-                        <select 
-                            value={editModalData.yearVal}
-                            onChange={(e) => setEditModalData({...editModalData, yearVal: e.target.value})}
-                            className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
-                        >
-                            <option value="2025">2025</option>
-                            <option value="2026">2026</option>
-                        </select>
+            {editModalData.status !== 'UPCOMING' && (
+                <>
+                    {/* Amount & Due Row */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 mb-1.5">{t.amount}</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
+                                <input 
+                                    type="number" 
+                                    value={editModalData.amount}
+                                    onChange={(e) => setEditModalData({...editModalData, amount: Number(e.target.value)})}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 mb-1.5">{t.due}</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
+                                <input 
+                                    type="number" 
+                                    value={editModalData.due}
+                                    onChange={(e) => setEditModalData({...editModalData, due: Number(e.target.value)})}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-red-600 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all"
+                                />
+                            </div>
+                        </div>
                     </div>
-                )}
-            </div>
+
+                    {/* Date Selection Row */}
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-xs font-bold text-slate-600">পেমেন্ট তারিখ</label>
+                            <button 
+                                onClick={() => setEditModalData({...editModalData, isDateEnabled: !editModalData.isDateEnabled})}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${editModalData.isDateEnabled ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}
+                            >
+                                {editModalData.isDateEnabled ? 'অন আছে' : 'অফ আছে'}
+                            </button>
+                        </div>
+                        
+                        {editModalData.isDateEnabled && (
+                            <div className="grid grid-cols-3 gap-2">
+                                {/* Day Dropdown */}
+                                <select 
+                                    value={editModalData.day}
+                                    onChange={(e) => setEditModalData({...editModalData, day: e.target.value})}
+                                    className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                                >
+                                    {Array.from({length: 31}, (_, i) => i + 1).map(d => (
+                                        <option key={d} value={d}>{d}</option>
+                                    ))}
+                                </select>
+
+                                {/* Month Dropdown */}
+                                <select 
+                                    value={editModalData.monthName}
+                                    onChange={(e) => setEditModalData({...editModalData, monthName: e.target.value})}
+                                    className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                                >
+                                    {MONTHS_LOGIC.map((m) => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
+
+                                {/* Year Dropdown */}
+                                <select 
+                                    value={editModalData.yearVal}
+                                    onChange={(e) => setEditModalData({...editModalData, yearVal: e.target.value})}
+                                    className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                                >
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027</option>
+                                </select>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+            
+            {editModalData.status === 'UPCOMING' && (
+                <div className="py-8 text-center bg-slate-50 rounded-xl border border-slate-100">
+                    <Clock size={32} className="mx-auto text-slate-300 mb-2" />
+                    <p className="text-sm font-bold text-slate-600">এই মাসের বিল এখনো তৈরি হয়নি</p>
+                    <p className="text-xs text-slate-400 mt-1">তারিখ বা টাকার পরিমাণ প্রয়োজন নেই</p>
+                </div>
+            )}
         </div>
 
         <div className="mt-8 flex gap-3">
