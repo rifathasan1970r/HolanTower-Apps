@@ -39,6 +39,7 @@ interface PaymentData {
 interface UnitInfo {
   unit_text: string;
   is_occupied: boolean;
+  note?: string;
 }
 
 interface ServiceChargeViewProps {
@@ -53,7 +54,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   
   // Supabase State
   const [dbData, setDbData] = useState<PaymentData[]>([]);
-  const [unitsInfo, setUnitsInfo] = useState<Record<string, boolean>>({});
+  const [unitsInfo, setUnitsInfo] = useState<Record<string, { is_occupied: boolean, note: string }>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [useMock, setUseMock] = useState<boolean>(false);
 
@@ -62,6 +63,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [pinInput, setPinInput] = useState<string>('');
   const [processingUpdate, setProcessingUpdate] = useState<boolean>(false);
+  const [editingNote, setEditingNote] = useState<boolean>(false);
+  const [noteInput, setNoteInput] = useState<string>('');
 
   // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
@@ -108,8 +111,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
       if (uError) {
           console.warn("units_info table not found, using default occupancy logic.");
       } else if (uData) {
-          const mapping: Record<string, boolean> = {};
-          uData.forEach((u: UnitInfo) => mapping[u.unit_text] = u.is_occupied);
+          const mapping: Record<string, { is_occupied: boolean, note: string }> = {};
+          uData.forEach((u: UnitInfo) => mapping[u.unit_text] = { is_occupied: u.is_occupied, note: u.note || '' });
           setUnitsInfo(mapping);
       }
       
@@ -141,16 +144,16 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     if (!isAdmin || processingUpdate) return;
     setProcessingUpdate(true);
     
-    const currentVal = unitsInfo[unit] ?? (unit.charCodeAt(1) % 2 !== 0);
-    const newVal = !currentVal;
+    const currentInfo = unitsInfo[unit] || { is_occupied: (unit.charCodeAt(1) % 2 !== 0), note: '' };
+    const newVal = !currentInfo.is_occupied;
 
     try {
         const { error } = await supabase
             .from('units_info')
-            .upsert({ unit_text: unit, is_occupied: newVal }, { onConflict: 'unit_text' });
+            .upsert({ unit_text: unit, is_occupied: newVal, note: currentInfo.note }, { onConflict: 'unit_text' });
 
         if (error) throw error;
-        setUnitsInfo(prev => ({ ...prev, [unit]: newVal }));
+        setUnitsInfo(prev => ({ ...prev, [unit]: { ...currentInfo, is_occupied: newVal } }));
     } catch (err) {
         console.error("Error updating occupancy:", err);
     } finally {
@@ -186,7 +189,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         isDateEnabled = false;
     }
 
-    const isOccupied = unitsInfo[unit] ?? (unit.charCodeAt(1) % 2 !== 0);
+    const isOccupied = unitsInfo[unit]?.is_occupied ?? (unit.charCodeAt(1) % 2 !== 0);
     const defaultAmount = isOccupied ? 2000 : 500;
 
     let initialStatus: 'PAID' | 'DUE' | 'UPCOMING' = 'PAID';
@@ -318,6 +321,30 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
       startEditing(unit, month);
   };
 
+  const handleSaveNote = async () => {
+    if (!isAdmin || processingUpdate || !selectedUnit) return;
+    setProcessingUpdate(true);
+    
+    const currentInfo = unitsInfo[selectedUnit] || { is_occupied: (selectedUnit.charCodeAt(1) % 2 !== 0), note: '' };
+
+    try {
+        const { error } = await supabase
+            .from('units_info')
+            .upsert({ unit_text: selectedUnit, is_occupied: currentInfo.is_occupied, note: noteInput }, { onConflict: 'unit_text' });
+
+        if (error) throw error;
+        setUnitsInfo(prev => ({ ...prev, [selectedUnit]: { ...currentInfo, note: noteInput } }));
+        setEditingNote(false);
+    } catch (err) {
+        console.error("Error saving note:", err);
+        // Fallback to local state if column doesn't exist
+        setUnitsInfo(prev => ({ ...prev, [selectedUnit]: { ...currentInfo, note: noteInput } }));
+        setEditingNote(false);
+    } finally {
+        setProcessingUpdate(false);
+    }
+  };
+
   // Generate Data
   const getUnitData = (unit: string): MonthlyRecord[] => {
     const now = new Date();
@@ -349,7 +376,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         };
       }
 
-      const isOccupied = unitsInfo[unit] ?? (unit.charCodeAt(1) % 2 !== 0);
+      const isOccupied = unitsInfo[unit]?.is_occupied ?? (unit.charCodeAt(1) % 2 !== 0);
       const defaultAmount = isOccupied ? 2000 : 500;
 
       const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && index > currentRealMonthIdx);
@@ -440,7 +467,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   );
 
   const handleStatusChange = (newStatus: 'PAID' | 'DUE' | 'UPCOMING') => {
-      const isOccupied = unitsInfo[editModalData.unit] ?? (editModalData.unit.charCodeAt(1) % 2 !== 0);
+      const isOccupied = unitsInfo[editModalData.unit]?.is_occupied ?? (editModalData.unit.charCodeAt(1) % 2 !== 0);
       const defaultAmount = isOccupied ? 2000 : 500;
 
       if (newStatus === 'PAID') {
@@ -614,15 +641,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     // Stats for Graph
     const paidCount = records.filter(r => r.status === 'PAID').length;
     const dueCount = records.filter(r => r.status === 'DUE').length;
+    const upcomingCount = records.filter(r => r.status === 'UPCOMING').length;
     
-    const totalMonths = 12;
-    const radius = 40;
-    const circumference = 2 * Math.PI * radius;
-    const paidOffset = circumference - (paidCount / totalMonths) * circumference;
-    const dueOffset = circumference - (dueCount / totalMonths) * circumference;
-    
-    const isOccupied = unitsInfo[selectedUnit] ?? (selectedUnit.charCodeAt(1) % 2 !== 0); 
+    const isOccupied = unitsInfo[selectedUnit]?.is_occupied ?? (selectedUnit.charCodeAt(1) % 2 !== 0); 
     const occupancyStatus = isOccupied ? t.occupied : t.vacant;
+    const unitNote = unitsInfo[selectedUnit]?.note || '';
 
     return (
       <div key={`${selectedUnit}-${selectedYear}`} className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 min-h-screen relative">
@@ -809,36 +832,71 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                       <h3 className="font-bold text-slate-700">{t.paymentStatus} ({selectedYear})</h3>
                   </div>
                   
-                  {/* Pie Chart & Legend */}
-                  <div className="flex items-center justify-between gap-4 mb-6">
-                      <div className="relative w-32 h-32 flex-shrink-0">
-                          <svg className="w-full h-full transform -rotate-90">
-                              <circle cx="50%" cy="50%" r={radius} stroke="#f1f5f9" strokeWidth="12" fill="transparent"/>
-                              <circle cx="50%" cy="50%" r={radius} stroke="#22c55e" strokeWidth="12" fill="transparent" strokeDasharray={circumference} strokeDashoffset={paidOffset} strokeLinecap="round"/>
-                              <circle cx="50%" cy="50%" r={radius} stroke="#ef4444" strokeWidth="12" fill="transparent" strokeDasharray={circumference} strokeDashoffset={dueOffset} strokeLinecap="round" style={{ transformOrigin: 'center', transform: `rotate(${paidCount * (360/12)}deg)` }}/>
-                          </svg>
-                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                              <span className="block text-2xl font-bold text-slate-700">{Math.round((paidCount/totalMonths)*100)}%</span>
-                              <span className="text-[10px] text-slate-400 font-medium">{t.paid}</span>
-                          </div>
+                  {/* Status Boxes */}
+                  <div className="grid grid-cols-3 gap-3 mb-6">
+                      <div className="bg-green-50 border border-green-100 rounded-xl p-3 text-center flex flex-col items-center justify-center">
+                          <span className="text-2xl font-black text-green-600 mb-1">{paidCount}</span>
+                          <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{t.paid}</span>
                       </div>
+                      <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-center flex flex-col items-center justify-center">
+                          <span className="text-2xl font-black text-red-600 mb-1">{dueCount}</span>
+                          <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">{t.due}</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col items-center justify-center">
+                          <span className="text-2xl font-black text-slate-600 mb-1">{upcomingCount}</span>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t.upcoming}</span>
+                      </div>
+                  </div>
 
-                      <div className="flex-1 space-y-3">
-                          <div className="flex justify-between items-center text-sm">
-                              <div className="flex items-center gap-2">
-                                  <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                                  <span className="text-slate-600 font-medium">{t.paid}</span>
-                              </div>
-                              <span className="font-bold text-slate-800">{paidCount} {t.month}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                              <div className="flex items-center gap-2">
-                                  <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                                  <span className="text-slate-600 font-medium">{t.due}</span>
-                              </div>
-                              <span className="font-bold text-slate-800">{dueCount} {t.month}</span>
-                          </div>
+                  {/* Note Box */}
+                  <div className="mb-6 bg-amber-50/50 border border-amber-200/50 rounded-xl p-4 relative group transition-all hover:bg-amber-50">
+                      <div className="flex items-center gap-2 mb-2">
+                          <Edit3 size={14} className="text-amber-600" />
+                          <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider">নোট</h4>
                       </div>
+                      
+                      {editingNote ? (
+                          <div className="mt-2">
+                              <textarea 
+                                  value={noteInput}
+                                  onChange={(e) => setNoteInput(e.target.value)}
+                                  className="w-full bg-white border border-amber-200 rounded-lg p-3 text-sm text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 min-h-[80px] resize-none"
+                                  placeholder="এখানে নোট লিখুন..."
+                                  autoFocus
+                              />
+                              <div className="flex justify-end gap-2 mt-2">
+                                  <button 
+                                      onClick={() => setEditingNote(false)}
+                                      className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-md transition-colors"
+                                  >
+                                      বাতিল
+                                  </button>
+                                  <button 
+                                      onClick={handleSaveNote}
+                                      className="px-3 py-1.5 text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 rounded-md transition-colors shadow-sm"
+                                  >
+                                      সেভ করুন
+                                  </button>
+                              </div>
+                          </div>
+                      ) : (
+                          <div 
+                              className={`text-sm ${unitNote ? 'text-slate-700' : 'text-slate-400 italic'} min-h-[40px] ${isAdmin ? 'cursor-pointer' : ''}`}
+                              onClick={() => {
+                                  if (isAdmin) {
+                                      setNoteInput(unitNote);
+                                      setEditingNote(true);
+                                  }
+                              }}
+                          >
+                              {unitNote || (isAdmin ? 'নোট যোগ করতে ক্লিক করুন...' : 'কোনো নোট নেই')}
+                              {isAdmin && !editingNote && (
+                                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-1 rounded-md">এডিট</span>
+                                  </div>
+                              )}
+                          </div>
+                      )}
                   </div>
 
                   {/* Month Grid */}
