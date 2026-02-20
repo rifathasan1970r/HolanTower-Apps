@@ -825,84 +825,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                 </table>
             </div>
             
-            {/* Payment Status Graph & Grid Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-                  <div className="flex items-center gap-2 mb-4 border-b border-slate-50 pb-2">
-                      <PieChart size={18} className="text-primary-600" />
-                      <h3 className="font-bold text-slate-700">{t.paymentStatus} ({selectedYear})</h3>
-                  </div>
-                  
-                  {/* Status Boxes */}
-                  <div className="grid grid-cols-3 gap-3 mb-6">
-                      <div className="bg-green-50 border border-green-100 rounded-xl p-3 text-center flex flex-col items-center justify-center">
-                          <span className="text-2xl font-black text-green-600 mb-1">{paidCount}</span>
-                          <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{t.paid}</span>
-                      </div>
-                      <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-center flex flex-col items-center justify-center">
-                          <span className="text-2xl font-black text-red-600 mb-1">{dueCount}</span>
-                          <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">{t.due}</span>
-                      </div>
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center flex flex-col items-center justify-center">
-                          <span className="text-2xl font-black text-slate-600 mb-1">{upcomingCount}</span>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t.upcoming}</span>
-                      </div>
-                  </div>
-
-                  {/* Note Box */}
-                  <div className="mb-6 bg-amber-50/50 border border-amber-200/50 rounded-xl p-4 relative group transition-all hover:bg-amber-50">
-                      <div className="flex items-center gap-2 mb-2">
-                          <Edit3 size={14} className="text-amber-600" />
-                          <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider">নোট</h4>
-                      </div>
-                      
-                      {editingNote ? (
-                          <div className="mt-2">
-                              <textarea 
-                                  value={noteInput}
-                                  onChange={(e) => setNoteInput(e.target.value)}
-                                  className="w-full bg-white border border-amber-200 rounded-lg p-3 text-sm text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 min-h-[80px] resize-none"
-                                  placeholder="এখানে নোট লিখুন..."
-                                  autoFocus
-                              />
-                              <div className="flex justify-end gap-2 mt-2">
-                                  <button 
-                                      onClick={() => setEditingNote(false)}
-                                      className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-md transition-colors"
-                                  >
-                                      বাতিল
-                                  </button>
-                                  <button 
-                                      onClick={handleSaveNote}
-                                      className="px-3 py-1.5 text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 rounded-md transition-colors shadow-sm"
-                                  >
-                                      সেভ করুন
-                                  </button>
-                              </div>
-                          </div>
-                      ) : (
-                          <div 
-                              className={`text-sm ${unitNote ? 'text-slate-700' : 'text-slate-400 italic'} min-h-[40px] ${isAdmin ? 'cursor-pointer' : ''}`}
-                              onClick={() => {
-                                  if (isAdmin) {
-                                      setNoteInput(unitNote);
-                                      setEditingNote(true);
-                                  }
-                              }}
-                          >
-                              {unitNote || (isAdmin ? 'নোট যোগ করতে ক্লিক করুন...' : 'কোনো নোট নেই')}
-                              {isAdmin && !editingNote && (
-                                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-1 rounded-md">এডিট</span>
-                                  </div>
-                              )}
-                          </div>
-                      )}
-                  </div>
-
-                  {/* Month Grid */}
-                  <div className="grid grid-cols-4 gap-2 border-t border-slate-50 pt-4">
+            {/* Month Grid Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
+                <div className="flex items-center gap-2 mb-4 border-b border-slate-50 pb-2">
+                    <CalendarDays size={18} className="text-primary-600" />
+                    <h3 className="font-bold text-slate-700">{t.month} গ্রিড ({selectedYear})</h3>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
                     {records.map((record, idx) => {
-                        // Use correct month logic for clicking
                         const dbMonth = MONTHS_LOGIC[record.monthIndex];
                         return (
                         <div
@@ -929,8 +859,112 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                         </div>
                     );
                     })}
-                  </div>
-              </div>
+                </div>
+            </div>
+
+            {/* Premium Note Box */}
+            <div className="mb-6 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100/50 border border-amber-200/60 rounded-2xl p-5 relative overflow-hidden shadow-sm group transition-all">
+                {/* Decorative background element */}
+                <div className="absolute -right-4 -top-4 text-amber-200/40 transform rotate-12 pointer-events-none">
+                    <Edit3 size={100} />
+                </div>
+                
+                <div className="flex items-center gap-2 mb-3 relative z-10">
+                    <div className="bg-amber-100 p-1.5 rounded-lg text-amber-600 shadow-sm">
+                        <Edit3 size={16} />
+                    </div>
+                    <h4 className="text-sm font-bold text-amber-900 tracking-wide">অ্যাডমিন নোট</h4>
+                </div>
+                
+                <div className="relative z-10">
+                    {editingNote ? (
+                        <div className="mt-2 animate-in fade-in duration-200">
+                            <textarea 
+                                value={noteInput}
+                                onChange={(e) => setNoteInput(e.target.value)}
+                                className="w-full bg-white/80 backdrop-blur-sm border border-amber-300 rounded-xl p-3 text-sm text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 min-h-[100px] resize-none shadow-inner"
+                                placeholder="এখানে স্পেশাল নোট লিখুন..."
+                                autoFocus
+                            />
+                            <div className="flex justify-end gap-2 mt-3">
+                                <button 
+                                    onClick={() => setEditingNote(false)}
+                                    className="px-4 py-2 text-xs font-bold text-amber-700 hover:bg-amber-200/50 rounded-lg transition-colors"
+                                >
+                                    বাতিল
+                                </button>
+                                <button 
+                                    onClick={handleSaveNote}
+                                    className="px-4 py-2 text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 rounded-lg transition-all shadow-md shadow-amber-500/20 active:scale-95"
+                                >
+                                    সেভ করুন
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div 
+                            className={`text-sm leading-relaxed ${unitNote ? 'text-amber-950 font-medium' : 'text-amber-700/60 italic'} min-h-[60px] p-3 bg-white/40 rounded-xl border border-white/60 ${isAdmin ? 'cursor-pointer hover:bg-white/60 transition-colors' : ''}`}
+                            onClick={() => {
+                                if (isAdmin) {
+                                    setNoteInput(unitNote);
+                                    setEditingNote(true);
+                                }
+                            }}
+                        >
+                            {unitNote || (isAdmin ? 'নোট যোগ করতে এখানে ক্লিক করুন...' : 'কোনো নোট নেই')}
+                            {isAdmin && !editingNote && (
+                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span className="text-[10px] font-bold text-amber-700 bg-amber-200/50 px-2.5 py-1 rounded-md border border-amber-300/50 backdrop-blur-sm shadow-sm">এডিট করুন</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Payment Status Graph */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div className="flex items-center gap-2 mb-6 border-b border-slate-50 pb-3">
+                    <PieChart size={20} className="text-indigo-600" />
+                    <h3 className="font-bold text-slate-800 text-lg">{t.paymentStatus} ({selectedYear})</h3>
+                </div>
+                
+                {/* Premium Pie Chart */}
+                <div className="flex flex-col items-center justify-center gap-6 mb-2">
+                    <div className="relative w-40 h-40 flex-shrink-0 drop-shadow-md">
+                        <svg className="w-full h-full transform -rotate-90">
+                            {/* Background circle */}
+                            <circle cx="50%" cy="50%" r="60" stroke="#f1f5f9" strokeWidth="14" fill="transparent"/>
+                            
+                            {/* Paid circle */}
+                            <circle cx="50%" cy="50%" r="60" stroke="#22c55e" strokeWidth="14" fill="transparent" strokeDasharray={2 * Math.PI * 60} strokeDashoffset={(2 * Math.PI * 60) - (paidCount / 12) * (2 * Math.PI * 60)} strokeLinecap="round" className="transition-all duration-1000 ease-out"/>
+                            
+                            {/* Due circle */}
+                            <circle cx="50%" cy="50%" r="60" stroke="#ef4444" strokeWidth="14" fill="transparent" strokeDasharray={2 * Math.PI * 60} strokeDashoffset={(2 * Math.PI * 60) - (dueCount / 12) * (2 * Math.PI * 60)} strokeLinecap="round" style={{ transformOrigin: 'center', transform: `rotate(${paidCount * (360/12)}deg)` }} className="transition-all duration-1000 ease-out"/>
+                        </svg>
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center bg-white w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-inner border border-slate-50">
+                            <span className="block text-3xl font-black text-slate-800 tracking-tighter">{Math.round((paidCount/12)*100)}%</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{t.paid}</span>
+                        </div>
+                    </div>
+
+                    {/* Status List */}
+                    <div className="w-full grid grid-cols-3 gap-3 mt-4">
+                        <div className="bg-green-50/50 border border-green-100 rounded-xl p-3 flex flex-col items-center justify-center">
+                            <span className="text-xl font-black text-green-600">{paidCount}</span>
+                            <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{t.paid}</span>
+                        </div>
+                        <div className="bg-red-50/50 border border-red-100 rounded-xl p-3 flex flex-col items-center justify-center">
+                            <span className="text-xl font-black text-red-600">{dueCount}</span>
+                            <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">{t.due}</span>
+                        </div>
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 flex flex-col items-center justify-center">
+                            <span className="text-xl font-black text-slate-600">{upcomingCount}</span>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t.upcoming}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
       </div>
     );
