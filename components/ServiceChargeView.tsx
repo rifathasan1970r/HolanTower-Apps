@@ -186,8 +186,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         isDateEnabled = false;
     }
 
+    const isOccupied = unitsInfo[unit] ?? (unit.charCodeAt(1) % 2 !== 0);
+    const defaultAmount = isOccupied ? 2000 : 500;
+
     let initialStatus: 'PAID' | 'DUE' | 'UPCOMING' = 'PAID';
-    let initialAmount = 2000;
+    let initialAmount = defaultAmount;
     let initialDue = 0;
 
     if (existing) {
@@ -220,7 +223,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         } else {
             initialStatus = 'DUE';
             initialAmount = 0;
-            initialDue = 2000;
+            initialDue = defaultAmount;
             isDateEnabled = false;
         }
     }
@@ -346,11 +349,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         };
       }
 
+      const isOccupied = unitsInfo[unit] ?? (unit.charCodeAt(1) % 2 !== 0);
+      const defaultAmount = isOccupied ? 2000 : 500;
+
       const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && index > currentRealMonthIdx);
       if (isFuture) {
         return { month: displayMonth, monthIndex: index, date: '-', amount: 0, due: 0, status: 'UPCOMING' };
       } else {
-        return { month: displayMonth, monthIndex: index, date: '-', amount: 0, due: SERVICE_CHARGE_AMOUNT, status: 'DUE' };
+        return { month: displayMonth, monthIndex: index, date: '-', amount: 0, due: defaultAmount, status: 'DUE' };
       }
     });
   };
@@ -434,10 +440,13 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   );
 
   const handleStatusChange = (newStatus: 'PAID' | 'DUE' | 'UPCOMING') => {
+      const isOccupied = unitsInfo[editModalData.unit] ?? (editModalData.unit.charCodeAt(1) % 2 !== 0);
+      const defaultAmount = isOccupied ? 2000 : 500;
+
       if (newStatus === 'PAID') {
-          setEditModalData(prev => ({ ...prev, status: newStatus, amount: 2000, due: 0, isDateEnabled: true }));
+          setEditModalData(prev => ({ ...prev, status: newStatus, amount: defaultAmount, due: 0, isDateEnabled: true }));
       } else if (newStatus === 'DUE') {
-          setEditModalData(prev => ({ ...prev, status: newStatus, amount: 0, due: 2000, isDateEnabled: false }));
+          setEditModalData(prev => ({ ...prev, status: newStatus, amount: 0, due: defaultAmount, isDateEnabled: false }));
       } else if (newStatus === 'UPCOMING') {
           setEditModalData(prev => ({ ...prev, status: newStatus, amount: 0, due: 0, isDateEnabled: false }));
       }
