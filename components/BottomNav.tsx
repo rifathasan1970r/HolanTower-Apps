@@ -6,10 +6,9 @@ import { ViewState } from '../types';
 interface BottomNavProps {
   currentView: ViewState;
   setView: (view: ViewState) => void;
-  lang: 'bn' | 'en';
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView, lang }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
       {/* Glassmorphism Background */}
@@ -59,7 +58,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView, lang }) => 
               )}
               
               <span className={`text-[10px] font-medium mt-1 ${isHome ? 'mb-1' : ''} ${isActive ? 'font-bold' : ''}`}>
-                {lang === 'bn' ? item.label : item.labelEn}
+                {item.label}
               </span>
             </button>
           );

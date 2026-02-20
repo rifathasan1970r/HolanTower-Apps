@@ -10,10 +10,9 @@ interface Message {
 
 interface AssistantProps {
   isVisible: boolean;
-  lang: 'bn' | 'en';
 }
 
-const SUGGESTIONS_BN = [
+const SUGGESTIONS = [
   "সার্ভিস চার্জ কত?",
   "ম্যানেজারের নাম্বার",
   "আজকের নোটিশ",
@@ -27,39 +26,14 @@ const SUGGESTIONS_BN = [
   "লোকেশন ম্যাপ"
 ];
 
-const SUGGESTIONS_EN = [
-  "Service charge amount?",
-  "Manager number",
-  "Today's notice",
-  "Gate closing time?",
-  "Garbage collection time",
-  "WiFi password",
-  "Lift broken?",
-  "Gas bill",
-  "Emergency contact",
-  "To-Let info",
-  "Location map"
-];
-
-const Assistant: React.FC<AssistantProps> = ({ isVisible, lang }) => {
+const Assistant: React.FC<AssistantProps> = ({ isVisible }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'assistant', text: 'আসসালামু আলাইকুম! আমি হলান টাওয়ারের স্মার্ট অ্যাসিস্ট্যান্ট। আমি কীভাবে আপনাকে সাহায্য করতে পারি?' }
+  ]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Initialize welcome message when language or visibility changes
-  useEffect(() => {
-    const initialMsg = lang === 'bn' 
-        ? 'আসসালামু আলাইকুম! আমি হলান টাওয়ারের স্মার্টু মিয়া। আমি কীভাবে আপনাকে সাহায্য করতে পারি?'
-        : 'Assalamu Alaikum! I am Smartu Mia of Hollan Tower. How can I assist you today?';
-    
-    // Only reset if empty to avoid wiping conversation, or just add a system note? 
-    // For simplicity, we just check if it's empty.
-    if (messages.length === 0) {
-        setMessages([{ role: 'assistant', text: initialMsg }]);
-    }
-  }, [lang]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -84,13 +58,11 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang }) => {
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
 
-    const response = await getGeminiResponse(userMessage, lang);
+    const response = await getGeminiResponse(userMessage);
 
     setMessages(prev => [...prev, { role: 'assistant', text: response }]);
     setIsLoading(false);
   };
-
-  const suggestions = lang === 'bn' ? SUGGESTIONS_BN : SUGGESTIONS_EN;
 
   // যদি হোম পেজে না থাকে এবং চ্যাট ওপেন না থাকে, তবে কিছুই রেন্ডার করার দরকার নেই
   if (!isVisible && !isOpen) return null;
@@ -107,13 +79,13 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang }) => {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-24 right-5 z-40 p-3 rounded-full shadow-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-violet-600 text-white flex items-center justify-center border-2 border-white/30 backdrop-blur-md group"
+            className="fixed bottom-24 right-5 z-40 p-4 rounded-full shadow-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-violet-600 text-white flex items-center justify-center border-2 border-white/30 backdrop-blur-md group"
           >
             <div className="relative">
-                 <Bot size={24} className="text-white drop-shadow-md" />
-                 <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                 <Bot size={28} className="text-white drop-shadow-md" />
+                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border border-white"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-white"></span>
                  </span>
             </div>
           </motion.button>
@@ -135,7 +107,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang }) => {
               {/* Header */}
               <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-3.5 flex justify-between items-center text-white shadow-md relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <Bot size={60} />
+                    <Bot size={80} />
                 </div>
 
                 <div className="flex items-center gap-3 relative z-10">
@@ -143,12 +115,10 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang }) => {
                     <Zap size={18} className="text-yellow-300 fill-yellow-300" />
                   </div>
                   <div>
-                    <span className="font-bold text-base block leading-tight tracking-wide">
-                        {lang === 'bn' ? 'স্মার্টু মিয়া' : 'Smartu Mia'}
-                    </span>
+                    <span className="font-bold text-base block leading-tight tracking-wide">স্মার্ট অ্যাসিস্ট্যান্ট</span>
                     <span className="text-[10px] text-indigo-100 flex items-center gap-1 opacity-90">
                       <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_5px_rgba(74,222,128,0.8)]"></span>
-                      {lang === 'bn' ? 'সক্রিয় আছে' : 'Active Now'}
+                      সক্রিয় আছে
                     </span>
                   </div>
                 </div>
@@ -205,7 +175,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang }) => {
               {/* Suggestions Chips */}
               {!isLoading && (
                 <div className="px-3 py-2 bg-slate-50 flex gap-2 overflow-x-auto no-scrollbar border-t border-gray-100">
-                  {suggestions.map((suggestion, idx) => (
+                  {SUGGESTIONS.map((suggestion, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleSend(suggestion)}
@@ -224,7 +194,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang }) => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder={lang === 'bn' ? "এখানে লিখুন..." : "Type here..."}
+                  placeholder="এখানে লিখুন..."
                   className="flex-1 bg-gray-100 border border-transparent focus:bg-white focus:border-indigo-200 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder:text-gray-400 text-gray-700"
                 />
                 <button
