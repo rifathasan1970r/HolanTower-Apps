@@ -9,6 +9,7 @@ import BottomNav from './components/BottomNav';
 import Assistant from './components/Assistant';
 import { DescoView } from './components/DescoView';
 import { ServiceChargeView } from './components/ServiceChargeView';
+import { EmergencyView } from './components/EmergencyView';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -103,38 +104,8 @@ const App: React.FC = () => {
           </div>
         );
 
-      case 'CONTACT':
-        return (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-xl font-bold text-gray-800 border-l-4 border-indigo-600 pl-3">জরুরী যোগাযোগ</h2>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-               {[
-                 { name: 'ম্যানেজার (রহিম সাহেব)', phone: '০১৭১১-০০০০০০', role: 'ম্যানেজমেন্ট', color: 'bg-indigo-100 text-indigo-600' },
-                 { name: 'সিকিউরিটি গেট', phone: '০১৯১১-২২৩৩৪৪', role: 'নিরাপত্তা', color: 'bg-rose-100 text-rose-600' },
-                 { name: 'লিফট মেইনটেনেন্স', phone: '০১৮১১-৫৫৬৬৭৭', role: 'টেকনিক্যাল', color: 'bg-amber-100 text-amber-600' },
-                 { name: 'ফায়ার সার্ভিস', phone: '৯৯৯', role: 'জরুরী সেবা', color: 'bg-red-500 text-white' },
-               ].map((contact, i) => (
-                 <div key={i} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                       <div className={`w-10 h-10 ${contact.color} rounded-full flex items-center justify-center shadow-sm`}>
-                          <Phone size={18} />
-                       </div>
-                       <div>
-                         <h4 className="font-bold text-gray-800 text-sm">{contact.name}</h4>
-                         <p className="text-[11px] text-gray-500 font-medium">{contact.role}</p>
-                       </div>
-                    </div>
-                    <a 
-                      href={`tel:${contact.phone}`} 
-                      className="px-4 py-2 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 hover:bg-green-500 hover:text-white transition-all active:scale-95"
-                    >
-                      কল করুন
-                    </a>
-                 </div>
-               ))}
-            </div>
-          </div>
-        );
+      case 'EMERGENCY':
+        return <EmergencyView />;
       
       case 'MENU':
       case 'HOME':
