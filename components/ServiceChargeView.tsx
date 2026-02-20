@@ -73,7 +73,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     due: 0,
     day: '1',
     monthName: 'জানুয়ারি',
-    yearVal: '2026'
+    yearVal: '2026',
+    isDateEnabled: true
   });
 
   const t = TRANSLATIONS[lang];
@@ -165,6 +166,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     let monthName = month;
     let yearVal = selectedYear.toString();
 
+    let isDateEnabled = true;
+
     if (existing?.paid_date) {
         // Try to parse simple date format if possible, otherwise keep defaults
         // This is a simplification as the date format stored might vary
@@ -175,6 +178,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
             // Month name might need mapping if stored differently
             // yearVal = parts[2]; // Keep year consistent with selectedYear for now
         }
+    } else if (existing && !existing.paid_date) {
+        isDateEnabled = false;
     }
 
     setEditModalData({
@@ -185,7 +190,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
       due: existing?.due ?? 0,
       day,
       monthName,
-      yearVal
+      yearVal,
+      isDateEnabled
     });
     setIsEditModalOpen(true);
   };
@@ -194,9 +200,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     if (processingUpdate) return;
     setProcessingUpdate(true);
 
-    const { unit, month, year, amount, due, day, monthName, yearVal } = editModalData;
+    const { unit, month, year, amount, due, day, monthName, yearVal, isDateEnabled } = editModalData;
     // Construct date string
-    const paidDate = `${day} ${monthName} ${yearVal}`;
+    const paidDate = isDateEnabled ? `${day} ${monthName} ${yearVal}` : '';
 
     try {
       // ১. প্রথমে চেক করি এই মাস ও ইউনিটের ডাটা সার্ভারে আগে থেকেই আছে কিনা
@@ -348,7 +354,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   };
 
   // Login Modal
-  const LoginModal = () => (
+  const loginModalContent = showLogin && (
     <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl animate-in zoom-in duration-200">
         <div className="flex justify-between items-center mb-4">
@@ -378,7 +384,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   );
 
   // Payment Edit Modal
-  const PaymentEditModal = () => (
+  const paymentEditModalContent = isEditModalOpen && (
     <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in duration-200">
         <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
@@ -422,40 +428,51 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
 
             {/* Date Selection Row */}
             <div>
-                <label className="block text-xs font-bold text-slate-600 mb-2">পেমেন্ট তারিখ</label>
-                <div className="grid grid-cols-3 gap-2">
-                    {/* Day Dropdown */}
-                    <select 
-                        value={editModalData.day}
-                        onChange={(e) => setEditModalData({...editModalData, day: e.target.value})}
-                        className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                <div className="flex justify-between items-center mb-2">
+                    <label className="block text-xs font-bold text-slate-600">পেমেন্ট তারিখ</label>
+                    <button 
+                        onClick={() => setEditModalData({...editModalData, isDateEnabled: !editModalData.isDateEnabled})}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${editModalData.isDateEnabled ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}
                     >
-                        {Array.from({length: 31}, (_, i) => i + 1).map(d => (
-                            <option key={d} value={d}>{d}</option>
-                        ))}
-                    </select>
-
-                    {/* Month Dropdown */}
-                    <select 
-                        value={editModalData.monthName}
-                        onChange={(e) => setEditModalData({...editModalData, monthName: e.target.value})}
-                        className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
-                    >
-                        {MONTHS_LOGIC.map((m) => (
-                            <option key={m} value={m}>{m}</option>
-                        ))}
-                    </select>
-
-                    {/* Year Dropdown */}
-                    <select 
-                        value={editModalData.yearVal}
-                        onChange={(e) => setEditModalData({...editModalData, yearVal: e.target.value})}
-                        className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
-                    >
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                    </select>
+                        {editModalData.isDateEnabled ? 'অন আছে' : 'অফ আছে'}
+                    </button>
                 </div>
+                
+                {editModalData.isDateEnabled && (
+                    <div className="grid grid-cols-3 gap-2">
+                        {/* Day Dropdown */}
+                        <select 
+                            value={editModalData.day}
+                            onChange={(e) => setEditModalData({...editModalData, day: e.target.value})}
+                            className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                        >
+                            {Array.from({length: 31}, (_, i) => i + 1).map(d => (
+                                <option key={d} value={d}>{d}</option>
+                            ))}
+                        </select>
+
+                        {/* Month Dropdown */}
+                        <select 
+                            value={editModalData.monthName}
+                            onChange={(e) => setEditModalData({...editModalData, monthName: e.target.value})}
+                            className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                        >
+                            {MONTHS_LOGIC.map((m) => (
+                                <option key={m} value={m}>{m}</option>
+                            ))}
+                        </select>
+
+                        {/* Year Dropdown */}
+                        <select 
+                            value={editModalData.yearVal}
+                            onChange={(e) => setEditModalData({...editModalData, yearVal: e.target.value})}
+                            className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                        >
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                        </select>
+                    </div>
+                )}
             </div>
         </div>
 
@@ -503,8 +520,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
 
     return (
       <div key={`${selectedUnit}-${selectedYear}`} className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 min-h-screen relative">
-        {showLogin && <LoginModal />}
-        {isEditModalOpen && <PaymentEditModal />}
+        {loginModalContent}
+        {paymentEditModalContent}
         
         {/* Navigation Header Section */}
         <div className="bg-white sticky top-[60px] z-10 border-b border-slate-100 shadow-sm transition-all">
@@ -753,8 +770,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   // VIEW 2 & 3 Combined Logic Wrapper
   return (
     <div className="px-4 py-6 pb-24 animate-in slide-in-from-bottom-4 duration-500">
-      {showLogin && <LoginModal />}
-      {isEditModalOpen && <PaymentEditModal />}
+      {loginModalContent}
+      {paymentEditModalContent}
       
       {/* Loading State */}
       {loading && (
