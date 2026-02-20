@@ -766,10 +766,12 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                                             <div className={`px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                                             record.status === 'PAID' 
                                                 ? 'bg-green-100 text-green-700 border-green-200 shadow-sm' 
-                                                : 'bg-white text-red-500 border-red-200 shadow-sm'
+                                                : record.status === 'DUE'
+                                                ? 'bg-white text-red-500 border-red-200 shadow-sm'
+                                                : 'bg-slate-100 text-slate-500 border-slate-200 shadow-sm'
                                             }`}>
-                                            {record.status === 'PAID' ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
-                                            {record.status === 'PAID' ? t.paid : t.due}
+                                            {record.status === 'PAID' ? <CheckCircle2 size={10} /> : record.status === 'DUE' ? <XCircle size={10} /> : <Clock size={10} />}
+                                            {record.status === 'PAID' ? t.paid : record.status === 'DUE' ? t.due : t.upcoming}
                                             </div>
                                         ) : (
                                             getStatusElement(record.status)
@@ -853,6 +855,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                             )}
                              {record.status === 'DUE' && (
                                 <span className="text-[9px] mt-0.5 font-bold opacity-90">{t.due}</span>
+                            )}
+                             {record.status === 'UPCOMING' && (
+                                <span className="text-[9px] mt-0.5 font-bold opacity-90">{t.upcoming}</span>
                             )}
                         </div>
                     );
