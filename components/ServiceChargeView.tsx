@@ -50,6 +50,7 @@ interface ServiceChargeViewProps {
 export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn' }) => {
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [showSummaryList, setShowSummaryList] = useState<boolean>(false);
+  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -436,6 +437,80 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         );
     }
   };
+
+  // Summary Modal
+  const summaryModalContent = showSummaryModal && selectedUnit && (
+    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowSummaryModal(false)}>
+      <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Decorative background */}
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-50 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-50 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
+        
+        <div className="relative z-10">
+            <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-2.5 rounded-xl shadow-md shadow-indigo-200">
+                        <PieChart size={22} className="text-white" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-800 tracking-tight">সামারি রিপোর্ট</h3>
+                        <p className="text-xs font-medium text-slate-500">{selectedYear} সাল</p>
+                    </div>
+                </div>
+                <button onClick={() => setShowSummaryModal(false)} className="bg-slate-100 hover:bg-slate-200 text-slate-500 p-1.5 rounded-full transition-colors">
+                    <X size={16} />
+                </button>
+            </div>
+
+            <div className="space-y-4">
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 text-slate-600">
+                        <Home size={18} className="text-indigo-500" />
+                        <span className="text-sm font-medium">ফ্ল্যাট নম্বর</span>
+                    </div>
+                    <span className="text-base font-bold text-slate-800">{selectedUnit}</span>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 text-slate-600">
+                        <Users size={18} className="text-blue-500" />
+                        <span className="text-sm font-medium">ফ্ল্যাট মালিক</span>
+                    </div>
+                    <span className="text-sm font-bold text-slate-800 text-right">{FLAT_OWNERS[selectedUnit] || 'অজানা'}</span>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 text-slate-600">
+                        <Grid size={18} className={occupancyStatus === t.occupied ? 'text-green-500' : 'text-orange-500'} />
+                        <span className="text-sm font-medium">বসবাসের ধরন</span>
+                    </div>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${occupancyStatus === t.occupied ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                        {occupancyStatus}
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 text-white shadow-lg shadow-slate-900/20">
+                        <p className="text-[10px] text-slate-300 font-medium uppercase tracking-wider mb-1">মোট টাকা</p>
+                        <p className="font-bold text-lg">৳ {totalAmount.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-4 text-white shadow-lg shadow-red-500/20">
+                        <p className="text-[10px] text-red-100 font-medium uppercase tracking-wider mb-1">মোট বকেয়া</p>
+                        <p className="font-bold text-lg">৳ {totalDue.toLocaleString()}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <button 
+                onClick={() => setShowSummaryModal(false)}
+                className="w-full mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors text-sm"
+            >
+                বন্ধ করুন
+            </button>
+        </div>
+      </div>
+    </div>
+  );
 
   // Login Modal
   const loginModalContent = showLogin && (
@@ -898,7 +973,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                 
                 {/* Premium Pie Chart */}
                 <div className="flex flex-col items-center justify-center mb-2">
-                    <div className="w-full h-[250px]">
+                    <div className="w-full h-[250px] cursor-pointer" onClick={() => setShowSummaryModal(true)}>
                         <ResponsiveContainer width="100%" height="100%">
                             <RechartsPieChart>
                                 <Pie
