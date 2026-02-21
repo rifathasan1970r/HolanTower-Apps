@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check } from 'lucide-react';
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabaseClient';
 import { TRANSLATIONS, FLAT_OWNERS } from '../constants';
 
@@ -896,47 +897,44 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                 </div>
                 
                 {/* Premium Pie Chart */}
-                <div className="flex flex-col items-center justify-center gap-6 mb-2">
-                    <div className="relative w-40 h-40 flex-shrink-0 drop-shadow-md">
-                        <svg className="w-full h-full transform -rotate-90">
-                            {/* Background circle */}
-                            <circle cx="50%" cy="50%" r="60" stroke="#f1f5f9" strokeWidth="14" fill="transparent"/>
-                            
-                            {/* Paid circle */}
-                            {paidCount > 0 && (
-                                <circle cx="50%" cy="50%" r="60" stroke="#22c55e" strokeWidth="14" fill="transparent" strokeDasharray={2 * Math.PI * 60} strokeDashoffset={(2 * Math.PI * 60) - (paidCount / 12) * (2 * Math.PI * 60)} strokeLinecap="round" className="transition-all duration-1000 ease-out"/>
-                            )}
-                            
-                            {/* Due circle */}
-                            {dueCount > 0 && (
-                                <circle cx="50%" cy="50%" r="60" stroke="#ef4444" strokeWidth="14" fill="transparent" strokeDasharray={2 * Math.PI * 60} strokeDashoffset={(2 * Math.PI * 60) - (dueCount / 12) * (2 * Math.PI * 60)} strokeLinecap="round" style={{ transformOrigin: 'center', transform: `rotate(${paidCount * (360/12)}deg)` }} className="transition-all duration-1000 ease-out"/>
-                            )}
-
-                            {/* Upcoming circle */}
-                            {upcomingCount > 0 && (
-                                <circle cx="50%" cy="50%" r="60" stroke="#cbd5e1" strokeWidth="14" fill="transparent" strokeDasharray={2 * Math.PI * 60} strokeDashoffset={(2 * Math.PI * 60) - (upcomingCount / 12) * (2 * Math.PI * 60)} strokeLinecap="round" style={{ transformOrigin: 'center', transform: `rotate(${(paidCount + dueCount) * (360/12)}deg)` }} className="transition-all duration-1000 ease-out"/>
-                            )}
-                        </svg>
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white w-28 h-28 rounded-full flex flex-col items-center justify-center shadow-inner border border-slate-50 gap-1.5">
-                            {paidCount > 0 && (
-                                <div className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                    <span className="text-[10px] font-bold text-slate-600">{t.paid}: <span className="text-green-600 text-xs">{paidCount}</span></span>
-                                </div>
-                            )}
-                            {dueCount > 0 && (
-                                <div className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                    <span className="text-[10px] font-bold text-slate-600">{t.due}: <span className="text-red-600 text-xs">{dueCount}</span></span>
-                                </div>
-                            )}
-                            {upcomingCount > 0 && (
-                                <div className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                                    <span className="text-[10px] font-bold text-slate-600">{t.upcoming}: <span className="text-slate-500 text-xs">{upcomingCount}</span></span>
-                                </div>
-                            )}
-                        </div>
+                <div className="flex flex-col items-center justify-center mb-2">
+                    <div className="w-full h-[250px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RechartsPieChart>
+                                <Pie
+                                    data={[
+                                        { name: t.paid, value: paidCount, color: '#22c55e' },
+                                        { name: t.due, value: dueCount, color: '#ef4444' },
+                                        { name: t.upcoming, value: upcomingCount, color: '#cbd5e1' },
+                                    ].filter(item => item.value > 0)}
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={80}
+                                    dataKey="value"
+                                    labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
+                                    label={({ cx, cy, midAngle, innerRadius, outerRadius, value, name }) => {
+                                        const RADIAN = Math.PI / 180;
+                                        const radius = outerRadius + 20;
+                                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                        
+                                        return (
+                                            <text x={x} y={y} fill="#334155" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
+                                                {`${name} ${value}`}
+                                            </text>
+                                        );
+                                    }}
+                                >
+                                    {[
+                                        { name: t.paid, value: paidCount, color: '#22c55e' },
+                                        { name: t.due, value: dueCount, color: '#ef4444' },
+                                        { name: t.upcoming, value: upcomingCount, color: '#cbd5e1' },
+                                    ].filter(item => item.value > 0).map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                            </RechartsPieChart>
+                        </ResponsiveContainer>
                     </div>
 
                     {/* Status List */}
