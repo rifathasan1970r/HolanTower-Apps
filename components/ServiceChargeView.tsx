@@ -92,7 +92,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   };
 
   // Fetch data from Supabase
-  const fetchData = async (showLoading = true) => {
+  const fetchData = async (showLoading = true, fetchUnitsInfo = true) => {
     if (showLoading) setLoading(true);
     try {
       // Fetch Payments
@@ -105,16 +105,18 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
       if (payData) setDbData(payData as PaymentData[]);
 
       // Fetch Units Occupancy Info
-      const { data: uData, error: uError } = await supabase
-        .from('units_info')
-        .select('*');
-      
-      if (uError) {
-          console.warn("units_info table not found, using default occupancy logic.");
-      } else if (uData) {
-          const mapping: Record<string, { is_occupied: boolean, note: string }> = {};
-          uData.forEach((u: UnitInfo) => mapping[u.unit_text] = { is_occupied: u.is_occupied, note: u.note || '' });
-          setUnitsInfo(mapping);
+      if (fetchUnitsInfo) {
+        const { data: uData, error: uError } = await supabase
+          .from('units_info')
+          .select('*');
+        
+        if (uError) {
+            console.warn("units_info table not found, using default occupancy logic.");
+        } else if (uData) {
+            const mapping: Record<string, { is_occupied: boolean, note: string }> = {};
+            uData.forEach((u: UnitInfo) => mapping[u.unit_text] = { is_occupied: u.is_occupied, note: u.note || '' });
+            setUnitsInfo(mapping);
+        }
       }
       
       setUseMock(false);
@@ -142,9 +144,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   };
 
   const handleToggleOccupancy = async (unit: string | null) => {
-    if (!unit || !isAdmin) return;
+    if (!unit || !isAdmin || processingUpdate) return;
+    setProcessingUpdate(true);
     
-    // Consistent default logic: last character 'A' or 'C' is occupied, 'B' is vacant
     const isOccupiedDefault = unit.slice(-1) !== 'B';
     const currentInfo = unitsInfo[unit] || { is_occupied: isOccupiedDefault, note: '' };
     const newVal = !currentInfo.is_occupied;
@@ -153,15 +155,40 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     setUnitsInfo(prev => ({ ...prev, [unit]: { ...currentInfo, is_occupied: newVal } }));
 
     try {
-        const { error } = await supabase
+        // Use a more robust check-then-act pattern to ensure persistence
+        const { data: existing, error: fetchError } = await supabase
             .from('units_info')
-            .upsert({ unit_text: unit, is_occupied: newVal, note: currentInfo.note }, { onConflict: 'unit_text' });
+            .select('unit_text')
+            .eq('unit_text', unit)
+            .maybeSingle();
+
+        if (fetchError) throw fetchError;
+
+        let error = null;
+        if (existing) {
+            const { error: updateError } = await supabase
+                .from('units_info')
+                .update({ is_occupied: newVal })
+                .eq('unit_text', unit);
+            error = updateError;
+        } else {
+            const { error: insertError } = await supabase
+                .from('units_info')
+                .insert({ unit_text: unit, is_occupied: newVal, note: currentInfo.note });
+            error = insertError;
+        }
 
         if (error) {
             console.error("Supabase error updating occupancy:", error);
+            // Rollback on error
+            setUnitsInfo(prev => ({ ...prev, [unit]: currentInfo }));
         }
     } catch (err) {
         console.error("Error updating occupancy:", err);
+        // Rollback on catch
+        setUnitsInfo(prev => ({ ...prev, [unit]: currentInfo }));
+    } finally {
+        setProcessingUpdate(false);
     }
   };
 
@@ -304,8 +331,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
 
       if (error) throw error;
 
-      // রিফ্রেশ ডাটা (সরাসরি সার্ভার থেকে) - যাতে আপডেট নিশ্চিত হয়
-      await fetchData(false); 
+      // রিফ্রেশ পেমেন্ট ডাটা শুধুমাত্র (বসবাসের ধরন যাতে রিভার্ট না হয়)
+      await fetchData(false, false); 
       setIsEditModalOpen(false);
       
     } catch (err: any) {
@@ -652,6 +679,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     const occupancyStatus = isOccupied ? t.occupied : t.vacant;
     const unitNote = unitsInfo[selectedUnit]?.note || '';
 
+    // Important: Changing occupancy status should NOT affect already saved payment records.
+    // getUnitData handles this by checking if a payment record exists first.
+
     // Summary Modal
     const summaryModalContent = showSummaryModal && selectedUnit && (
       <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowSummaryModal(false)}>
@@ -693,10 +723,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                       <span className="text-sm font-bold text-slate-800 text-right">{FLAT_OWNERS.find(f => f.flat === selectedUnit)?.name || 'অজানা'}</span>
                   </div>
 
-                  <div 
-                    className={`bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between transition-all ${isAdmin ? 'cursor-pointer hover:bg-indigo-50 hover:border-indigo-100 active:scale-[0.98]' : ''}`}
-                    onClick={() => handleToggleOccupancy(selectedUnit)}
-                  >
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
                       <div className="flex items-center gap-2.5 text-slate-600">
                           <Grid size={18} className={occupancyStatus === t.occupied ? 'text-green-500' : 'text-orange-500'} />
                           <span className="text-sm font-medium">বসবাসের ধরন</span>
@@ -705,7 +732,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                         <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${occupancyStatus === t.occupied ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                             {occupancyStatus}
                         </span>
-                        {isAdmin && <Edit3 size={10} className="text-slate-400" />}
                       </div>
                   </div>
 
@@ -817,13 +843,19 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
             >
                 <button 
                     onClick={() => handleToggleOccupancy(selectedUnit)}
-                    disabled={!isAdmin}
-                    className={`text-center px-1 flex flex-col items-center justify-center transition-all ${isAdmin ? 'active:scale-95 cursor-pointer' : ''}`}
+                    disabled={!isAdmin || processingUpdate}
+                    className={`text-center px-1 flex flex-col items-center justify-center transition-all ${isAdmin && !processingUpdate ? 'active:scale-95 cursor-pointer' : 'opacity-80 cursor-not-allowed'}`}
                 >
                     <p className="text-[10px] text-white/80 font-medium uppercase mb-1">{t.occupancy}</p>
                     <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${occupancyStatus === t.occupied ? 'bg-white text-blue-600' : 'bg-white/90 text-orange-600'}`}>
-                        {occupancyStatus === t.occupied ? <Users size={12} /> : <Home size={12} />}
-                        {occupancyStatus}
+                        {processingUpdate ? (
+                            <RefreshCw size={12} className="animate-spin" />
+                        ) : (
+                            <>
+                                {occupancyStatus === t.occupied ? <Users size={12} /> : <Home size={12} />}
+                                {occupancyStatus}
+                            </>
+                        )}
                     </div>
                 </button>
                 <div className="text-center px-1 flex flex-col items-center justify-center">
