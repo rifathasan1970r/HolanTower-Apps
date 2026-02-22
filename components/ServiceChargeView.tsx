@@ -68,7 +68,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   const [editingNote, setEditingNote] = useState<boolean>(false);
   const [noteInput, setNoteInput] = useState<string>('');
 
-  // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [editModalData, setEditModalData] = useState({
     unit: '',
@@ -142,20 +141,26 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     }
   };
 
-  const handleToggleOccupancy = async (unit: string) => {
-    if (!isAdmin || processingUpdate) return;
+  const handleToggleOccupancy = async (unit: string | null) => {
+    if (!unit || !isAdmin || processingUpdate) return;
     setProcessingUpdate(true);
     
     const currentInfo = unitsInfo[unit] || { is_occupied: (unit.charCodeAt(1) % 2 !== 0), note: '' };
     const newVal = !currentInfo.is_occupied;
+
+    // Optimistic update
+    setUnitsInfo(prev => ({ ...prev, [unit]: { ...currentInfo, is_occupied: newVal } }));
 
     try {
         const { error } = await supabase
             .from('units_info')
             .upsert({ unit_text: unit, is_occupied: newVal, note: currentInfo.note }, { onConflict: 'unit_text' });
 
-        if (error) throw error;
-        setUnitsInfo(prev => ({ ...prev, [unit]: { ...currentInfo, is_occupied: newVal } }));
+        if (error) {
+            // Rollback on error
+            setUnitsInfo(prev => ({ ...prev, [unit]: currentInfo }));
+            throw error;
+        }
     } catch (err) {
         console.error("Error updating occupancy:", err);
     } finally {
@@ -690,14 +695,20 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                       <span className="text-sm font-bold text-slate-800 text-right">{FLAT_OWNERS.find(f => f.flat === selectedUnit)?.name || 'অজানা'}</span>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                  <div 
+                    className={`bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between transition-all ${isAdmin ? 'cursor-pointer hover:bg-indigo-50 hover:border-indigo-100 active:scale-[0.98]' : ''}`}
+                    onClick={() => handleToggleOccupancy(selectedUnit)}
+                  >
                       <div className="flex items-center gap-2.5 text-slate-600">
                           <Grid size={18} className={occupancyStatus === t.occupied ? 'text-green-500' : 'text-orange-500'} />
                           <span className="text-sm font-medium">বসবাসের ধরন</span>
                       </div>
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${occupancyStatus === t.occupied ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                          {occupancyStatus}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${occupancyStatus === t.occupied ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                            {occupancyStatus}
+                        </span>
+                        {isAdmin && <Edit3 size={10} className="text-slate-400" />}
+                      </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
