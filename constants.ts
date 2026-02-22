@@ -9,7 +9,8 @@ import {
   ShieldCheck,
   Droplets,
   Trash2,
-  Bot
+  Bot,
+  ArrowUpDown
 } from 'lucide-react';
 import { MenuItem, Notice } from './types';
 
@@ -75,6 +76,15 @@ export const MENU_ITEMS: MenuItem[] = [
     color: 'bg-rose-500',
     description: 'ময়লা সংগ্রহ সময়সূচী',
     gradient: 'from-rose-400 to-pink-600'
+  },
+  { 
+    id: 'lift', 
+    label: 'লিফট নির্দেশাবলি', 
+    icon: ArrowUpDown,
+    view: 'LIFT_INSTRUCTIONS',
+    color: 'bg-slate-500',
+    description: 'লিফট ব্যবহারের নিয়মাবলী',
+    gradient: 'from-slate-400 to-gray-600'
   },
 ];
 

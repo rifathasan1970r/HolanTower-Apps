@@ -12,6 +12,7 @@ import { ServiceChargeView } from './components/ServiceChargeView';
 import { EmergencyView } from './components/EmergencyView';
 import { ToLetView } from './components/ToLetView';
 import { WaterBillView } from './components/WaterBillView';
+import { LiftInstructionsView } from './components/LiftInstructionsView';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -56,6 +57,9 @@ const App: React.FC = () => {
 
       case 'WATER_BILL':
         return <WaterBillView onBack={() => setCurrentView('MENU')} />;
+
+      case 'LIFT_INSTRUCTIONS':
+        return <LiftInstructionsView onBack={() => setCurrentView('MENU')} />;
       
       case 'MENU':
       case 'HOME':
