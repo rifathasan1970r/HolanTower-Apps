@@ -70,6 +70,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   const [noteInput, setNoteInput] = useState<string>('');
 
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [showUnitSelector, setShowUnitSelector] = useState<boolean>(false);
   const [editModalData, setEditModalData] = useState({
     unit: '',
     month: '',
@@ -842,11 +843,52 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
       </div>
     );
 
+    // Unit Selector Modal
+    const unitSelectorModalContent = showUnitSelector && (
+      <div className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowUnitSelector(false)}>
+        <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold text-slate-800">ইউনিট নির্বাচন করুন</h3>
+            <button onClick={() => setShowUnitSelector(false)} className="text-slate-400 hover:text-red-500 bg-slate-50 p-2 rounded-full transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            {ALL_UNITS.map((unit) => (
+              <button
+                key={unit}
+                onClick={() => {
+                  setSelectedUnit(unit);
+                  setShowUnitSelector(false);
+                }}
+                className={`py-3 rounded-xl font-bold text-sm transition-all border ${
+                  selectedUnit === unit 
+                    ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-200 scale-105' 
+                    : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100 hover:border-slate-200'
+                }`}
+              >
+                {unit}
+              </button>
+            ))}
+          </div>
+          
+          <button 
+            onClick={() => setShowUnitSelector(false)}
+            className="w-full mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors text-sm"
+          >
+            বন্ধ করুন
+          </button>
+        </div>
+      </div>
+    );
+
     return (
       <div key={`${selectedUnit}-${selectedYear}`} className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 min-h-screen relative">
         {loginModalContent}
         {paymentEditModalContent}
         {summaryModalContent}
+        {unitSelectorModalContent}
         
         {/* Navigation Header Section */}
         <div className="bg-white sticky top-[60px] z-10 border-b border-slate-100 shadow-sm transition-all">
@@ -877,8 +919,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                     <ChevronLeft size={32} />
                  </button>
                  
-                 <div className="text-center animate-in zoom-in duration-300">
-                    <h2 className="text-3xl font-bold text-slate-800">{t.unit} {selectedUnit}</h2>
+                 <div 
+                    onClick={() => setShowUnitSelector(true)}
+                    className="text-center animate-in zoom-in duration-300 cursor-pointer hover:scale-105 transition-transform active:scale-95"
+                  >
+                    <h2 className="text-4xl font-black text-slate-800 tracking-tight">{selectedUnit}</h2>
                     <p className="text-sm font-bold text-primary-600 mt-1">
                       {FLAT_OWNERS.find(f => f.flat === selectedUnit)?.name || 'Unknown'}
                     </p>
