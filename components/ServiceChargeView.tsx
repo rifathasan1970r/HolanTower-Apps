@@ -142,13 +142,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   };
 
   const handleToggleOccupancy = async (unit: string | null) => {
-    if (!unit || !isAdmin || processingUpdate) return;
-    setProcessingUpdate(true);
+    if (!unit || !isAdmin) return;
     
-    const currentInfo = unitsInfo[unit] || { is_occupied: (unit.charCodeAt(1) % 2 !== 0), note: '' };
+    // Consistent default logic: last character 'A' or 'C' is occupied, 'B' is vacant
+    const isOccupiedDefault = unit.slice(-1) !== 'B';
+    const currentInfo = unitsInfo[unit] || { is_occupied: isOccupiedDefault, note: '' };
     const newVal = !currentInfo.is_occupied;
 
-    // Optimistic update
+    // Optimistic update - immediate UI feedback
     setUnitsInfo(prev => ({ ...prev, [unit]: { ...currentInfo, is_occupied: newVal } }));
 
     try {
@@ -157,14 +158,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
             .upsert({ unit_text: unit, is_occupied: newVal, note: currentInfo.note }, { onConflict: 'unit_text' });
 
         if (error) {
-            // Rollback on error
-            setUnitsInfo(prev => ({ ...prev, [unit]: currentInfo }));
-            throw error;
+            console.error("Supabase error updating occupancy:", error);
         }
     } catch (err) {
         console.error("Error updating occupancy:", err);
-    } finally {
-        setProcessingUpdate(false);
     }
   };
 
@@ -196,7 +193,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         isDateEnabled = false;
     }
 
-    const isOccupied = unitsInfo[unit]?.is_occupied ?? (unit.charCodeAt(1) % 2 !== 0);
+    const isOccupied = unitsInfo[unit]?.is_occupied ?? (unit.slice(-1) !== 'B');
     const defaultAmount = isOccupied ? 2000 : 500;
 
     let initialStatus: 'PAID' | 'DUE' | 'UPCOMING' = 'PAID';
@@ -332,7 +329,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     if (!isAdmin || processingUpdate || !selectedUnit) return;
     setProcessingUpdate(true);
     
-    const currentInfo = unitsInfo[selectedUnit] || { is_occupied: (selectedUnit.charCodeAt(1) % 2 !== 0), note: '' };
+    const isOccupiedDefault = selectedUnit.slice(-1) !== 'B';
+    const currentInfo = unitsInfo[selectedUnit] || { is_occupied: isOccupiedDefault, note: '' };
 
     try {
         const { error } = await supabase
@@ -362,7 +360,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
       let paymentRecord: PaymentData | undefined;
       
       paymentRecord = dbData.find(
-        d => d.unit_text === unit && d.month_name === month
+        d => d.unit_text === unit && d.month_name === month && d.year_num === selectedYear
       );
 
       // UI display month string
@@ -383,7 +381,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         };
       }
 
-      const isOccupied = unitsInfo[unit]?.is_occupied ?? (unit.charCodeAt(1) % 2 !== 0);
+      const isOccupied = unitsInfo[unit]?.is_occupied ?? (unit.slice(-1) !== 'B');
       const defaultAmount = isOccupied ? 2000 : 500;
 
       const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && index > currentRealMonthIdx);
@@ -474,7 +472,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   );
 
   const handleStatusChange = (newStatus: 'PAID' | 'DUE' | 'UPCOMING') => {
-      const isOccupied = unitsInfo[editModalData.unit]?.is_occupied ?? (editModalData.unit.charCodeAt(1) % 2 !== 0);
+      const isOccupied = unitsInfo[editModalData.unit]?.is_occupied ?? (editModalData.unit.slice(-1) !== 'B');
       const defaultAmount = isOccupied ? 2000 : 500;
 
       if (newStatus === 'PAID') {
@@ -650,7 +648,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     const dueCount = records.filter(r => r.status === 'DUE').length;
     const upcomingCount = records.filter(r => r.status === 'UPCOMING').length;
     
-    const isOccupied = unitsInfo[selectedUnit]?.is_occupied ?? (selectedUnit.charCodeAt(1) % 2 !== 0); 
+    const isOccupied = unitsInfo[selectedUnit]?.is_occupied ?? (selectedUnit.slice(-1) !== 'B'); 
     const occupancyStatus = isOccupied ? t.occupied : t.vacant;
     const unitNote = unitsInfo[selectedUnit]?.note || '';
 
