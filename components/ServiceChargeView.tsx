@@ -41,6 +41,7 @@ interface UnitInfo {
   unit_text: string;
   is_occupied: boolean;
   note?: string;
+  year_num?: number;
 }
 
 interface ServiceChargeViewProps {
@@ -111,11 +112,25 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
           .select('*');
         
         if (uError) {
-            console.warn("units_info table not found, using default occupancy logic.");
+            console.warn("units_info table not found or error, using localStorage fallback.");
+            const localData = localStorage.getItem('units_info_fallback');
+            if (localData) {
+                try {
+                    setUnitsInfo(JSON.parse(localData));
+                } catch (e) {
+                    console.error("Error parsing localStorage fallback", e);
+                }
+            }
         } else if (uData) {
             const mapping: Record<string, { is_occupied: boolean, note: string }> = {};
-            uData.forEach((u: UnitInfo) => mapping[u.unit_text] = { is_occupied: u.is_occupied, note: u.note || '' });
+            uData.forEach((u: any) => {
+                // Use year-specific key if available, otherwise fallback to unit_text
+                const key = u.year_num ? `${u.unit_text}-${u.year_num}` : u.unit_text;
+                mapping[key] = { is_occupied: u.is_occupied, note: u.note || '' };
+            });
             setUnitsInfo(mapping);
+            // Sync to local storage for offline/fallback
+            localStorage.setItem('units_info_fallback', JSON.stringify(mapping));
         }
       }
       
@@ -147,46 +162,55 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     if (!unit || !isAdmin || processingUpdate) return;
     setProcessingUpdate(true);
     
+    const yearKey = `${unit}-${selectedYear}`;
     const isOccupiedDefault = unit.slice(-1) !== 'B';
-    const currentInfo = unitsInfo[unit] || { is_occupied: isOccupiedDefault, note: '' };
+    const currentInfo = unitsInfo[yearKey] || unitsInfo[unit] || { is_occupied: isOccupiedDefault, note: '' };
     const newVal = !currentInfo.is_occupied;
 
     // Optimistic update - immediate UI feedback
-    setUnitsInfo(prev => ({ ...prev, [unit]: { ...currentInfo, is_occupied: newVal } }));
+    const newUnitsInfo = { ...unitsInfo, [yearKey]: { ...currentInfo, is_occupied: newVal } };
+    setUnitsInfo(newUnitsInfo);
+    
+    // Always save to localStorage as a fallback
+    localStorage.setItem('units_info_fallback', JSON.stringify(newUnitsInfo));
 
     try {
-        // Use a more robust check-then-act pattern to ensure persistence
+        // Use a more robust check-then-act pattern to ensure persistence with year_num
         const { data: existing, error: fetchError } = await supabase
             .from('units_info')
             .select('unit_text')
             .eq('unit_text', unit)
+            .eq('year_num', selectedYear)
             .maybeSingle();
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+            console.warn("Supabase fetch error (year_num might not exist), trying with unit_text only as composite key.");
+            // Fallback: try using unit_text as the composite key "unit-year"
+            const compositeKey = `${unit}-${selectedYear}`;
+            await supabase.from('units_info').upsert({ unit_text: compositeKey, is_occupied: newVal, note: currentInfo.note }, { onConflict: 'unit_text' });
+            return;
+        }
 
         let error = null;
         if (existing) {
             const { error: updateError } = await supabase
                 .from('units_info')
                 .update({ is_occupied: newVal })
-                .eq('unit_text', unit);
+                .eq('unit_text', unit)
+                .eq('year_num', selectedYear);
             error = updateError;
         } else {
             const { error: insertError } = await supabase
                 .from('units_info')
-                .insert({ unit_text: unit, is_occupied: newVal, note: currentInfo.note });
+                .insert({ unit_text: unit, is_occupied: newVal, note: currentInfo.note, year_num: selectedYear });
             error = insertError;
         }
 
         if (error) {
             console.error("Supabase error updating occupancy:", error);
-            // Rollback on error
-            setUnitsInfo(prev => ({ ...prev, [unit]: currentInfo }));
         }
     } catch (err) {
         console.error("Error updating occupancy:", err);
-        // Rollback on catch
-        setUnitsInfo(prev => ({ ...prev, [unit]: currentInfo }));
     } finally {
         setProcessingUpdate(false);
     }
@@ -220,7 +244,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         isDateEnabled = false;
     }
 
-    const isOccupied = unitsInfo[unit]?.is_occupied ?? (unit.slice(-1) !== 'B');
+    const yearKey = `${unit}-${selectedYear}`;
+    const isOccupied = unitsInfo[yearKey]?.is_occupied ?? unitsInfo[unit]?.is_occupied ?? (unit.slice(-1) !== 'B');
     const defaultAmount = isOccupied ? 2000 : 500;
 
     let initialStatus: 'PAID' | 'DUE' | 'UPCOMING' = 'PAID';
@@ -408,7 +433,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         };
       }
 
-      const isOccupied = unitsInfo[unit]?.is_occupied ?? (unit.slice(-1) !== 'B');
+      const yearKey = `${unit}-${selectedYear}`;
+      const isOccupied = unitsInfo[yearKey]?.is_occupied ?? unitsInfo[unit]?.is_occupied ?? (unit.slice(-1) !== 'B');
       const defaultAmount = isOccupied ? 2000 : 500;
 
       const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && index > currentRealMonthIdx);
@@ -499,7 +525,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   );
 
   const handleStatusChange = (newStatus: 'PAID' | 'DUE' | 'UPCOMING') => {
-      const isOccupied = unitsInfo[editModalData.unit]?.is_occupied ?? (editModalData.unit.slice(-1) !== 'B');
+      const unit = editModalData.unit;
+      const yearKey = `${unit}-${selectedYear}`;
+      const isOccupied = unitsInfo[yearKey]?.is_occupied ?? unitsInfo[unit]?.is_occupied ?? (unit.slice(-1) !== 'B');
       const defaultAmount = isOccupied ? 2000 : 500;
 
       if (newStatus === 'PAID') {
@@ -675,9 +703,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     const dueCount = records.filter(r => r.status === 'DUE').length;
     const upcomingCount = records.filter(r => r.status === 'UPCOMING').length;
     
-    const isOccupied = unitsInfo[selectedUnit]?.is_occupied ?? (selectedUnit.slice(-1) !== 'B'); 
+    const yearKey = `${selectedUnit}-${selectedYear}`;
+    const isOccupied = unitsInfo[yearKey]?.is_occupied ?? unitsInfo[selectedUnit]?.is_occupied ?? (selectedUnit.slice(-1) !== 'B'); 
     const occupancyStatus = isOccupied ? t.occupied : t.vacant;
-    const unitNote = unitsInfo[selectedUnit]?.note || '';
+    const unitNote = unitsInfo[yearKey]?.note || unitsInfo[selectedUnit]?.note || '';
 
     // Important: Changing occupancy status should NOT affect already saved payment records.
     // getUnitData handles this by checking if a payment record exists first.
