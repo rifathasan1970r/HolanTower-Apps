@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Phone, 
   Copy, 
@@ -31,9 +31,23 @@ const WhatsAppIcon = () => (
 
 const initialContacts = [
   {
+    id: 'cat-5',
+    category: 'জরুরী সেবা',
+    icon: 'Siren',
+    colorClass: 'bg-rose-100',
+    iconColor: 'text-rose-600',
+    people: [
+      { id: '14', name: 'পুলিশ', role: 'জাতীয় জরুরী সেবা', phone: '999', wa: false },
+      { id: '15', name: 'ফায়ার সার্ভিস', role: 'অগ্নি নির্বাপণ', phone: '16163', wa: false },
+      { id: '16', name: 'অ্যাম্বুলেন্স', role: 'জরুরী চিকিৎসা সেবা', phone: '10666', wa: false },
+    ]
+  },
+  {
     id: 'cat-1',
     category: 'বিল্ডিং ম্যানেজমেন্ট',
     icon: 'ShieldAlert',
+    colorClass: 'bg-green-100',
+    iconColor: 'text-green-600',
     people: [
       { id: '1', name: 'রিফাত', role: 'নিরাপত্তা ও তত্ত্বাবধান', phone: '+8801310-988954', wa: true },
       { id: '2', name: 'আবু সাঈদ', role: 'ম্যানেজার', phone: '+8801716-524033', wa: true },
@@ -43,6 +57,8 @@ const initialContacts = [
     id: 'cat-2',
     category: 'নির্মাণ ও মেরামত',
     icon: 'Hammer',
+    colorClass: 'bg-amber-100',
+    iconColor: 'text-amber-600',
     people: [
       { id: '3', name: 'সম্রাট', role: 'নির্মাণ ঠিকাদার', phone: '01648-496150', wa: true },
       { id: '4', name: 'সুমন', role: 'বিদ্যুৎ ঠিকাদার', phone: '01674-200082', wa: true },
@@ -54,6 +70,8 @@ const initialContacts = [
     id: 'cat-3',
     category: 'দৈনিক সেবা',
     icon: 'Wrench',
+    colorClass: 'bg-indigo-100',
+    iconColor: 'text-indigo-600',
     people: [
       { id: '7', name: 'পরিচ্ছন্নতা কর্মী', role: 'ময়লা ফেলার সার্ভিস', phone: '01797550346', wa: false },
       { id: '8', name: 'গ্যাস সরবরাহকারী', role: 'গ্যাস সিলিন্ডার', phone: '01660183718', wa: false },
@@ -63,6 +81,8 @@ const initialContacts = [
     id: 'cat-4',
     category: 'ইন্টারনেট ও টিভি',
     icon: 'Wifi',
+    colorClass: 'bg-sky-100',
+    iconColor: 'text-sky-600',
     people: [
       { id: '9', name: 'সার্কেল নেটওয়ার্ক', role: 'ISP হটলাইন', phone: '16237', wa: false },
       { id: '10', name: 'সার্কেল নেটওয়ার্ক', role: 'ISP সাপোর্ট', phone: '09611-800900', wa: false },
@@ -115,14 +135,23 @@ const Card = ({
 );
 
 export const EmergencyView = () => {
-  const [contacts, setContacts] = useLocalStorage('emergencyContacts_v3', initialContacts);
-  const [isAdmin, setIsAdmin] = useLocalStorage('isAdmin_v3', false);
+  const [contacts, setContacts] = useLocalStorage('emergencyContacts_v8', initialContacts);
+  const [isAdmin, setIsAdmin] = useLocalStorage('isAdmin_v8', false);
   const [showLogin, setShowLogin] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showEditor, setShowEditor] = useState(false);
   const [editingContact, setEditingContact] = useState<any>(null);
   const [showCategoryEditor, setShowCategoryEditor] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    // Data migration check: if the stored data doesn't have colorClass, it's old.
+    if (contacts && contacts.length > 0 && !contacts[0].hasOwnProperty('colorClass')) {
+      // Reset the state to the new initialContacts with colors.
+      setContacts(initialContacts);
+    }
+  }, []); // Run only once on mount
 
   const copyText = async (text: string) => {
     try {
@@ -168,6 +197,13 @@ export const EmergencyView = () => {
     }
   }
 
+  const handleDeleteCategory = (categoryId: string) => {
+    if (window.confirm('আপনি কি নিশ্চিত যে আপনি এই সম্পূর্ণ ডিপার্টমেন্টটি মুছে ফেলতে চান? এর অন্তর্গত সমস্ত নম্বর মুছে যাবে।')) {
+      const newContacts = contacts.filter(cat => cat.id !== categoryId);
+      setContacts(newContacts);
+    }
+  };
+
   const handleSave = (contactData: any) => {
     const { categoryId, ...personData } = contactData;
     let newContacts;
@@ -205,6 +241,8 @@ export const EmergencyView = () => {
       id: `cat-${Date.now()}`,
       category: categoryName,
       icon: 'Wrench', // Default icon
+      colorClass: 'bg-slate-100',
+      iconColor: 'text-slate-600',
       people: []
     };
     setContacts([...contacts, newCategory]);
@@ -393,6 +431,9 @@ export const EmergencyView = () => {
           জরুরী সার্ভিস ও কন্ট্রাক্টর
         </h2>
         <div className="flex items-center gap-2">
+          <button onClick={() => setShowAll(!showAll)} className="text-sm font-medium text-indigo-600 hover:underline">
+            {showAll ? 'বিভাগ অনুযায়ী' : 'জরুরী সব সার্ভিস'}
+          </button>
           {isAdmin && (
             <button onClick={() => setShowCategoryEditor(true)} className="text-sm font-medium text-indigo-600 hover:underline">
               নতুন ডিপার্টমেন্ট
@@ -433,50 +474,92 @@ export const EmergencyView = () => {
         </div>
       </motion.div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {contacts.map(category => {
-          const Icon = icons[category.icon] || Wrench;
-          return (
-            <div key={category.id}>
-            <Card 
-              title={category.category}
-              icon={Icon}
-              desc={`${category.people.length} contacts`}
-              colorClass="bg-white"
-              iconColor="text-slate-500"
-            >
-              {isAdmin && (
-                <div className="absolute top-2 right-2 flex gap-1">
-                  <button onClick={() => handleAdd(category)} className="bg-blue-100 text-blue-600 p-1.5 rounded-full hover:bg-blue-200">
-                    <Plus size={12}/>
-                  </button>
-                </div>
-              )}
-              <div className="space-y-3 mt-2">
-                {category.people.map(person => (
-                  <div key={person.id} className="relative border-t border-slate-100 pt-3">
-                    {isAdmin && (
-                      <div className="absolute top-3 right-0 flex gap-1">
-                        <button onClick={() => handleEdit(category, person)} className="bg-slate-100 text-slate-600 p-1 rounded-full hover:bg-slate-200">
-                          <Edit size={12}/>
-                        </button>
-                        <button onClick={() => handleDelete(person.id)} className="bg-red-100 text-red-600 p-1 rounded-full hover:bg-red-200">
-                          <Trash2 size={12}/>
-                        </button>
-                      </div>
-                    )}
-                    <p className="text-xs text-slate-500 font-medium pr-16">{person.role}</p>
-                    <p className="font-bold text-slate-800 text-base">{person.name}</p>
-                    <p className="font-mono font-bold text-slate-600 text-sm mt-1">{person.phone}</p>
-                    <ActionButtons phone={person.phone} wa={person.wa} />
+      {!showAll ? (
+        <div className="grid sm:grid-cols-2 gap-4">
+          {contacts.map(category => {
+            const Icon = icons[category.icon] || Wrench;
+            return (
+              <div key={category.id}>
+              <Card 
+                title={category.category}
+                icon={Icon}
+                desc={`${category.people.length} contacts`}
+                colorClass={category.colorClass || 'bg-white'}
+                iconColor={category.iconColor || 'text-slate-500'}
+              >
+                {isAdmin && (
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <button onClick={() => handleAdd(category)} className="bg-blue-100 text-blue-600 p-1.5 rounded-full hover:bg-blue-200">
+                      <Plus size={12}/>
+                    </button>
+                    <button onClick={() => handleDeleteCategory(category.id)} className="bg-red-100 text-red-600 p-1.5 rounded-full hover:bg-red-200">
+                      <Trash2 size={12}/>
+                    </button>
                   </div>
-                ))}
+                )}
+                <div className="space-y-3 mt-2">
+                  {category.people.map(person => (
+                    <div key={person.id} className="relative border-t border-slate-100 pt-3">
+                      {isAdmin && (
+                        <div className="absolute top-3 right-0 flex gap-1">
+                          <button onClick={() => handleEdit(category, person)} className="bg-slate-100 text-slate-600 p-1 rounded-full hover:bg-slate-200">
+                            <Edit size={12}/>
+                          </button>
+                          <button onClick={() => handleDelete(person.id)} className="bg-red-100 text-red-600 p-1 rounded-full hover:bg-red-200">
+                            <Trash2 size={12}/>
+                          </button>
+                        </div>
+                      )}
+                      <p className="text-xs text-slate-500 font-medium pr-16">{person.role}</p>
+                      <p className="font-bold text-slate-800 text-base">{person.name}</p>
+                      <p className="font-mono font-bold text-slate-600 text-sm mt-1">{person.phone}</p>
+                      <ActionButtons phone={person.phone} wa={person.wa} />
+                    </div>
+                  ))}
+                </div>
+              </Card>
               </div>
-            </Card>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <Card
+              title="জরুরী সব সার্ভিস"
+              icon={Siren}
+              desc={`${contacts.reduce((acc, cat) => acc + cat.people.length, 0)} contacts`}
+              colorClass="bg-slate-100"
+              iconColor="text-slate-600"
+          >
+              <div className="space-y-3 mt-2">
+                  {contacts.flatMap(category =>
+                      category.people.map(person => ({
+                          ...person,
+                          categoryName: category.category,
+                          categoryId: category.id
+                      }))
+                  ).map(person => (
+                      <div key={person.id} className="relative border-t border-slate-200 pt-3">
+                          {isAdmin && (
+                              <div className="absolute top-3 right-0 flex gap-1">
+                                  <button onClick={() => handleEdit(contacts.find(c => c.id === person.categoryId), person)} className="bg-slate-200 text-slate-600 p-1 rounded-full hover:bg-slate-300">
+                                      <Edit size={12}/>
+                                  </button>
+                                  <button onClick={() => handleDelete(person.id)} className="bg-red-100 text-red-600 p-1 rounded-full hover:bg-red-200">
+                                      <Trash2 size={12}/>
+                                  </button>
+                              </div>
+                          )}
+                          <p className="text-xs text-slate-500 font-medium pr-16">{person.categoryName} / {person.role}</p>
+                          <p className="font-bold text-slate-800 text-base">{person.name}</p>
+                          <p className="font-mono font-bold text-slate-600 text-sm mt-1">{person.phone}</p>
+                          <ActionButtons phone={person.phone} wa={person.wa} />
+                      </div>
+                  ))}
+              </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
