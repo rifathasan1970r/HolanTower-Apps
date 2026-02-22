@@ -80,7 +80,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     monthName: 'জানুয়ারি',
     yearVal: '2026',
     isDateEnabled: true,
-    status: 'PAID' as 'PAID' | 'DUE' | 'UPCOMING'
+    status: 'PAID' as 'PAID' | 'DUE' | 'UPCOMING',
+    isOccupied: true // Local occupancy for this specific entry
   });
 
   const t = TRANSLATIONS[lang];
@@ -208,6 +209,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
 
         if (error) {
             console.error("Supabase error updating occupancy:", error);
+        } else {
+            // Refresh data to ensure sync
+            await fetchData(false, true);
         }
     } catch (err) {
         console.error("Error updating occupancy:", err);
@@ -244,15 +248,26 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         isDateEnabled = false;
     }
 
-    const yearKey = `${unit}-${selectedYear}`;
-    const isOccupied = unitsInfo[yearKey]?.is_occupied ?? unitsInfo[unit]?.is_occupied ?? (unit.slice(-1) !== 'B');
-    const defaultAmount = isOccupied ? 2000 : 500;
+    const isOccupiedDefault = unit.slice(-1) !== 'B';
+    const defaultAmount = isOccupiedDefault ? 2000 : 500;
 
     let initialStatus: 'PAID' | 'DUE' | 'UPCOMING' = 'PAID';
     let initialAmount = defaultAmount;
     let initialDue = 0;
+    let modalOccupancy = isOccupiedDefault; // Default to standard unit type occupancy
 
     if (existing) {
+        // If existing data exists, we try to infer occupancy from amount/due
+        if (existing.amount === 500 || existing.due === 500) {
+            modalOccupancy = false;
+        } else if (existing.amount === 2000 || existing.due === 2000) {
+            modalOccupancy = true;
+        } else {
+            // Fallback to global status if amount is custom
+            const yearKey = `${unit}-${selectedYear}`;
+            modalOccupancy = unitsInfo[yearKey]?.is_occupied ?? unitsInfo[unit]?.is_occupied ?? isOccupiedDefault;
+        }
+
         if (existing.amount > 0) {
             initialStatus = 'PAID';
             initialAmount = existing.amount;
@@ -297,7 +312,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
       monthName,
       yearVal,
       isDateEnabled,
-      status: initialStatus
+      status: initialStatus,
+      isOccupied: modalOccupancy
     });
     setIsEditModalOpen(true);
   };
@@ -433,9 +449,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         };
       }
 
-      const yearKey = `${unit}-${selectedYear}`;
-      const isOccupied = unitsInfo[yearKey]?.is_occupied ?? unitsInfo[unit]?.is_occupied ?? (unit.slice(-1) !== 'B');
-      const defaultAmount = isOccupied ? 2000 : 500;
+      const defaultAmount = (unit.slice(-1) !== 'B') ? 2000 : 500;
 
       const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && index > currentRealMonthIdx);
       if (isFuture) {
@@ -525,10 +539,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
   );
 
   const handleStatusChange = (newStatus: 'PAID' | 'DUE' | 'UPCOMING') => {
-      const unit = editModalData.unit;
-      const yearKey = `${unit}-${selectedYear}`;
-      const isOccupied = unitsInfo[yearKey]?.is_occupied ?? unitsInfo[unit]?.is_occupied ?? (unit.slice(-1) !== 'B');
-      const defaultAmount = isOccupied ? 2000 : 500;
+      const defaultAmount = editModalData.isOccupied ? 2000 : 500;
 
       if (newStatus === 'PAID') {
           setEditModalData(prev => ({ ...prev, status: newStatus, amount: defaultAmount, due: 0, isDateEnabled: true }));
@@ -537,6 +548,21 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
       } else if (newStatus === 'UPCOMING') {
           setEditModalData(prev => ({ ...prev, status: newStatus, amount: 0, due: 0, isDateEnabled: false }));
       }
+  };
+
+  const handleModalOccupancyChange = (val: boolean) => {
+      const defaultAmount = val ? 2000 : 500;
+      setEditModalData(prev => {
+          const updates: any = { isOccupied: val };
+          if (prev.status === 'PAID') {
+              updates.amount = defaultAmount;
+              updates.due = 0;
+          } else if (prev.status === 'DUE') {
+              updates.amount = 0;
+              updates.due = defaultAmount;
+          }
+          return { ...prev, ...updates };
+      });
   };
 
   // Payment Edit Modal
@@ -556,6 +582,25 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         </div>
 
         <div className="space-y-4">
+            {/* Occupancy Type Selection */}
+            <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">বসবাসের ধরন (এই মাসের জন্য)</label>
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                    <button 
+                        onClick={() => handleModalOccupancyChange(true)}
+                        className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${editModalData.isOccupied ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        <Users size={12} /> বসবাসরত
+                    </button>
+                    <button 
+                        onClick={() => handleModalOccupancyChange(false)}
+                        className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${!editModalData.isOccupied ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        <Home size={12} /> খালি
+                    </button>
+                </div>
+            </div>
+
             {/* Status Selection */}
             <div className="flex bg-slate-100 p-1 rounded-xl">
                 <button 
@@ -752,15 +797,25 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                       <span className="text-sm font-bold text-slate-800 text-right">{FLAT_OWNERS.find(f => f.flat === selectedUnit)?.name || 'অজানা'}</span>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                  <div 
+                    className={`bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between transition-all ${isAdmin && !processingUpdate ? 'cursor-pointer hover:bg-indigo-50 hover:border-indigo-100 active:scale-[0.98]' : (processingUpdate ? 'opacity-70 cursor-wait' : '')}`}
+                    onClick={() => handleToggleOccupancy(selectedUnit)}
+                  >
                       <div className="flex items-center gap-2.5 text-slate-600">
                           <Grid size={18} className={occupancyStatus === t.occupied ? 'text-green-500' : 'text-orange-500'} />
                           <span className="text-sm font-medium">বসবাসের ধরন</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${occupancyStatus === t.occupied ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                            {occupancyStatus}
-                        </span>
+                        {processingUpdate ? (
+                           <RefreshCw size={12} className="animate-spin text-indigo-500" />
+                        ) : (
+                          <>
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${occupancyStatus === t.occupied ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                {occupancyStatus}
+                            </span>
+                            {isAdmin && <Edit3 size={10} className="text-slate-400" />}
+                          </>
+                        )}
                       </div>
                   </div>
 
