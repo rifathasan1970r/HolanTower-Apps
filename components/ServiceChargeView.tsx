@@ -847,14 +847,19 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
     const unitSelectorModalContent = showUnitSelector && (
       <div className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowUnitSelector(false)}>
         <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-slate-800">ইউনিট নির্বাচন করুন</h3>
-            <button onClick={() => setShowUnitSelector(false)} className="text-slate-400 hover:text-red-500 bg-slate-50 p-2 rounded-full transition-colors">
-              <X size={20} />
-            </button>
-          </div>
+          <h3 className="text-lg font-bold text-slate-800 text-center mb-4">ইউনিট সিলেক্ট করুন</h3>
           
-          <div className="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+          <button 
+            onClick={() => {
+              setSelectedUnit(null);
+              setShowUnitSelector(false);
+            }}
+            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl mb-4 transition-colors shadow-md shadow-indigo-200"
+          >
+            সকল ইউনিট
+          </button>
+          
+          <div className="grid grid-cols-3 gap-2.5 max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar pb-2">
             {ALL_UNITS.map((unit) => (
               <button
                 key={unit}
@@ -862,10 +867,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                   setSelectedUnit(unit);
                   setShowUnitSelector(false);
                 }}
-                className={`py-3 rounded-xl font-bold text-sm transition-all border ${
+                className={`py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm border ${
                   selectedUnit === unit 
-                    ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-200 scale-105' 
-                    : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100 hover:border-slate-200'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
+                    : 'bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100'
                 }`}
               >
                 {unit}
@@ -873,12 +878,20 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
             ))}
           </div>
           
-          <button 
-            onClick={() => setShowUnitSelector(false)}
-            className="w-full mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors text-sm"
-          >
-            বন্ধ করুন
-          </button>
+          <div className="mt-4 border-t border-slate-100 pt-3">
+             <marquee className="text-red-600 text-xs font-bold">
+               । কোনো ইউনিট এর হিসাব দেখতে উপরের ইউনিট এ ক্লিক করুন। সকল ইউনিট এর হিসাব ডিটেইস এ দেওয়া আছে।
+             </marquee>
+          </div>
+          
+          <div className="flex justify-center mt-3">
+            <button 
+              onClick={() => setShowUnitSelector(false)}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-10 rounded-xl transition-colors text-sm shadow-md shadow-red-200"
+            >
+              বন্ধ
+            </button>
+          </div>
         </div>
       </div>
     );

@@ -11,6 +11,7 @@ import { DescoView } from './components/DescoView';
 import { ServiceChargeView } from './components/ServiceChargeView';
 import { EmergencyView } from './components/EmergencyView';
 import { ToLetView } from './components/ToLetView';
+import { WaterBillView } from './components/WaterBillView';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -52,6 +53,9 @@ const App: React.FC = () => {
 
       case 'EMERGENCY':
         return <EmergencyView />;
+
+      case 'WATER_BILL':
+        return <WaterBillView onBack={() => setCurrentView('MENU')} />;
       
       case 'MENU':
       case 'HOME':

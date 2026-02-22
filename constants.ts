@@ -62,7 +62,7 @@ export const MENU_ITEMS: MenuItem[] = [
     id: 'water', 
     label: 'পানির বিল', 
     icon: Droplets, 
-    view: 'HOME', // Placeholder
+    view: 'WATER_BILL',
     color: 'bg-cyan-500',
     description: 'ওয়াসা বিল তথ্য',
     gradient: 'from-cyan-400 to-blue-500'
