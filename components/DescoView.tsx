@@ -1,42 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Zap, Filter, Check, Copy, Hash, ExternalLink, ShieldCheck, Lightbulb, ChevronRight, X, User, Info, CreditCard, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ViewState } from '../types';
+import { FLAT_OWNERS as DESCO_DATA } from '../constants';
 
 // Constants
 const EKPAY_LINK = "https://ekpay.gov.bd/#/payment/electricity-bill";
 const BLOG_LINK = "https://holantower.blogspot.com/p/holantower-electricity-desco-bill.html";
-
-// Desco Data
-const DESCO_DATA = [
-  { flat: '2A', name: 'MATIN', account: '41371285' },
-  { flat: '2B', name: 'HANIF', account: '41371286' },
-  { flat: '2C', name: 'MINA', account: '41371287' },
-  { flat: '3A', name: 'JILLUR', account: '41371298' },
-  { flat: '3B', name: 'KAIYUM', account: '41371308' },
-  { flat: '3C', name: 'FARUK', account: '41371291' },
-  { flat: '4A', name: 'SAIDUR', account: '41371310' },
-  { flat: '4B', name: 'IBRAHIM', account: '41371303' },
-  { flat: '4C', name: 'AYUB', account: '41371296' },
-  { flat: '5A', name: 'MOJAMMEL', account: '41371302' },
-  { flat: '5B', name: 'NESAR', account: '41371295' },
-  { flat: '5C', name: 'JUWEL', account: '41371309' },
-  { flat: '6A', name: 'NESAR', account: '41371299' },
-  { flat: '6B', name: 'SHAHIN', account: '41371305' },
-  { flat: '6C', name: 'SHAHIDULAH', account: '41371292' },
-  { flat: '7A', name: 'AZAD', account: '41371294' },
-  { flat: '7B', name: 'MOROL', account: '41371293' },
-  { flat: '7C', name: 'NAZRUL', account: '41371284' },
-  { flat: '8A', name: 'ATIQ', account: '41371306' },
-  { flat: '8B', name: 'MOSTOFA', account: '41371304' },
-  { flat: '8C', name: 'FIROZ', account: '41371301' },
-  { flat: '9A', name: 'KAIYUM', account: '41371307' },
-  { flat: '9B', name: 'AZHAR', account: '41371297' },
-  { flat: '9C', name: 'SAYED', account: '41371300' },
-  { flat: '10A', name: 'HAKIM', account: '41371288' },
-  { flat: '10B', name: 'MOTIUR', account: '41371289' },
-  { flat: '10C', name: 'ASHRAF', account: '41371290' },
-  { flat: 'MAIN', name: 'NAZRUL', account: '41371283' }
-];
 
 // Quick Recharge Modal Component
 const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: typeof DESCO_DATA }) => {
@@ -314,23 +284,25 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
         <div className="grid grid-cols-2 gap-3 mb-4">
             <button 
                 onClick={() => setView('DESCO_INFO')}
-                className="bg-white border border-slate-100 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all text-left flex flex-col justify-between h-24 group active:scale-95"
+                className="bg-gradient-to-br from-red-500 to-rose-600 border border-red-400 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all text-left flex flex-col justify-between h-20 group active:scale-95 relative overflow-hidden"
             >
-                <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <Info size={18} />
+                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8 pointer-events-none"></div>
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform relative z-10">
+                    <CreditCard size={18} />
                 </div>
-                <span className="text-[11px] font-bold text-slate-700 leading-tight">
+                <span className="text-[10px] font-bold text-white leading-tight relative z-10">
                     ডেসকো মিটারের সকল তথ্য (একাউন্ট নম্বর কপি করুন)
                 </span>
             </button>
             <button 
                 onClick={() => setView('DESCO_RULES')}
-                className="bg-white border border-slate-100 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all text-left flex flex-col justify-between h-24 group active:scale-95"
+                className="bg-gradient-to-br from-red-500 to-rose-600 border border-red-400 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all text-left flex flex-col justify-between h-20 group active:scale-95 relative overflow-hidden"
             >
-                <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
-                    <Lightbulb size={18} />
+                <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full blur-xl -ml-8 -mb-8 pointer-events-none"></div>
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform relative z-10">
+                    <Zap size={18} />
                 </div>
-                <span className="text-[11px] font-bold text-slate-700 leading-tight">
+                <span className="text-[10px] font-bold text-white leading-tight relative z-10">
                     ডেসকো রিচার্জ করার নিয়ম
                 </span>
             </button>
