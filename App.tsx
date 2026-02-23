@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize } from 'lucide-react';
+import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { APP_NAME, MENU_ITEMS } from './constants';
+import { APP_NAME, MENU_ITEMS, TRANSLATIONS } from './constants';
 import { ViewState } from './types';
 import NoticeBoard from './components/NoticeBoard';
 import BottomNav from './components/BottomNav';
@@ -16,6 +16,9 @@ import { LiftInstructionsView } from './components/LiftInstructionsView';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+  const [showSummaryList, setShowSummaryList] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const [greeting, setGreeting] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [currentTime, setCurrentTime] = useState('');
@@ -41,10 +44,68 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Advanced Back Navigation Support
+  useEffect(() => {
+    // Initialize history state if not already set
+    if (!window.history.state || window.history.state.view === undefined) {
+      window.history.replaceState({ view: 'BASE' }, '');
+      window.history.pushState({ view: 'HOME', unit: null, summary: false }, '');
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state;
+      
+      if (state) {
+        if (state.view === 'BASE') {
+          // We hit the bottom of our app history
+          setShowExitDialog(true);
+          // Push the current view back so we stay in the app
+          window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+        } else if (state.view) {
+          // Navigate to the view stored in history
+          setCurrentView(state.view);
+          setSelectedUnit(state.unit || null);
+          setShowSummaryList(!!state.summary);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentView, selectedUnit, showSummaryList]);
+
+  // Sync manual navigation with History API
+  useEffect(() => {
+    const state = window.history.state;
+    // Only push state if the current view or sub-state is different from the one in history
+    // This prevents duplicate states when navigating via back button
+    if (state && (state.view !== currentView || state.unit !== selectedUnit || state.summary !== showSummaryList) && state.view !== 'BASE') {
+      window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+    }
+  }, [currentView, selectedUnit, showSummaryList]);
+
+  const t = TRANSLATIONS['bn']; // Default to Bangla for now, can be dynamic if needed
+
+  const handleExitApp = () => {
+    // Try to close the window
+    window.close();
+    // If window.close() doesn't work (common in browsers), 
+    // we can't do much more than hiding the dialog or showing a message.
+    // On Android, if we don't push the state back, the next back press exits.
+    setShowExitDialog(false);
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'SERVICE_CHARGE':
-        return <ServiceChargeView />;
+        return (
+          <ServiceChargeView 
+            selectedUnit={selectedUnit} 
+            onUnitSelect={setSelectedUnit}
+            showSummaryList={showSummaryList}
+            onSummaryToggle={setShowSummaryList}
+          />
+        );
       
       case 'DESCO':
         return <DescoView />;
@@ -228,6 +289,52 @@ const App: React.FC = () => {
 
       {/* Bottom Navigation */}
       <BottomNav currentView={currentView} setView={setCurrentView} />
+
+      {/* Exit Confirmation Dialog */}
+      <AnimatePresence>
+        {showExitDialog && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowExitDialog(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-xs bg-white rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">{t.exitTitle}</h3>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                  {t.exitMessage}
+                </p>
+              </div>
+              <div className="flex border-t border-slate-100">
+                <button
+                  onClick={() => setShowExitDialog(false)}
+                  className="flex-1 py-4 text-sm font-bold text-slate-500 hover:bg-slate-50 transition-colors border-r border-slate-100"
+                >
+                  {t.exitCancel}
+                </button>
+                <button
+                  onClick={handleExitApp}
+                  className="flex-1 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <LogOut size={16} />
+                  {t.exitConfirm}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

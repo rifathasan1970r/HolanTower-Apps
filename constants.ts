@@ -156,6 +156,10 @@ export const TRANSLATIONS = {
     month: 'মাস',
     paymentStatus: 'পেমেন্ট স্ট্যাটাস',
     notice: 'নোটিশ',
+    exitTitle: 'অ্যাপ বন্ধ করুন',
+    exitMessage: 'আপনি কি নিশ্চিতভাবে অ্যাপটি বন্ধ করতে চান?',
+    exitConfirm: 'হ্যাঁ, বন্ধ করুন',
+    exitCancel: 'না',
     months: [
       'জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
       'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
@@ -195,6 +199,10 @@ export const TRANSLATIONS = {
     month: 'Month',
     paymentStatus: 'Payment Status',
     notice: 'Notice',
+    exitTitle: 'Exit App',
+    exitMessage: 'Are you sure you want to exit the app?',
+    exitConfirm: 'Yes, Exit',
+    exitCancel: 'No',
     months: [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'

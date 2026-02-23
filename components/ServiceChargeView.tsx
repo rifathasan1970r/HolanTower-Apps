@@ -46,11 +46,19 @@ interface UnitInfo {
 
 interface ServiceChargeViewProps {
   lang?: 'bn' | 'en';
+  selectedUnit: string | null;
+  onUnitSelect: (unit: string | null) => void;
+  showSummaryList: boolean;
+  onSummaryToggle: (show: boolean) => void;
 }
 
-export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn' }) => {
-  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
-  const [showSummaryList, setShowSummaryList] = useState<boolean>(false);
+export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ 
+  lang = 'bn',
+  selectedUnit,
+  onUnitSelect,
+  showSummaryList,
+  onSummaryToggle
+}) => {
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [searchTerm, setSearchTerm] = useState('');
@@ -851,7 +859,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
           
           <button 
             onClick={() => {
-              setSelectedUnit(null);
+              onUnitSelect(null);
               setShowUnitSelector(false);
             }}
             className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl mb-4 transition-colors shadow-md shadow-indigo-200"
@@ -864,7 +872,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
               <button
                 key={unit}
                 onClick={() => {
-                  setSelectedUnit(unit);
+                  onUnitSelect(unit);
                   setShowUnitSelector(false);
                 }}
                 className={`py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm border ${
@@ -907,7 +915,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         <div className="bg-white relative border-b border-slate-100 shadow-sm transition-all">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
                  <button 
-                  onClick={() => setSelectedUnit(null)}
+                  onClick={() => onUnitSelect(null)}
                   className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors py-1 group"
                 >
                   <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
@@ -925,7 +933,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
             
             <div className="flex items-center justify-between px-6 py-3">
                  <button 
-                    onClick={() => prevUnit && setSelectedUnit(prevUnit)}
+                    onClick={() => prevUnit && onUnitSelect(prevUnit)}
                     disabled={!prevUnit}
                     className={`p-2 rounded-full transition-all ${!prevUnit ? 'text-slate-100 cursor-not-allowed' : 'text-slate-500 hover:bg-slate-100 active:scale-95 hover:text-primary-600'}`}
                  >
@@ -941,9 +949,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                       {FLAT_OWNERS.find(f => f.flat === selectedUnit)?.name || 'Unknown'}
                     </p>
                  </div>
-
+ 
                  <button 
-                    onClick={() => nextUnit && setSelectedUnit(nextUnit)}
+                    onClick={() => nextUnit && onUnitSelect(nextUnit)}
                     disabled={!nextUnit}
                     className={`p-2 rounded-full transition-all ${!nextUnit ? 'text-slate-100 cursor-not-allowed' : 'text-slate-500 hover:bg-slate-100 active:scale-95 hover:text-primary-600'}`}
                  >
@@ -1301,7 +1309,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         <div className="animate-in slide-in-from-right duration-300">
              <div className="flex items-center gap-3 mb-4">
                  <button 
-                  onClick={() => setShowSummaryList(false)}
+                  onClick={() => onSummaryToggle(false)}
                   className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-colors active:scale-95"
                 >
                   <ArrowLeft size={20} />
@@ -1386,7 +1394,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                             {filteredUnitsData.map((data, idx) => (
                                 <tr 
                                     key={idx} 
-                                    onClick={() => setSelectedUnit(data.unit)}
+                                    onClick={() => onUnitSelect(data.unit)}
                                     className="hover:bg-slate-50 transition-colors cursor-pointer active:bg-slate-100 group"
                                 >
                                     <td className="py-3 pl-4">
@@ -1442,7 +1450,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
 
             {/* Grand Summary Box (All Units) - CLICKABLE */}
             <div 
-                onClick={() => setShowSummaryList(true)}
+                onClick={() => onSummaryToggle(true)}
                 className="mb-6 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 p-5 text-white cursor-pointer active:scale-[0.98] transition-all group"
                 style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
             >
@@ -1501,7 +1509,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
                 {filteredUnitsData.map((data) => (
                 <button
                     key={data.unit}
-                    onClick={() => setSelectedUnit(data.unit)}
+                    onClick={() => onUnitSelect(data.unit)}
                     className="group relative bg-white border border-slate-200 hover:border-primary-500 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
                 >
                     <span className="text-lg font-bold text-slate-700 group-hover:text-primary-600">{data.unit}</span>
