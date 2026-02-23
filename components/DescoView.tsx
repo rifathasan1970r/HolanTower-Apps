@@ -290,7 +290,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                 className="bg-gradient-to-br from-red-500 to-rose-600 border border-red-400 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all text-left flex flex-col items-start justify-center gap-1 h-20 group active:scale-95 relative overflow-hidden"
             >
                 <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8 pointer-events-none"></div>
-                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform relative z-10 shrink-0 animate-[pulse_3s_ease-in-out_infinite]">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform relative z-10 shrink-0 icon-premium-pulse">
                     <Info size={18} />
                 </div>
                 <span className="text-[10px] font-bold text-white leading-tight relative z-10 mt-1">
@@ -302,7 +302,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                 className="bg-gradient-to-br from-red-500 to-rose-600 border border-red-400 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all text-right flex flex-col items-end justify-center h-20 group active:scale-95 relative overflow-hidden"
             >
                 <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full blur-xl -ml-8 -mb-8 pointer-events-none"></div>
-                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform relative z-10 mb-1">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform relative z-10 mb-1 icon-premium-pulse">
                     <Zap size={18} />
                 </div>
                 <span className="text-[10px] font-bold text-white leading-tight relative z-10">
@@ -593,6 +593,13 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
         }
         .eb-icon-custom {
           animation: redPulse 3s ease-in-out infinite;
+        }
+        @keyframes iconPulsePremium {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
+          50% { transform: scale(1.1); box-shadow: 0 0 12px rgba(255,255,255,0.4); }
+        }
+        .icon-premium-pulse {
+          animation: iconPulsePremium 3s ease-in-out infinite;
         }
       `}</style>
 
