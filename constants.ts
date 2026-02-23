@@ -10,7 +10,8 @@ import {
   Droplets,
   Trash2,
   Bot,
-  ArrowUpDown
+  ArrowUpDown,
+  Calculator
 } from 'lucide-react';
 import { MenuItem, Notice } from './types';
 
@@ -42,6 +43,15 @@ export const MENU_ITEMS: MenuItem[] = [
     color: 'bg-yellow-500',
     description: 'প্রিপেইড মিটার তথ্য',
     gradient: 'from-amber-400 to-orange-500'
+  },
+  { 
+    id: 'accounts', 
+    label: 'স্বচ্ছ হিসাব কেন্দ্র', 
+    icon: Calculator, 
+    view: 'ACCOUNTS',
+    color: 'bg-indigo-500',
+    description: 'বিল্ডিং এর আয়-ব্যয়',
+    gradient: 'from-indigo-500 to-purple-600'
   },
   { 
     id: 'tolet', 
