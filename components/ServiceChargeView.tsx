@@ -904,7 +904,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({ lang = 'bn
         {unitSelectorModalContent}
         
         {/* Navigation Header Section */}
-        <div className="bg-white sticky top-[60px] z-10 border-b border-slate-100 shadow-sm transition-all">
+        <div className="bg-white relative border-b border-slate-100 shadow-sm transition-all">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
                  <button 
                   onClick={() => setSelectedUnit(null)}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, ArrowUpDown, Phone, Users, Weight, DoorOpen, Ban, Wind, Bell, PowerOff, ChevronsUpDown, Hand, UserCheck, Trash2, VolumeX, Building, AlertCircle, Sparkles
+  ArrowLeft, ArrowUpDown, Phone, Users, Weight, DoorOpen, Ban, Wind, Bell, PowerOff, ChevronsUpDown, Hand, UserCheck, Trash2, VolumeX, Building
 } from 'lucide-react';
 
 interface LiftInstructionsViewProps {
@@ -25,11 +25,6 @@ const instructions = [
   { icon: Wind, text: "লিফটের ভিতরে পর্যাপ্ত বায়ু চলাচল ও ইমারজেন্সি লাইটের ব্যবস্থা রয়েছে।" },
 ];
 
-const emergencyContact = {
-  name: "রিফাত",
-  phone: "01310-988954"
-};
-
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -51,14 +46,14 @@ const itemVariants = {
 
 export const LiftInstructionsView: React.FC<LiftInstructionsViewProps> = ({ onBack }) => {
   return (
-    <div className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-100 min-h-screen text-slate-800">
+    <div className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-100 min-h-screen">
       {/* Background decorative shapes */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute -top-24 -left-24 w-72 h-72 bg-indigo-200/30 rounded-full filter blur-3xl opacity-50"></div>
         <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-red-200/30 rounded-full filter blur-3xl opacity-50"></div>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-xl sticky top-[60px] z-10 border-b border-gray-200/50">
+      <div className="bg-white/80 backdrop-blur-xl relative border-b border-gray-200/50">
         <div className="flex items-center justify-between px-4 py-3">
           <button 
             onClick={onBack}
@@ -116,7 +111,7 @@ export const LiftInstructionsView: React.FC<LiftInstructionsViewProps> = ({ onBa
             </div>
             <div>
               <p className="font-bold">জরুরি প্রয়োজনে যোগাযোগ করুন</p>
-              <p className="text-lg font-bold tracking-wider">{emergencyContact.phone} ( {emergencyContact.name} )</p>
+              <p className="text-lg font-bold tracking-wider">01310-988954 ( রিফাত )</p>
             </div>
           </div>
         </motion.div>
