@@ -8,6 +8,8 @@ import NoticeBoard from './components/NoticeBoard';
 import BottomNav from './components/BottomNav';
 import Assistant from './components/Assistant';
 import { DescoView } from './components/DescoView';
+import { DescoInfoView } from './components/DescoInfoView';
+import { DescoRulesView } from './components/DescoRulesView';
 import { ServiceChargeView } from './components/ServiceChargeView';
 import { EmergencyView } from './components/EmergencyView';
 import { ToLetView } from './components/ToLetView';
@@ -170,7 +172,13 @@ const App: React.FC = () => {
         );
       
       case 'DESCO':
-        return <DescoView />;
+        return <DescoView setView={setCurrentView} />;
+
+      case 'DESCO_INFO':
+        return <DescoInfoView onBack={() => window.history.back()} />;
+
+      case 'DESCO_RULES':
+        return <DescoRulesView />;
 
       case 'TO_LET':
         return <ToLetView />;

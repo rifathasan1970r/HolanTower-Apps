@@ -174,9 +174,10 @@ const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: type
 
 interface DescoViewProps {
   lang?: 'bn' | 'en';
+  setView: (view: ViewState) => void;
 }
 
-export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn' }) => {
+export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) => {
   // State
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFloor, setSelectedFloor] = useState('');
@@ -307,6 +308,32 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn' }) => {
             <div className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-slate-100">
                 <Lightbulb size={20} className="text-indigo-600" />
             </div>
+        </div>
+
+        {/* Quick Access Boxes */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+            <button 
+                onClick={() => setView('DESCO_INFO')}
+                className="bg-white border border-slate-100 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all text-left flex flex-col justify-between h-24 group active:scale-95"
+            >
+                <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                    <Info size={18} />
+                </div>
+                <span className="text-[11px] font-bold text-slate-700 leading-tight">
+                    ডেসকো মিটারের সকল তথ্য (একাউন্ট নম্বর কপি করুন)
+                </span>
+            </button>
+            <button 
+                onClick={() => setView('DESCO_RULES')}
+                className="bg-white border border-slate-100 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all text-left flex flex-col justify-between h-24 group active:scale-95"
+            >
+                <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                    <Lightbulb size={18} />
+                </div>
+                <span className="text-[11px] font-bold text-slate-700 leading-tight">
+                    ডেসকো রিচার্জ করার নিয়ম
+                </span>
+            </button>
         </div>
 
         {/* Search & Filter Bar - Fixed: Added background and padding to mask content behind */}
