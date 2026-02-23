@@ -47,21 +47,20 @@ export const DescoInfoView: React.FC<DescoInfoViewProps> = ({ onBack }) => {
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden"
+          className="bg-slate-50 rounded-xl shadow-xl border border-slate-200 overflow-hidden"
         >
           {/* Header / Trigger */}
-          <button 
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full p-3 flex items-center justify-between bg-white hover:bg-slate-50 transition-colors"
-          >
-            <div className="text-left">
-              <h3 className="font-bold text-sm text-slate-800 leading-tight">আপনার ডেসকো একাউন্ট নম্বর কপি করুন</h3>
-              <p className="text-[11px] font-bold text-indigo-600 mt-0.5">লিস্ট দেখুন (২৭ টি ইউনিট)</p>
-            </div>
-            <div className={`w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-               <ChevronDown size={18} />
-            </div>
-          </button>
+          <div className="p-3 bg-slate-50 flex flex-col items-center justify-center gap-2">
+             <h3 className="font-bold text-sm text-slate-800 leading-tight text-center">আপনার ডেসকো একাউন্ট নম্বর কপি করুন</h3>
+             
+             <button 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="flex items-center gap-1.5 bg-purple-900 hover:bg-purple-800 px-4 py-1.5 rounded-full transition-colors group active:scale-95 shadow-sm"
+             >
+                <span className="text-[10px] font-bold text-white">লিস্ট দেখুন (২৭ টি ইউনিট)</span>
+                <ChevronDown size={12} className={`text-white transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+             </button>
+          </div>
 
           {/* Dropdown Content */}
           <AnimatePresence>
@@ -72,7 +71,7 @@ export const DescoInfoView: React.FC<DescoInfoViewProps> = ({ onBack }) => {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden border-t border-slate-100 bg-slate-50"
               >
-                <div className="p-3">
+                <div className="p-3 pt-2">
                   <div className="mb-3 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                     <input 

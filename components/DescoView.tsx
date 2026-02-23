@@ -283,7 +283,10 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
         {/* Quick Access Boxes */}
         <div className="grid grid-cols-2 gap-3 mb-4">
             <button 
-                onClick={() => setView('DESCO_INFO')}
+                onClick={() => {
+                    window.history.pushState({ view: 'DESCO_INFO', unit: null, summary: false }, '');
+                    setView('DESCO_INFO');
+                }}
                 className="bg-gradient-to-br from-red-500 to-rose-600 border border-red-400 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all text-left flex flex-col justify-between h-20 group active:scale-95 relative overflow-hidden"
             >
                 <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8 pointer-events-none"></div>
