@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -172,7 +172,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-[#F8FAFC] relative shadow-2xl overflow-hidden flex flex-col">
+    <div className="min-h-screen pb-24 max-w-md mx-auto bg-[#F8FAFC] relative shadow-2xl">
       {/* Decorative Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[20%] bg-teal-200/20 blur-[100px] rounded-full"></div>
@@ -180,7 +180,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Top Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 transition-all duration-300">
+      <header className="fixed top-0 left-0 right-0 max-w-md mx-auto z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 transition-all duration-300">
         <div className="px-5 py-3 flex items-center justify-start">
           <div className="flex items-center gap-3 text-left">
             <div className="w-9 h-9 bg-gradient-to-tr from-teal-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-200 shrink-0 transform rotate-3">
@@ -206,8 +206,8 @@ const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main 
-        className={`relative z-10 transition-all duration-300 flex-grow overflow-y-auto pb-24 ${ 
-          currentView === 'HOME' ? 'pt-[125px] px-0' : 'pt-[90px] px-5'
+        className={`px-5 relative z-10 transition-all duration-300 ${
+          currentView === 'HOME' ? 'pt-[125px]' : 'pt-[90px]'
         }`}
       >
         <AnimatePresence mode="wait">
