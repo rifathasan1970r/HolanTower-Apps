@@ -287,22 +287,22 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                     window.history.pushState({ view: 'DESCO_INFO', unit: null, summary: false }, '');
                     setView('DESCO_INFO');
                 }}
-                className="bg-gradient-to-br from-red-500 to-rose-600 border border-red-400 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all text-left flex flex-col justify-between h-20 group active:scale-95 relative overflow-hidden"
+                className="bg-gradient-to-br from-red-500 to-rose-600 border border-red-400 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all text-left flex flex-col items-start justify-center gap-1 h-20 group active:scale-95 relative overflow-hidden"
             >
                 <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8 pointer-events-none"></div>
-                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform relative z-10">
-                    <CreditCard size={18} />
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform relative z-10 shrink-0 animate-[pulse_3s_ease-in-out_infinite]">
+                    <Info size={18} />
                 </div>
-                <span className="text-[10px] font-bold text-white leading-tight relative z-10">
-                    ডেসকো মিটারের সকল তথ্য (একাউন্ট নম্বর কপি করুন)
+                <span className="text-[10px] font-bold text-white leading-tight relative z-10 mt-1">
+                    ডেসকো মিটারের সকল তথ্য
                 </span>
             </button>
             <button 
                 onClick={() => setView('DESCO_RULES')}
-                className="bg-gradient-to-br from-red-500 to-rose-600 border border-red-400 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all text-left flex flex-col justify-between h-20 group active:scale-95 relative overflow-hidden"
+                className="bg-gradient-to-br from-red-500 to-rose-600 border border-red-400 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all text-right flex flex-col items-end justify-center h-20 group active:scale-95 relative overflow-hidden"
             >
                 <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full blur-xl -ml-8 -mb-8 pointer-events-none"></div>
-                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform relative z-10">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform relative z-10 mb-1">
                     <Zap size={18} />
                 </div>
                 <span className="text-[10px] font-bold text-white leading-tight relative z-10">
@@ -361,7 +361,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
             {/* Floor Header */}
             <div className="flex items-center gap-3 mb-3 pl-1">
                 <div className="bg-slate-200 h-px flex-1"></div>
-                <span className="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-sm uppercase">
+                <span className="text-xs font-bold text-white bg-red-600 border border-red-500 px-3 py-1 rounded-full shadow-sm uppercase">
                     {getFloorLabel(floorKey)}
                 </span>
                 <div className="bg-slate-200 h-px flex-1"></div>
