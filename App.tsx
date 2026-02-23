@@ -103,6 +103,11 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [currentView, selectedUnit, showSummaryList]);
 
+  // Scroll to top on view or unit change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView, selectedUnit, showSummaryList]);
+
   // Sync manual navigation with History API
   useEffect(() => {
     const state = window.history.state;
@@ -234,7 +239,7 @@ const App: React.FC = () => {
             <div>
               <div className="flex justify-between items-end mb-4 px-1">
                  <h3 className="text-lg font-bold text-slate-800">
-                   {currentView === 'MENU' ? 'সকল সেবা' : 'কুইক অ্যাক্সেস'}
+                   {currentView === 'MENU' ? 'সকল সেবা' : 'সেবা কেন্দ্র'}
                  </h3>
                  {currentView === 'HOME' && (
                    <button onClick={() => setCurrentView('MENU')} className="text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors">
