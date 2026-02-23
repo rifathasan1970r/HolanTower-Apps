@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut } from 'lucide-react';
+import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { APP_NAME, MENU_ITEMS, TRANSLATIONS } from './constants';
@@ -22,25 +22,54 @@ const App: React.FC = () => {
   const [greeting, setGreeting] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [currentTime, setCurrentTime] = useState('');
+  const [currentSeconds, setCurrentSeconds] = useState('');
+  const [amPm, setAmPm] = useState('');
+  const [timeIcon, setTimeIcon] = useState<React.ReactNode>(<CloudSun size={24} className="text-yellow-300" />);
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
       const hour = now.getHours();
+      const minute = now.getMinutes();
+      const totalMinutes = hour * 60 + minute;
       
-      if (hour < 12) setGreeting('শুভ সকাল');
-      else if (hour < 17) setGreeting('শুভ দুপুর');
-      else if (hour < 20) setGreeting('শুভ বিকেল');
-      else setGreeting('শুভ সন্ধ্যা');
+      // 1. Greeting & Icon logic
+      if (totalMinutes >= 300 && totalMinutes < 720) { // 5:00 AM – 11:59 AM
+        setGreeting('শুভ সকাল');
+        setTimeIcon(<Sun size={24} className="text-yellow-300 animate-pulse" />);
+      } else if (totalMinutes >= 720 && totalMinutes < 960) { // 12:00 PM – 3:59 PM
+        setGreeting('শুভ দুপুর');
+        setTimeIcon(<Sun size={24} className="text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.8)]" />);
+      } else if (totalMinutes >= 960 && totalMinutes < 1080) { // 4:00 PM – 6:00 PM
+        setGreeting('শুভ বিকেল');
+        setTimeIcon(<Sunset size={24} className="text-orange-300" />);
+      } else if (totalMinutes >= 1080 && totalMinutes < 1170) { // 6:00 PM – 7:30 PM
+        setGreeting('শুভ সন্ধ্যা');
+        setTimeIcon(<Sunset size={24} className="text-orange-400" />);
+      } else { // 7:30 PM – 4:59 AM
+        setGreeting('শুভ রাত্রি');
+        setTimeIcon(<Moon size={24} className="text-blue-100 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]" />);
+      }
 
       const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
       setCurrentDate(now.toLocaleDateString('bn-BD', options));
       
-      setCurrentTime(now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }));
+      // Time parts
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+      // Example: "05:47:03 AM"
+      const [hms, ap] = timeStr.split(' ');
+      const [h, m, s] = hms.split(':');
+      
+      // Convert HH:MM and SS to Bangla digits for consistency with the rest of the app
+      const toBanglaDigits = (str: string) => str.replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[parseInt(d)]);
+      
+      setCurrentTime(toBanglaDigits(`${h}:${m}`));
+      setCurrentSeconds(toBanglaDigits(s));
+      setAmPm(ap);
     };
 
     updateTime();
-    const timer = setInterval(updateTime, 60000);
+    const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -158,19 +187,26 @@ const App: React.FC = () => {
             {/* Premium Hero Dashboard for Home */}
             {currentView === 'HOME' && (
               <div className="relative rounded-3xl overflow-hidden shadow-2xl group transition-all duration-500">
-                {/* Background with Gradient and Noise */}
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800"></div>
-                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                {/* Background Image with Overlay */}
+                <div className="absolute inset-0">
+                  <img 
+                    src="https://i.imghippo.com/files/doWD3644bN.jpg" 
+                    alt="Hollan Tower Background" 
+                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal-900/80 via-teal-800/60 to-emerald-900/80 backdrop-brightness-75"></div>
+                </div>
                 
                 {/* Content */}
                 <div className="relative z-10 p-6 text-white">
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <h2 className="text-xl font-light opacity-90 mb-1">{greeting},</h2>
-                      <h1 className="text-2xl font-bold tracking-tight">বাসিন্দা</h1>
+                      <h1 className="text-2xl font-bold tracking-tight">হলান টাওয়ার বাসী</h1>
                     </div>
                     <div className="bg-white/10 backdrop-blur-md p-2 rounded-full border border-white/20 shadow-lg">
-                      <CloudSun size={24} className="text-yellow-300" />
+                      {timeIcon}
                     </div>
                   </div>
 
@@ -184,8 +220,10 @@ const App: React.FC = () => {
                            <p className="text-sm font-bold leading-tight">{currentDate}</p>
                         </div>
                      </div>
-                     <div className="text-right border-l border-white/10 pl-4">
-                        <p className="text-2xl font-bold font-mono tracking-wider">{currentTime}</p>
+                     <div className="text-right border-l border-white/10 pl-4 flex flex-col justify-center items-end">
+                        <p className="text-2xl font-bold font-mono tracking-wider leading-none">{currentTime}</p>
+                        <p className="text-[12px] font-bold font-mono opacity-80 mt-1.5 leading-none">{currentSeconds} সেকেন্ড</p>
+                        <p className="text-sm font-black opacity-100 mt-2 leading-none tracking-widest bg-white/20 px-2 py-1 rounded-md">{amPm}</p>
                      </div>
                   </div>
                 </div>
