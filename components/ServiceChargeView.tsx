@@ -867,7 +867,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             সকল ইউনিট
           </button>
           
-          <div className="grid grid-cols-3 gap-2.5 max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar pb-2">
+          <div className="grid grid-cols-3 gap-1.5 pb-2">
             {ALL_UNITS.map((unit) => (
               <button
                 key={unit}
@@ -875,7 +875,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                   onUnitSelect(unit);
                   setShowUnitSelector(false);
                 }}
-                className={`py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm border ${
+                className={`py-1.5 rounded-lg font-bold text-xs transition-all shadow-sm border ${
                   selectedUnit === unit 
                     ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
                     : 'bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100'
