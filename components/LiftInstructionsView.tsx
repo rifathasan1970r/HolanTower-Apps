@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, ArrowUpDown, Phone, Users, Weight, DoorOpen, Ban, Wind, Bell, PowerOff, ChevronsUpDown, Hand, UserCheck, Trash2, VolumeX, Building
+  ArrowLeft, ArrowUpDown, Phone, Users, Weight, DoorOpen, Ban, Wind, Bell, PowerOff, ChevronsUpDown, Hand, UserCheck, Trash2, VolumeX, Building, AlertCircle, Sparkles
 } from 'lucide-react';
 
 interface LiftInstructionsViewProps {
@@ -25,6 +25,11 @@ const instructions = [
   { icon: Wind, text: "লিফটের ভিতরে পর্যাপ্ত বায়ু চলাচল ও ইমারজেন্সি লাইটের ব্যবস্থা রয়েছে।" },
 ];
 
+const emergencyContact = {
+  name: "রিফাত",
+  phone: "01310-988954"
+};
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -46,7 +51,7 @@ const itemVariants = {
 
 export const LiftInstructionsView: React.FC<LiftInstructionsViewProps> = ({ onBack }) => {
   return (
-    <div className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-100 min-h-screen">
+    <div className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-100 min-h-screen text-slate-800">
       {/* Background decorative shapes */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute -top-24 -left-24 w-72 h-72 bg-indigo-200/30 rounded-full filter blur-3xl opacity-50"></div>
@@ -111,7 +116,7 @@ export const LiftInstructionsView: React.FC<LiftInstructionsViewProps> = ({ onBa
             </div>
             <div>
               <p className="font-bold">জরুরি প্রয়োজনে যোগাযোগ করুন</p>
-              <p className="text-lg font-bold tracking-wider">01310-988954 ( রিফাত )</p>
+              <p className="text-lg font-bold tracking-wider">{emergencyContact.phone} ( {emergencyContact.name} )</p>
             </div>
           </div>
         </motion.div>

@@ -483,9 +483,14 @@ export const EmergencyView = () => {
                         </button>
                       </div>
                     )}
-                    <p className="text-xs text-slate-500 font-medium pr-16">{person.role}</p>
-                    <p className="font-bold text-slate-800 text-base">{person.name}</p>
-                    <p className="font-mono font-bold text-slate-600 text-sm mt-1">{person.phone}</p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-slate-500 font-medium">{person.role}</p>
+                      <p className="font-bold text-red-600 text-base">{person.name}</p>
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <p className="font-bold text-slate-800 text-base">নম্বর</p>
+                      <p className="font-mono font-extrabold text-red-600 text-lg">{person.phone}</p>
+                    </div>
                     <ActionButtons phone={person.phone} wa={person.wa} />
                   </div>
                 ))}
