@@ -17,7 +17,8 @@ import {
   Coins,
   Flame,
   FireExtinguisher,
-  Clock
+  Clock,
+  Smartphone
 } from 'lucide-react';
 import { MenuItem, Notice } from './types';
 
@@ -57,6 +58,15 @@ export const MENU_ITEMS: MenuItem[] = [
     color: 'bg-yellow-500',
     description: 'প্রিপেইড মিটার তথ্য',
     gradient: 'from-amber-400 to-orange-500'
+  },
+  { 
+    id: 'recharge_rules', 
+    label: 'রিচার্জ করার নিয়ম', 
+    icon: Smartphone, 
+    view: 'RECHARGE_RULES',
+    color: 'bg-orange-500',
+    description: 'সহজ রিচার্জ নির্দেশিকা',
+    gradient: 'from-orange-400 to-red-500'
   },
   { 
     id: 'accounts', 

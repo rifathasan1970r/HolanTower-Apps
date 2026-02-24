@@ -21,6 +21,7 @@ import ImageSlider from './components/ImageSlider';
 import { MaintenanceView } from './components/MaintenanceView';
 import { SettingsView } from './components/SettingsView';
 import { PrayerTimeView } from './components/PrayerTimeView';
+import { RechargeRulesView } from './components/RechargeRulesView';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -233,6 +234,9 @@ const App: React.FC = () => {
       
       case 'PRAYER_TIME':
         return <PrayerTimeView onBack={() => window.history.back()} />;
+
+      case 'RECHARGE_RULES':
+        return <RechargeRulesView onBack={() => window.history.back()} />;
 
       case 'MENU':
       case 'HOME':
