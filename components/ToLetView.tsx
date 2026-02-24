@@ -19,7 +19,7 @@ export const ToLetView = () => {
   ]);
 
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-2 pb-6">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6">
       <h2 className="text-2xl font-bold text-slate-800 dark:text-white px-1 border-l-4 border-emerald-500 pl-3">
         বাসাভাড়া / টু-লেট
       </h2>

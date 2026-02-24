@@ -1265,7 +1265,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   // VIEW 2 & 3 Combined Logic Wrapper
   return (
-    <div className="px-4 pt-4 pb-24 animate-in slide-in-from-bottom-4 duration-500 bg-slate-50 dark:bg-slate-900">
+    <div className="px-4 pb-24 animate-in slide-in-from-bottom-4 duration-500 bg-slate-50 dark:bg-slate-900 min-h-screen">
       {loginModalContent}
       {paymentEditModalContent}
       

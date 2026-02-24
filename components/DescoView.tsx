@@ -263,7 +263,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
       <div className="fixed -top-20 -right-20 w-64 h-64 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header Section */}
-      <div className="pt-4 px-4 pb-4 relative z-10">
+      <div className="px-4 pb-4 relative z-10">
         <div className="flex items-center justify-between mb-6">
             <div>
                 <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
@@ -312,7 +312,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
         </div>
 
         {/* Search & Filter Bar - Fixed: Added background and padding to mask content behind */}
-        <div className="sticky top-[64px] z-30 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md py-2 -mx-4 px-4 mb-2 transition-all shadow-sm">
+        <div className="sticky top-[var(--header-height)] z-30 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md py-2 -mx-4 px-4 mb-2 transition-all shadow-sm">
             <div className="flex gap-3">
                 <div className="relative flex-1 group shadow-lg shadow-slate-200/50 dark:shadow-none rounded-2xl">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />

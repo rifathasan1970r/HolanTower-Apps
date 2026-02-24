@@ -9,7 +9,7 @@ export const DescoRulesView: React.FC<DescoRulesViewProps> = ({ onBack }) => {
   return (
     <div className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 dark:bg-slate-900 min-h-screen relative transition-colors duration-300">
       {/* Navigation Header Section */}
-      <div className="bg-white dark:bg-slate-800 sticky top-[60px] z-10 border-b border-slate-100 dark:border-slate-700 shadow-sm transition-all">
+      <div className="bg-white dark:bg-slate-800 sticky top-[var(--header-height)] z-10 border-b border-slate-100 dark:border-slate-700 shadow-sm transition-all">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50 dark:border-slate-700">
           <button 
             onClick={onBack}
