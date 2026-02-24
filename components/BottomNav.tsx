@@ -26,16 +26,23 @@ const BottomNav: React.FC<BottomNavProps> = React.memo(({ currentView, setView }
             <button
               key={item.id}
               onClick={() => setView(item.view)}
-              className="flex flex-col items-center justify-center w-16 h-full group outline-none space-y-1"
+              className="relative flex flex-col items-center justify-center w-16 h-full group outline-none space-y-1"
             >
               <item.icon 
                 size={24} 
                 strokeWidth={isActive ? 2.5 : 2} 
-                className={`transition-all duration-200 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400'}`}
+                className={`transition-all duration-200 relative z-10 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400'}`}
               />
-              <span className={`text-[10px] font-bold tracking-wide transition-all duration-200 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'}`}>
+              <span className={`text-[10px] font-bold tracking-wide transition-all duration-200 relative z-10 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'}`}>
                 {item.label}
               </span>
+              {isActive && (
+                <motion.div
+                  layoutId="active-nav-indicator"
+                  className="absolute inset-0 bg-primary-50 dark:bg-slate-800 rounded-xl"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
             </button>
           );
         })}
