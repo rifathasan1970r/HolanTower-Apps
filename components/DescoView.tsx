@@ -263,7 +263,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
       <div className="fixed -top-20 -right-20 w-64 h-64 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header Section */}
-      <div className="pt-6 px-4 pb-4 relative z-10">
+      <div className="pt-4 px-4 pb-4 relative z-10">
         <div className="flex items-center justify-between mb-6">
             <div>
                 <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight flex items-center gap-2">

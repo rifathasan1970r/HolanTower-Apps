@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset, Wrench, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { APP_NAME, MENU_ITEMS, TRANSLATIONS, MENU_NOTICE_TEXT } from './constants';
+import { APP_NAME, MENU_ITEMS, TRANSLATIONS, MENU_NOTICE_TEXT, DESCO_NOTICE_TEXT, SERVICE_CHARGE_NOTICE_TEXT, EMERGENCY_NOTICE_TEXT } from './constants';
 import { ViewState } from './types';
 import NoticeBoard from './components/NoticeBoard';
 import BottomNav from './components/BottomNav';
@@ -407,10 +407,14 @@ const App: React.FC = () => {
              </div>
           </div>
         </div>
-        {(currentView === 'HOME' || currentView === 'MENU') && (
+        {(currentView === 'HOME' || currentView === 'MENU' || currentView === 'DESCO' || currentView === 'SERVICE_CHARGE' || currentView === 'EMERGENCY') && (
           <NoticeBoard 
             key={currentView} 
-            text={currentView === 'MENU' ? MENU_NOTICE_TEXT : undefined} 
+            text={
+              currentView === 'DESCO' ? DESCO_NOTICE_TEXT : 
+              currentView === 'SERVICE_CHARGE' ? SERVICE_CHARGE_NOTICE_TEXT :
+              (currentView === 'MENU' || currentView === 'EMERGENCY') ? EMERGENCY_NOTICE_TEXT : undefined
+            } 
           />
         )}
       </header>
@@ -418,7 +422,7 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <main 
         className={`px-5 relative z-10 transition-all duration-300 ${
-          (currentView === 'HOME' || currentView === 'MENU') ? 'pt-[125px]' : 'pt-[90px]'
+          (currentView === 'HOME' || currentView === 'MENU' || currentView === 'DESCO' || currentView === 'SERVICE_CHARGE' || currentView === 'EMERGENCY') ? 'pt-[125px]' : 'pt-[90px]'
         }`}
       >
         <AnimatePresence mode="wait">
