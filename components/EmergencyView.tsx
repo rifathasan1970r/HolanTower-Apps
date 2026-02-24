@@ -35,7 +35,7 @@ const initialContacts = [
     category: 'বিল্ডিং ম্যানেজমেন্ট',
     icon: 'ShieldAlert',
     colorClass: 'bg-green-100',
-    iconColor: 'text-green-600',
+    iconColor: 'text-green-600 dark:text-green-400',
     people: [
       { id: '1', name: 'রিফাত', role: 'নিরাপত্তা ও তত্ত্বাবধান', phone: '+8801310-988954', wa: true },
       { id: '2', name: 'আবু সাঈদ', role: 'ম্যানেজার', phone: '+8801716-524033', wa: true },
@@ -46,7 +46,7 @@ const initialContacts = [
     category: 'নির্মাণ ও মেরামত',
     icon: 'Hammer',
     colorClass: 'bg-amber-100',
-    iconColor: 'text-amber-600',
+    iconColor: 'text-amber-600 dark:text-amber-400',
     people: [
       { id: '3', name: 'সম্রাট', role: 'নির্মাণ ঠিকাদার', phone: '01648-496150', wa: true },
       { id: '4', name: 'সুমন', role: 'বিদ্যুৎ ঠিকাদার', phone: '01674-200082', wa: true },
@@ -59,7 +59,7 @@ const initialContacts = [
     category: 'দৈনিক সেবা',
     icon: 'Wrench',
     colorClass: 'bg-indigo-100',
-    iconColor: 'text-indigo-600',
+    iconColor: 'text-indigo-600 dark:text-indigo-400',
     people: [
       { id: '7', name: 'পরিচ্ছন্নতা কর্মী', role: 'ময়লা ফেলার সার্ভিস', phone: '01797550346', wa: false },
       { id: '8', name: 'গ্যাস সরবরাহকারী', role: 'গ্যাস সিলিন্ডার', phone: '01660183718', wa: false },
@@ -70,7 +70,7 @@ const initialContacts = [
     category: 'ইন্টারনেট ও টিভি',
     icon: 'Wifi',
     colorClass: 'bg-sky-100',
-    iconColor: 'text-sky-600',
+    iconColor: 'text-sky-600 dark:text-sky-400',
     people: [
       { id: '9', name: 'সার্কেল নেটওয়ার্ক', role: 'ISP হটলাইন', phone: '16237', wa: false },
       { id: '10', name: 'সার্কেল নেটওয়ার্ক', role: 'ISP সাপোর্ট', phone: '09611-800900', wa: false },

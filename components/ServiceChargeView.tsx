@@ -1265,27 +1265,27 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   // VIEW 2 & 3 Combined Logic Wrapper
   return (
-    <div className="px-4 py-6 pb-24 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="px-4 py-6 pb-24 animate-in slide-in-from-bottom-4 duration-500 bg-slate-50 dark:bg-slate-900 min-h-screen">
       {loginModalContent}
       {paymentEditModalContent}
       
       {/* Loading State */}
       {loading && (
-         <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+         <div className="fixed inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
              <RefreshCw className="animate-spin text-primary-500" size={40} />
          </div>
       )}
 
       {/* Main Header */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-slate-800">{t.serviceCharge}</h2>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.serviceCharge}</h2>
         <div className="flex items-center gap-2">
            {useMock && (
-             <span className="text-[9px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full border border-yellow-200">{t.demo}</span>
+             <span className="text-[9px] bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-200 dark:border-yellow-800">{t.demo}</span>
            )}
            <button 
              onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)}
-             className={`p-2 rounded-full transition-colors ${isAdmin ? 'bg-indigo-100 text-indigo-600 shadow-sm' : 'text-slate-300 hover:text-slate-500'}`}
+             className={`p-2 rounded-full transition-colors ${isAdmin ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'}`}
            >
              {isAdmin ? <Unlock size={18} /> : <Lock size={18} />}
            </button>
@@ -1293,13 +1293,13 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       </div>
 
       {isAdmin && (
-         <div className="mb-4 bg-indigo-50 border border-indigo-100 rounded-xl p-3 flex items-start gap-3">
-             <div className="bg-indigo-100 p-2 rounded-full text-indigo-600 mt-0.5">
+         <div className="mb-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl p-3 flex items-start gap-3">
+             <div className="bg-indigo-100 dark:bg-indigo-800 p-2 rounded-full text-indigo-600 dark:text-indigo-300 mt-0.5">
                <Edit3 size={16} />
              </div>
              <div>
-               <p className="text-sm font-bold text-indigo-900">{t.adminDashboard}</p>
-               <p className="text-xs text-indigo-600 mt-1">{t.editInfo}</p>
+               <p className="text-sm font-bold text-indigo-900 dark:text-indigo-200">{t.adminDashboard}</p>
+               <p className="text-xs text-indigo-600 dark:text-indigo-300 mt-1">{t.editInfo}</p>
              </div>
          </div>
       )}
@@ -1310,27 +1310,27 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
              <div className="flex items-center gap-3 mb-4">
                  <button 
                   onClick={() => onSummaryToggle(false)}
-                  className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-colors active:scale-95"
+                  className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95"
                 >
                   <ArrowLeft size={20} />
                 </button>
                 <div className="flex-1">
-                    <h2 className="text-xl font-bold text-slate-800">{t.allUnitsCalc}</h2>
-                    <p className="text-xs text-primary-600 font-medium">{t.financialYear}: {selectedYear}</p>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t.allUnitsCalc}</h2>
+                    <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">{t.financialYear}: {selectedYear}</p>
                 </div>
              </div>
 
              {/* Year Selection Tabs - Added for All Units Summary */}
-             <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-100 flex mb-4">
+             <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex mb-4">
                 <button 
                     onClick={() => setSelectedYear(2025)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                 >
                     <CalendarDays size={16} /> 2025
                 </button>
                 <button 
                     onClick={() => setSelectedYear(2026)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                 >
                     <CalendarDays size={16} /> 2026
                 </button>
@@ -1338,7 +1338,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
              {/* Replaced Summary Card matching the Dashboard design */}
             <div 
-                className="mb-6 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 p-5 text-white transition-all"
+                className="mb-6 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 dark:border-white/5 p-5 text-white transition-all"
                 style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
             >
                 <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -1370,54 +1370,54 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
              {/* Search Bar */}
              <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={20} />
                 <input 
                 type="text" 
                 placeholder={t.searchUnit}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary-500 transition-all shadow-sm"
+                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500 transition-all shadow-sm"
                 />
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="bg-slate-50 border-b border-slate-100">
-                                <th className="py-3 pl-4 text-left text-xs font-bold text-slate-500 uppercase">{t.unit}</th>
-                                <th className="py-3 text-center text-xs font-bold text-slate-500 uppercase">{t.totalCollected}</th>
-                                <th className="py-3 pr-4 text-right text-xs font-bold text-slate-500 uppercase">{t.totalDue}</th>
+                            <tr className="bg-slate-50 dark:bg-slate-700 border-b border-slate-100 dark:border-slate-600">
+                                <th className="py-3 pl-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">{t.unit}</th>
+                                <th className="py-3 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">{t.totalCollected}</th>
+                                <th className="py-3 pr-4 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">{t.totalDue}</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                             {filteredUnitsData.map((data, idx) => (
                                 <tr 
                                     key={idx} 
                                     onClick={() => onUnitSelect(data.unit)}
-                                    className="hover:bg-slate-50 transition-colors cursor-pointer active:bg-slate-100 group"
+                                    className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer active:bg-slate-100 dark:active:bg-slate-600 group"
                                 >
                                     <td className="py-3 pl-4">
                                         <div className="flex items-center gap-2">
                                             <div className="flex flex-col">
-                                              <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-1.5 rounded-lg text-sm w-fit">{data.unit}</span>
-                                              <span className="text-[10px] font-bold text-slate-400 mt-1 ml-1">
+                                              <span className="font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-2.5 py-1.5 rounded-lg text-sm w-fit">{data.unit}</span>
+                                              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1 ml-1">
                                                 {FLAT_OWNERS.find(f => f.flat === data.unit)?.name}
                                               </span>
                                             </div>
-                                            <ArrowUpRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <ArrowUpRight size={14} className="text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                                         </div>
                                     </td>
                                     <td className="py-3 text-center">
-                                        <span className={`text-sm font-semibold ${data.collected > 0 ? 'text-green-600' : 'text-slate-400'}`}>
+                                        <span className={`text-sm font-semibold ${data.collected > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`}>
                                             {data.collected > 0 ? `৳ ${data.collected.toLocaleString()}` : '-'}
                                         </span>
                                     </td>
                                     <td className="py-3 pr-4 text-right">
                                         {data.due > 0 ? (
-                                            <span className="text-sm font-bold text-red-500">৳ {data.due.toLocaleString()}</span>
+                                            <span className="text-sm font-bold text-red-500 dark:text-red-400">৳ {data.due.toLocaleString()}</span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
                                                 <CheckCircle2 size={10} /> {t.paid}
                                             </span>
                                         )}
@@ -1433,16 +1433,16 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         // VIEW 3: MAIN GRID DASHBOARD
         <div>
             {/* Year Selection Tabs */}
-            <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-100 flex mb-6">
+            <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex mb-6">
                 <button 
                     onClick={() => setSelectedYear(2025)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                 >
                     <CalendarDays size={16} /> 2025
                 </button>
                 <button 
                     onClick={() => setSelectedYear(2026)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                 >
                     <CalendarDays size={16} /> 2026
                 </button>
@@ -1451,7 +1451,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             {/* Grand Summary Box (All Units) - CLICKABLE */}
             <div 
                 onClick={() => onSummaryToggle(true)}
-                className="mb-6 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 p-5 text-white cursor-pointer active:scale-[0.98] transition-all group"
+                className="mb-6 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 dark:border-white/5 p-5 text-white cursor-pointer active:scale-[0.98] transition-all group"
                 style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
             >
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -1489,19 +1489,19 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
             {/* Search Bar */}
             <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={20} />
                 <input 
                 type="text" 
                 placeholder={t.searchUnit}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary-500 transition-all shadow-sm"
+                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500 transition-all shadow-sm"
                 />
             </div>
 
             <div className="flex justify-between items-center mb-4 px-1">
-                <p className="text-sm font-semibold text-slate-600">{t.all} {t.unit} ({ALL_UNITS.length})</p>
-                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{selectedYear}</span>
+                <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">{t.all} {t.unit} ({ALL_UNITS.length})</p>
+                <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">{selectedYear}</span>
             </div>
 
             {/* Grid View */}
@@ -1510,10 +1510,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 <button
                     key={data.unit}
                     onClick={() => onUnitSelect(data.unit)}
-                    className="group relative bg-white border border-slate-200 hover:border-primary-500 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
+                    className="group relative bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-primary-500 dark:hover:border-primary-400 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
                 >
-                    <span className="text-lg font-bold text-slate-700 group-hover:text-primary-600">{data.unit}</span>
-                    <span className="text-[10px] font-bold text-slate-400 mt-1">
+                    <span className="text-lg font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400">{data.unit}</span>
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1">
                       {FLAT_OWNERS.find(f => f.flat === data.unit)?.name || '-'}
                     </span>
                     
@@ -1522,7 +1522,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 </button>
                 ))}
                 {filteredUnitsData.length === 0 && (
-                    <div className="col-span-3 py-8 text-center text-slate-400 text-sm">
+                    <div className="col-span-3 py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                         কোনো ইউনিট পাওয়া যায়নি
                     </div>
                 )}

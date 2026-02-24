@@ -20,6 +20,7 @@ import { LiftInstructionsView } from './components/LiftInstructionsView';
 import ImageSlider from './components/ImageSlider';
 import { MaintenanceView } from './components/MaintenanceView';
 import { SettingsView } from './components/SettingsView';
+import { PrayerTimeView } from './components/PrayerTimeView';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -230,6 +231,9 @@ const App: React.FC = () => {
       case 'SETTINGS':
         return <SettingsView onBack={() => window.history.back()} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
       
+      case 'PRAYER_TIME':
+        return <PrayerTimeView onBack={() => window.history.back()} />;
+
       case 'MENU':
       case 'HOME':
       default:

@@ -1,11 +1,11 @@
 import React from 'react';
-import { ArrowLeft, Droplets } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Sunrise, Sunset, Clock } from 'lucide-react';
 
-interface WaterBillViewProps {
+interface PrayerTimeViewProps {
   onBack: () => void;
 }
 
-export const WaterBillView: React.FC<WaterBillViewProps> = ({ onBack }) => {
+export const PrayerTimeView: React.FC<PrayerTimeViewProps> = ({ onBack }) => {
   return (
     <div className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 dark:bg-slate-900 min-h-screen relative">
       {/* Navigation Header Section */}
@@ -22,13 +22,13 @@ export const WaterBillView: React.FC<WaterBillViewProps> = ({ onBack }) => {
         
         <div className="flex items-center justify-center px-6 py-4">
           <div className="text-center animate-in zoom-in duration-300 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white shadow-md">
-                <Droplets size={20} />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+                <Moon size={20} />
             </div>
             <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">পানির বিল</h2>
-                <p className="text-xs font-bold text-cyan-600 dark:text-cyan-400 mt-0.5">
-                  ওয়াসা বিল তথ্য
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">নামাজের সময়সূচী</h2>
+                <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                  প্রতিদিনের নামাজের সময়
                 </p>
             </div>
           </div>
@@ -38,7 +38,7 @@ export const WaterBillView: React.FC<WaterBillViewProps> = ({ onBack }) => {
       <div className="p-5 space-y-4">
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
             <h3 className="font-bold text-slate-700 dark:text-slate-200 text-center">এই ফিচারটি খুব শীঘ্রই আসছে।</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2">আমরা বর্তমানে পানির বিল সেকশনটি তৈরি করছি। এখানে আপনি আপনার মাসিক ওয়াসার বিল এবং পেমেন্টের তথ্য দেখতে পারবেন। ধৈর্য ধরার জন্য ধন্যবাদ।</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2">আমরা বর্তমানে নামাজের সময়সূচী সেকশনটি তৈরি করছি। এখানে আপনি প্রতিদিনের নামাজের সময় দেখতে পারবেন। ধৈর্য ধরার জন্য ধন্যবাদ।</p>
         </div>
       </div>
     </div>

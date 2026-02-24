@@ -16,7 +16,8 @@ import {
   Megaphone,
   Coins,
   Flame,
-  FireExtinguisher
+  FireExtinguisher,
+  Clock
 } from 'lucide-react';
 import { MenuItem, Notice } from './types';
 
@@ -103,13 +104,13 @@ export const MENU_ITEMS: MenuItem[] = [
     gradient: 'from-teal-400 to-emerald-600'
   },
   { 
-    id: 'waste', 
-    label: 'বর্জ্য ব্যবস্থাপনা', 
-    icon: Trash2, 
-    view: 'HOME', // Placeholder
-    color: 'bg-rose-500',
-    description: 'ময়লা সংগ্রহ সময়সূচী',
-    gradient: 'from-rose-400 to-pink-600'
+    id: 'prayer', 
+    label: 'নামাজের সময়', 
+    icon: Clock, 
+    view: 'PRAYER_TIME',
+    color: 'bg-indigo-500',
+    description: 'আজকের নামাজের সময়সূচী',
+    gradient: 'from-indigo-400 to-purple-600'
   },
   { 
     id: 'lift', 
