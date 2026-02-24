@@ -378,7 +378,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl transition-colors duration-300">
+    <div className="min-h-screen pb-24 max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl transition-colors duration-300 [scrollbar-gutter:stable]">
       {/* Decorative Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[20%] bg-teal-200/20 dark:bg-teal-900/20 blur-[100px] rounded-full"></div>
@@ -417,7 +417,7 @@ const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main 
-        className={`px-5 relative z-10 transition-all duration-300 ${
+        className={`px-5 relative z-10 transition-[padding] duration-300 ${
           (currentView === 'HOME' || currentView === 'MENU') ? 'pt-[125px]' : 'pt-[90px]'
         }`}
       >
