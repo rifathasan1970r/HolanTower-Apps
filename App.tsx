@@ -17,6 +17,7 @@ import { EmergencyView } from './components/EmergencyView';
 import { ToLetView } from './components/ToLetView';
 import { WaterBillView } from './components/WaterBillView';
 import { LiftInstructionsView } from './components/LiftInstructionsView';
+import ImageSlider from './components/ImageSlider';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -292,26 +293,13 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Recent Activity Section (Only Home) */}
+            {/* Image Slider Section (Only Home) */}
             {currentView === 'HOME' && (
               <div className="pb-4">
                 <div className="flex justify-between items-center mb-3 px-1">
-                  <h3 className="text-lg font-bold text-gray-800">সর্বশেষ লেনদেন</h3>
+                  <h3 className="text-lg font-bold text-gray-800">গ্যালারি</h3>
                 </div>
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
-                  {[1, 2].map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 border-b border-gray-50 last:border-0 hover:bg-slate-50 transition-colors rounded-lg">
-                      <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
-                        <User size={18} />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-sm font-bold text-gray-800">সার্ভিস চার্জ (এপ্রিল)</h4>
-                        <p className="text-[10px] text-gray-400 font-medium">১০ মে, ২০২৪ • ৩:৩০ অপরাহ্ন</p>
-                      </div>
-                      <span className="text-sm font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded-md">-৳৩,৫০০</span>
-                    </div>
-                  ))}
-                </div>
+                <ImageSlider />
               </div>
             )}
           </div>
