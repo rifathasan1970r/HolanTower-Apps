@@ -46,9 +46,16 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
                     {isActive && (
                         <motion.div
                             className="absolute inset-0 rounded-full bg-[#4C1D95]"
-                            initial={{ opacity: 0.3, scale: 1 }}
-                            animate={{ opacity: 0, scale: 1.35 }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+                            initial={{ opacity: 0, scale: 1 }}
+                            animate={{ 
+                                opacity: [0, 0.2, 0],
+                                scale: [1, 1.35]
+                            }}
+                            transition={{ 
+                                duration: 2.5,
+                                repeat: Infinity,
+                                ease: "easeOut"
+                            }}
                         />
                     )}
                     
