@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { APP_NAME, MENU_ITEMS, TRANSLATIONS } from './constants';
+import { APP_NAME, MENU_ITEMS, TRANSLATIONS, MENU_NOTICE_TEXT } from './constants';
 import { ViewState } from './types';
 import NoticeBoard from './components/NoticeBoard';
 import BottomNav from './components/BottomNav';
@@ -349,13 +349,18 @@ const App: React.FC = () => {
              </div>
           </div>
         </div>
-        {currentView === 'HOME' && <NoticeBoard />}
+        {(currentView === 'HOME' || currentView === 'MENU') && (
+          <NoticeBoard 
+            key={currentView} 
+            text={currentView === 'MENU' ? MENU_NOTICE_TEXT : undefined} 
+          />
+        )}
       </header>
 
       {/* Main Content Area */}
       <main 
         className={`px-5 relative z-10 transition-all duration-300 ${
-          currentView === 'HOME' ? 'pt-[125px]' : 'pt-[90px]'
+          (currentView === 'HOME' || currentView === 'MENU') ? 'pt-[125px]' : 'pt-[90px]'
         }`}
       >
         <AnimatePresence mode="wait">

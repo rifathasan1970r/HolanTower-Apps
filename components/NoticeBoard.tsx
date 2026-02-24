@@ -8,8 +8,6 @@ interface NoticeBoardProps {
 }
 
 const NoticeBoard: React.FC<NoticeBoardProps> = ({ lang = 'bn', text }) => {
-  // Combine all notices into a single string or use provided text
-  const noticeText = text || NOTICES.map(n => n.text).join(" ••• ");
   const t = TRANSLATIONS[lang];
 
   return (
@@ -20,14 +18,36 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({ lang = 'bn', text }) => {
       </div>
       
       <div className="whitespace-nowrap overflow-hidden w-full ml-24">
-        <div className="animate-marquee inline-block">
-          <span className="text-sm font-semibold text-gray-900 mx-4">
-            {noticeText}
-          </span>
-          {/* Duplicate for seamless loop */}
-          <span className="text-sm font-semibold text-gray-900 mx-4">
-            {noticeText}
-          </span>
+        <div className="animate-marquee inline-flex items-center will-change-transform" style={{ animationDuration: '80s' }}>
+          {text ? (
+            <>
+              <span className="text-sm font-semibold text-gray-900 mx-4">
+                {text}
+              </span>
+              <span className="text-sm font-semibold text-gray-900 mx-4">
+                {text}
+              </span>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center">
+                {NOTICES.map((n) => (
+                  <div key={n.id} className="flex items-center mx-6">
+                    {n.icon && <n.icon className="w-4 h-4 text-purple-600 mr-2 shrink-0" />}
+                    <span className="text-sm font-semibold text-gray-900">{n.text}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center">
+                {NOTICES.map((n) => (
+                  <div key={`dup-${n.id}`} className="flex items-center mx-6">
+                    {n.icon && <n.icon className="w-4 h-4 text-purple-600 mr-2 shrink-0" />}
+                    <span className="text-sm font-semibold text-gray-900">{n.text}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

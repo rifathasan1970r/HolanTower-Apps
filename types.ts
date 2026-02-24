@@ -16,4 +16,5 @@ export interface Notice {
   id: number;
   text: string;
   date: string;
+  icon?: LucideIcon;
 }
