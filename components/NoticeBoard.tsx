@@ -18,7 +18,7 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({ lang = 'bn', text }) => {
       </div>
       
       <div className="whitespace-nowrap overflow-hidden w-full ml-24">
-        <div className="animate-marquee inline-flex items-center will-change-transform" style={{ animationDuration: '80s' }}>
+        <div className="animate-marquee inline-flex items-center will-change-transform" style={{ animationDuration: '60s' }}>
           {text ? (
             <>
               <span className="text-sm font-semibold text-gray-900 mx-4">
