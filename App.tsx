@@ -412,6 +412,7 @@ const App: React.FC = () => {
         </div>
         {hasNotice && (
           <NoticeBoard 
+            key={currentView} 
             text={
               currentView === 'DESCO' ? DESCO_NOTICE_TEXT : 
               currentView === 'SERVICE_CHARGE' ? SERVICE_CHARGE_NOTICE_TEXT :

@@ -452,7 +452,7 @@ export const EmergencyView = () => {
         {contacts.map(category => {
           const Icon = icons[category.icon] || Wrench;
           return (
-            <div key={category.id}>
+            <div key={category.id} className="mb-4 sm:mb-0">
             <Card 
               title={category.category}
               icon={Icon}
