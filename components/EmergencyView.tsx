@@ -106,7 +106,7 @@ const Card = ({
   <motion.div 
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
-    className={`glass-card p-5 rounded-2xl border border-white/40 dark:border-slate-700 shadow-sm ${colorClass} dark:bg-slate-800 relative overflow-hidden transition-colors duration-300`}
+    className={`bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg p-5 rounded-2xl border border-white/40 dark:border-slate-700 shadow-sm relative overflow-hidden transition-colors duration-300`}
   >
     <div className="flex items-start justify-between mb-3">
       <div>
