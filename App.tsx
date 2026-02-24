@@ -378,8 +378,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <>
-      <div className="min-h-[100dvh] pb-24 max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl">
+    <div className="min-h-screen pb-24 max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl transition-colors duration-300">
       {/* Decorative Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[20%] bg-teal-200/20 dark:bg-teal-900/20 blur-[100px] rounded-full"></div>
@@ -387,7 +386,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Top Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 max-w-md mx-auto z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-800/50">
+      <header className="fixed top-0 left-0 right-0 max-w-md mx-auto z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-800/50 transition-all duration-300">
         <div className="px-5 py-3 flex items-center justify-start">
           <div className="flex items-center gap-3 text-left">
             <div className="w-9 h-9 bg-gradient-to-tr from-teal-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-200 dark:shadow-none shrink-0 transform rotate-3">
@@ -418,7 +417,9 @@ const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main 
-        className="px-5 relative z-10 pt-[125px]"
+        className={`px-5 relative z-10 transition-all duration-300 ${
+          (currentView === 'HOME' || currentView === 'MENU') ? 'pt-[125px]' : 'pt-[90px]'
+        }`}
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -435,6 +436,9 @@ const App: React.FC = () => {
 
       {/* Gemini Assistant - Only visible on HOME view */}
       <Assistant isVisible={currentView === 'HOME'} />
+
+      {/* Bottom Navigation */}
+      <BottomNav currentView={currentView} setView={setCurrentView} />
 
       {/* Exit Confirmation Dialog */}
       <AnimatePresence>
@@ -482,9 +486,7 @@ const App: React.FC = () => {
         )}
       </AnimatePresence>
     </div>
-    <BottomNav currentView={currentView} setView={setCurrentView} />
-  </>
-);
+  );
 };
 
 export default App;

@@ -9,19 +9,16 @@ interface BottomNavProps {
   lang?: 'bn' | 'en';
 }
 
-const BottomNav: React.FC<BottomNavProps> = React.memo(({ currentView, setView }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
   return (
-    <div 
-      className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 h-[80px] will-change-transform" 
-      style={{ transform: 'translateZ(0)' }}
-    >
+    <div className="fixed bottom-0 left-0 right-0 z-50 pb-0">
       {/* Premium Glass Container with Rounded Top - White Theme */}
       <div className="absolute inset-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-t border-purple-100/50 dark:border-slate-800/50 shadow-[0_-8px_30px_-5px_rgba(0,0,0,0.1),0_-2px_10px_-2px_rgba(0,0,0,0.05)] rounded-t-[24px]">
          {/* Soft Gradient Overlay */}
          <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-white/20 dark:from-slate-800/50 dark:to-slate-800/20 rounded-t-[24px] pointer-events-none" />
       </div>
       
-      <div className="relative w-full px-2 h-full flex justify-around items-end pb-3">
+      <div className="relative max-w-lg mx-auto px-2 h-[80px] flex justify-around items-end pb-3">
         {BOTTOM_NAV_ITEMS.map((item) => {
           const isActive = currentView === item.view;
           const isHome = item.id === 'home';
@@ -77,7 +74,7 @@ const BottomNav: React.FC<BottomNavProps> = React.memo(({ currentView, setView }
                       <motion.div
                         layoutId="nav-pill"
                         className="absolute inset-0 bg-purple-50 dark:bg-slate-800 rounded-xl -z-10"
-                        transition={{ type: "spring", bounce: 0, duration: 0.5 }}
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
                     
@@ -110,7 +107,6 @@ const BottomNav: React.FC<BottomNavProps> = React.memo(({ currentView, setView }
                      <motion.div 
                        layoutId="nav-line"
                        className="absolute -bottom-2 w-8 h-1 bg-[#4C1D95] dark:bg-purple-500 rounded-t-full shadow-[0_-2px_6px_rgba(76,29,149,0.3)]"
-                       transition={{ type: "spring", bounce: 0, duration: 0.5 }}
                      />
                   )}
                 </motion.div>
@@ -121,6 +117,6 @@ const BottomNav: React.FC<BottomNavProps> = React.memo(({ currentView, setView }
       </div>
     </div>
   );
-});
+};
 
 export default BottomNav;
