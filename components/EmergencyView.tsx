@@ -356,7 +356,7 @@ export const EmergencyView = () => {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6">
+    <div className="animate-in fade-in duration-500 pb-6">
       <AnimatePresence>
         {showLogin && (
           <motion.div 
