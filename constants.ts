@@ -11,7 +11,8 @@ import {
   Trash2,
   Bot,
   ArrowUpDown,
-  Calculator
+  Calculator,
+  Map as MapIcon
 } from 'lucide-react';
 import { MenuItem, Notice } from './types';
 
@@ -79,6 +80,15 @@ export const MENU_ITEMS: MenuItem[] = [
     color: 'bg-cyan-500',
     description: 'ওয়াসা বিল তথ্য',
     gradient: 'from-cyan-400 to-blue-500'
+  },
+  { 
+    id: 'map', 
+    label: 'ম্যাপ ও বিভিন্ন রুট', 
+    icon: MapIcon, 
+    view: 'MAP_ROUTES',
+    color: 'bg-teal-500',
+    description: 'লোকেশন ও নির্দেশনা',
+    gradient: 'from-teal-400 to-emerald-600'
   },
   { 
     id: 'waste', 

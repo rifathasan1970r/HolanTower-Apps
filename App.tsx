@@ -11,6 +11,7 @@ import { DescoView } from './components/DescoView';
 import { DescoInfoView } from './components/DescoInfoView';
 import { DescoRulesView } from './components/DescoRulesView';
 import { AccountsView } from './components/AccountsView';
+import { MapRoutesView } from './components/MapRoutesView';
 import { ServiceChargeView } from './components/ServiceChargeView';
 import { EmergencyView } from './components/EmergencyView';
 import { ToLetView } from './components/ToLetView';
@@ -183,6 +184,9 @@ const App: React.FC = () => {
 
       case 'ACCOUNTS':
         return <AccountsView onBack={() => window.history.back()} />;
+
+      case 'MAP_ROUTES':
+        return <MapRoutesView onBack={() => window.history.back()} />;
 
       case 'TO_LET':
         return <ToLetView />;
