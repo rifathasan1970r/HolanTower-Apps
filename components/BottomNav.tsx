@@ -31,27 +31,28 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
             >
               {isHome ? (
                 // Floating Home Button - High End Style
-                <div className="absolute -top-9 left-1/2 -translate-x-1/2">
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2">
                    <motion.div
-                    whileTap={{ scale: 0.9 }}
+                    whileTap={{ scale: 0.95 }}
                     whileHover={{ y: -2 }}
-                    className={`relative p-4 rounded-full shadow-[0_12px_30px_-8px_rgba(76,29,149,0.4)] transition-all duration-300 ${
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                    className={`relative p-4 rounded-full shadow-[0_10px_25px_-5px_rgba(76,29,149,0.3)] transition-all duration-400 ${
                       isActive 
-                        ? 'bg-gradient-to-br from-[#4C1D95] to-[#6D28D9] text-white ring-[6px] ring-white' 
-                        : 'bg-white text-[#4C1D95] shadow-slate-200 border border-purple-100 ring-[6px] ring-white'
+                        ? 'bg-gradient-to-br from-[#4C1D95] to-[#6D28D9] text-white ring-[6px] ring-white shadow-[0_15px_35px_-5px_rgba(76,29,149,0.5)]' 
+                        : 'bg-white text-[#4C1D95] shadow-slate-200 border border-purple-50 ring-[6px] ring-white'
                     }`}
                   >
                     {/* Subtle Pulse Animation for Home */}
                     {isActive && (
                         <motion.div
                             className="absolute inset-0 rounded-full bg-[#4C1D95]"
-                            initial={{ opacity: 0.5, scale: 1 }}
-                            animate={{ opacity: 0, scale: 1.5 }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+                            initial={{ opacity: 0.4, scale: 1 }}
+                            animate={{ opacity: 0, scale: 1.4 }}
+                            transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
                         />
                     )}
                     
-                    <item.icon size={28} strokeWidth={2.5} className="relative z-10" />
+                    <item.icon size={28} strokeWidth={2.5} className="relative z-10 drop-shadow-sm" />
                   </motion.div>
                 </div>
               ) : (
