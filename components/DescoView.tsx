@@ -35,7 +35,7 @@ const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: type
   return (
     <div className="fixed inset-0 z-[100] font-sans text-[#121212] overflow-y-auto animate-in fade-in duration-300">
        {/* Background */}
-       <div className="fixed inset-0 bg-[url('https://i.imghippo.com/files/IxR3498AKE.png')] bg-cover bg-center blur-[2px] scale-105 z-[-1]" />
+       <div className="fixed inset-0 bg-[url('https://i.imghippo.com/files/IxR3498AKE.png')] bg-cover bg-center blur-[2px] z-[-1]" />
        <div className="fixed inset-0 bg-white/10 z-[-1]" />
 
        <div className="min-h-screen flex items-start justify-center p-[18px] pt-[80px]">
@@ -595,8 +595,8 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
           animation: redPulse 3s ease-in-out infinite;
         }
         @keyframes iconPulsePremium {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
-          50% { transform: scale(1.1); box-shadow: 0 0 12px rgba(255,255,255,0.4); }
+          0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+          50% { box-shadow: 0 0 12px rgba(255,255,255,0.4); }
         }
         .icon-premium-pulse {
           animation: iconPulsePremium 3s ease-in-out infinite;
