@@ -49,7 +49,7 @@ const ImageSlider: React.FC = () => {
   }, [paginate]);
 
   return (
-    <div className="relative w-full h-64 rounded-2xl overflow-hidden shadow-lg border border-white/50 bg-slate-50">
+    <div className="relative w-full h-64 rounded-2xl overflow-hidden shadow-lg border border-white/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800 transition-colors duration-300">
       <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={page}

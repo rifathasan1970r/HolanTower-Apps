@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset } from 'lucide-react';
+import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset, Wrench, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { APP_NAME, MENU_ITEMS, TRANSLATIONS, MENU_NOTICE_TEXT } from './constants';
@@ -18,6 +18,8 @@ import { ToLetView } from './components/ToLetView';
 import { WaterBillView } from './components/WaterBillView';
 import { LiftInstructionsView } from './components/LiftInstructionsView';
 import ImageSlider from './components/ImageSlider';
+import { MaintenanceView } from './components/MaintenanceView';
+import { SettingsView } from './components/SettingsView';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -30,6 +32,27 @@ const App: React.FC = () => {
   const [currentSeconds, setCurrentSeconds] = useState('');
   const [amPm, setAmPm] = useState('');
   const [timeIcon, setTimeIcon] = useState<React.ReactNode>(<CloudSun size={24} className="text-yellow-300" />);
+  
+  // Dark Mode State
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') === 'dark';
+    }
+    return false;
+  });
+
+  // Apply Dark Mode
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
+
+  const toggleDarkMode = () => setDarkMode(!darkMode);
 
   useEffect(() => {
     const updateTime = () => {
@@ -200,6 +223,12 @@ const App: React.FC = () => {
 
       case 'LIFT_INSTRUCTIONS':
         return <LiftInstructionsView onBack={() => setCurrentView('MENU')} />;
+
+      case 'MAINTENANCE':
+        return <MaintenanceView onBack={() => window.history.back()} />;
+
+      case 'SETTINGS':
+        return <SettingsView onBack={() => window.history.back()} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
       
       case 'MENU':
       case 'HOME':
@@ -255,11 +284,11 @@ const App: React.FC = () => {
             {/* Grid Menu */}
             <div>
               <div className="flex justify-between items-end mb-4 px-1">
-                 <h3 className="text-lg font-bold text-slate-800">
+                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">
                    {currentView === 'MENU' ? 'সকল সেবা' : 'সেবা কেন্দ্র'}
                  </h3>
                  {currentView === 'HOME' && (
-                   <button onClick={() => setCurrentView('MENU')} className="text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors">
+                   <button onClick={() => setCurrentView('MENU')} className="text-xs font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 transition-colors">
                      সব দেখুন
                    </button>
                  )}
@@ -275,18 +304,18 @@ const App: React.FC = () => {
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setCurrentView(item.view)}
-                    className="relative bg-white p-4 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-white overflow-hidden group text-left h-32 flex flex-col justify-between"
+                    className="relative bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-white dark:border-slate-700 overflow-hidden group text-left h-32 flex flex-col justify-between"
                   >
                     {/* Background Gradient Blob */}
-                    <div className={`absolute -right-4 -top-4 w-20 h-20 bg-gradient-to-br ${item.gradient || 'from-gray-100 to-gray-200'} opacity-10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500`}></div>
+                    <div className={`absolute -right-4 -top-4 w-20 h-20 bg-gradient-to-br ${item.gradient || 'from-gray-100 to-gray-200'} opacity-10 dark:opacity-5 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500`}></div>
                     
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.gradient || 'from-gray-500 to-gray-700'} flex items-center justify-center text-white shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:scale-110`}>
                       <item.icon size={20} />
                     </div>
                     
                     <div>
-                      <h4 className="font-bold text-slate-800 text-sm mb-0.5 group-hover:text-primary-700 transition-colors">{item.label}</h4>
-                      <p className="text-[10px] text-slate-400 font-medium line-clamp-1">{item.description}</p>
+                      <h4 className="font-bold text-slate-800 dark:text-white text-sm mb-0.5 group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">{item.label}</h4>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium line-clamp-1">{item.description}</p>
                     </div>
                   </motion.button>
                 ))}
@@ -297,9 +326,42 @@ const App: React.FC = () => {
             {currentView === 'HOME' && (
               <div className="pb-4">
                 <div className="flex justify-between items-center mb-3 px-1">
-                  <h3 className="text-lg font-bold text-gray-800">গ্যালারি</h3>
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-white">গ্যালারি</h3>
                 </div>
                 <ImageSlider />
+              </div>
+            )}
+
+            {/* Extra Menu Items (Only Menu) */}
+            {currentView === 'MENU' && (
+              <div className="space-y-3 mt-4 mb-8">
+                 {/* Maintenance Desk */}
+                 <button 
+                    onClick={() => setCurrentView('MAINTENANCE')}
+                    className="w-full relative bg-white dark:bg-slate-800 p-4 rounded-[14px] shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-white dark:border-slate-700 overflow-hidden flex items-center gap-4 group transition-all active:scale-[0.98]"
+                 >
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                       <Wrench size={20} />
+                    </div>
+                    <div className="text-left">
+                       <h4 className="text-base font-bold text-slate-800 dark:text-white mb-0.5">মেইনটেন্যান্স ডেস্ক</h4>
+                    </div>
+                    <ChevronRight className="ml-auto text-slate-300 dark:text-slate-600" size={18} />
+                 </button>
+
+                 {/* Settings */}
+                 <button 
+                    onClick={() => setCurrentView('SETTINGS')}
+                    className="w-full relative bg-white dark:bg-slate-800 p-4 rounded-[14px] shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-white dark:border-slate-700 overflow-hidden flex items-center gap-4 group transition-all active:scale-[0.98]"
+                 >
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                       <Settings size={20} />
+                    </div>
+                    <div className="text-left">
+                       <h4 className="text-base font-bold text-slate-800 dark:text-white mb-0.5">সেটিং</h4>
+                    </div>
+                    <ChevronRight className="ml-auto text-slate-300 dark:text-slate-600" size={18} />
+                 </button>
               </div>
             )}
           </div>
@@ -308,31 +370,31 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 max-w-md mx-auto bg-[#F8FAFC] relative shadow-2xl">
+    <div className="min-h-screen pb-24 max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl transition-colors duration-300">
       {/* Decorative Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[20%] bg-teal-200/20 blur-[100px] rounded-full"></div>
-         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[20%] bg-indigo-200/20 blur-[100px] rounded-full"></div>
+         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[20%] bg-teal-200/20 dark:bg-teal-900/20 blur-[100px] rounded-full"></div>
+         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[20%] bg-indigo-200/20 dark:bg-indigo-900/20 blur-[100px] rounded-full"></div>
       </div>
 
       {/* Top Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 max-w-md mx-auto z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 transition-all duration-300">
+      <header className="fixed top-0 left-0 right-0 max-w-md mx-auto z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-800/50 transition-all duration-300">
         <div className="px-5 py-3 flex items-center justify-start">
           <div className="flex items-center gap-3 text-left">
-            <div className="w-9 h-9 bg-gradient-to-tr from-teal-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-200 shrink-0 transform rotate-3">
+            <div className="w-9 h-9 bg-gradient-to-tr from-teal-600 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-200 dark:shadow-none shrink-0 transform rotate-3">
               <Building2 className="text-white" size={18} />
             </div>
             <div>
-              <h1 className="text-lg font-extrabold text-slate-800 leading-tight">
+              <h1 className="text-lg font-extrabold text-slate-800 dark:text-white leading-tight">
                 {APP_NAME}
               </h1>
-              <p className="text-[10px] text-slate-500 font-semibold flex items-center gap-1">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1">
                 <MapPin size={10} /> হলান, দক্ষিণখান
               </p>
             </div>
           </div>
           <div className="ml-auto">
-             <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
+             <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500">
                 <User size={16} />
              </div>
           </div>
@@ -385,27 +447,27 @@ const App: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-xs bg-white rounded-3xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-xs bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden"
             >
               <div className="p-6 text-center">
-                <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/20 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <AlertTriangle size={32} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 mb-2">{t.exitTitle}</h3>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{t.exitTitle}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                   {t.exitMessage}
                 </p>
               </div>
-              <div className="flex border-t border-slate-100">
+              <div className="flex border-t border-slate-100 dark:border-slate-700">
                 <button
                   onClick={() => setShowExitDialog(false)}
-                  className="flex-1 py-4 text-sm font-bold text-slate-500 hover:bg-slate-50 transition-colors border-r border-slate-100"
+                  className="flex-1 py-4 text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border-r border-slate-100 dark:border-slate-700"
                 >
                   {t.exitCancel}
                 </button>
                 <button
                   onClick={handleExitApp}
-                  className="flex-1 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-colors flex items-center justify-center gap-2"
                 >
                   <LogOut size={16} />
                   {t.exitConfirm}

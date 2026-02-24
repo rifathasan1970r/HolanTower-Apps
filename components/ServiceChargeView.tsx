@@ -520,19 +520,19 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   // Login Modal
   const loginModalContent = showLogin && (
     <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-xs shadow-2xl animate-in zoom-in duration-200">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-xs shadow-2xl animate-in zoom-in duration-200">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-slate-800">{t.adminLogin}</h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.adminLogin}</h3>
           <button onClick={() => setShowLogin(false)} className="text-slate-400 hover:text-red-500">
             <X size={20} />
           </button>
         </div>
-        <p className="text-sm text-slate-500 mb-4">{t.loginPrompt}:</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{t.loginPrompt}:</p>
         <input 
           type="password" 
           value={pinInput}
           onChange={(e) => setPinInput(e.target.value)}
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-4 text-center text-2xl tracking-widest font-bold focus:outline-none focus:border-indigo-500 transition-colors"
+          className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 mb-4 text-center text-2xl tracking-widest font-bold focus:outline-none focus:border-indigo-500 transition-colors text-slate-800 dark:text-white"
           placeholder="••••"
           maxLength={4}
           autoFocus
@@ -577,15 +577,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   // Payment Edit Modal
   const paymentEditModalContent = isEditModalOpen && (
     <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in duration-200">
-        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in duration-200">
+        <div className="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-slate-700 pb-4">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">পেমেন্ট আপডেট</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              ইউনিট: <span className="font-bold text-slate-700">{editModalData.unit}</span> | মাস: <span className="font-bold text-slate-700">{editModalData.month} {editModalData.year}</span>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">পেমেন্ট আপডেট</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              ইউনিট: <span className="font-bold text-slate-700 dark:text-slate-300">{editModalData.unit}</span> | মাস: <span className="font-bold text-slate-700 dark:text-slate-300">{editModalData.month} {editModalData.year}</span>
             </p>
           </div>
-          <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-red-500 bg-slate-50 p-2 rounded-full transition-colors">
+          <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-700 p-2 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -593,17 +593,17 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         <div className="space-y-4">
             {/* Occupancy Type Selection */}
             <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">বসবাসের ধরন (এই মাসের জন্য)</label>
-                <div className="flex bg-slate-100 p-1 rounded-xl">
+                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">বসবাসের ধরন (এই মাসের জন্য)</label>
+                <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
                     <button 
                         onClick={() => handleModalOccupancyChange(true)}
-                        className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${editModalData.isOccupied ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${editModalData.isOccupied ? 'bg-white dark:bg-slate-600 text-green-600 dark:text-green-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     >
                         <Users size={12} /> বসবাসরত
                     </button>
                     <button 
                         onClick={() => handleModalOccupancyChange(false)}
-                        className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${!editModalData.isOccupied ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${!editModalData.isOccupied ? 'bg-white dark:bg-slate-600 text-orange-600 dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     >
                         <Home size={12} /> খালি
                     </button>
@@ -611,22 +611,22 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             </div>
 
             {/* Status Selection */}
-            <div className="flex bg-slate-100 p-1 rounded-xl">
+            <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
                 <button 
                     onClick={() => handleStatusChange('PAID')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'PAID' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'PAID' ? 'bg-white dark:bg-slate-600 text-green-600 dark:text-green-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                 >
                     পরিশোধিত
                 </button>
                 <button 
                     onClick={() => handleStatusChange('DUE')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'DUE' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'DUE' ? 'bg-white dark:bg-slate-600 text-red-600 dark:text-red-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                 >
                     বকেয়া
                 </button>
                 <button 
                     onClick={() => handleStatusChange('UPCOMING')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'UPCOMING' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'UPCOMING' ? 'bg-white dark:bg-slate-600 text-slate-700 dark:text-slate-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                 >
                     আসন্ন
                 </button>
@@ -637,26 +637,26 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     {/* Amount & Due Row */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-slate-600 mb-1.5">{t.amount}</label>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">{t.amount}</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
                                 <input 
                                     type="number" 
                                     value={editModalData.amount}
                                     onChange={(e) => setEditModalData({...editModalData, amount: Number(e.target.value)})}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                                    className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-slate-700 dark:text-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 transition-all"
                                 />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-600 mb-1.5">{t.due}</label>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">{t.due}</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
                                 <input 
                                     type="number" 
                                     value={editModalData.due}
                                     onChange={(e) => setEditModalData({...editModalData, due: Number(e.target.value)})}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-red-600 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 transition-all"
+                                    className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-red-600 dark:text-red-400 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:focus:ring-red-900 transition-all"
                                 />
                             </div>
                         </div>
@@ -665,10 +665,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     {/* Date Selection Row */}
                     <div>
                         <div className="flex justify-between items-center mb-2">
-                            <label className="block text-xs font-bold text-slate-600">পেমেন্ট তারিখ</label>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400">পেমেন্ট তারিখ</label>
                             <button 
                                 onClick={() => setEditModalData({...editModalData, isDateEnabled: !editModalData.isDateEnabled})}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${editModalData.isDateEnabled ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${editModalData.isDateEnabled ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}
                             >
                                 {editModalData.isDateEnabled ? 'অন আছে' : 'অফ আছে'}
                             </button>
@@ -680,7 +680,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 <select 
                                     value={editModalData.day}
                                     onChange={(e) => setEditModalData({...editModalData, day: e.target.value})}
-                                    className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                                    className="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:border-indigo-500"
                                 >
                                     {Array.from({length: 31}, (_, i) => i + 1).map(d => (
                                         <option key={d} value={d}>{d}</option>
@@ -691,7 +691,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 <select 
                                     value={editModalData.monthName}
                                     onChange={(e) => setEditModalData({...editModalData, monthName: e.target.value})}
-                                    className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                                    className="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:border-indigo-500"
                                 >
                                     {MONTHS_LOGIC.map((m) => (
                                         <option key={m} value={m}>{m}</option>
@@ -702,7 +702,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 <select 
                                     value={editModalData.yearVal}
                                     onChange={(e) => setEditModalData({...editModalData, yearVal: e.target.value})}
-                                    className="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-500"
+                                    className="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl py-2.5 px-2 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:border-indigo-500"
                                 >
                                     <option value="2025">2025</option>
                                     <option value="2026">2026</option>
@@ -715,10 +715,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             )}
             
             {editModalData.status === 'UPCOMING' && (
-                <div className="py-8 text-center bg-slate-50 rounded-xl border border-slate-100">
-                    <Clock size={32} className="mx-auto text-slate-300 mb-2" />
-                    <p className="text-sm font-bold text-slate-600">এই মাসের বিল এখনো তৈরি হয়নি</p>
-                    <p className="text-xs text-slate-400 mt-1">তারিখ বা টাকার পরিমাণ প্রয়োজন নেই</p>
+                <div className="py-8 text-center bg-slate-50 dark:bg-slate-700 rounded-xl border border-slate-100 dark:border-slate-600">
+                    <Clock size={32} className="mx-auto text-slate-300 dark:text-slate-500 mb-2" />
+                    <p className="text-sm font-bold text-slate-600 dark:text-slate-300">এই মাসের বিল এখনো তৈরি হয়নি</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">তারিখ বা টাকার পরিমাণ প্রয়োজন নেই</p>
                 </div>
             )}
         </div>
@@ -726,13 +726,13 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         <div className="mt-8 flex gap-3">
             <button 
                 onClick={() => setIsEditModalOpen(false)}
-                className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors"
+                className="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
             >
                 বাতিল
             </button>
             <button 
                 onClick={handleModalSave}
-                className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2"
             >
                 <Save size={16} />
                 সেভ করুন
@@ -768,49 +768,49 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     // Summary Modal
     const summaryModalContent = showSummaryModal && selectedUnit && (
       <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowSummaryModal(false)}>
-        <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden" onClick={e => e.stopPropagation()}>
           {/* Decorative background */}
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-50 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
-          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-50 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-50 dark:bg-blue-900/20 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
           
           <div className="relative z-10">
               <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-2.5 rounded-xl shadow-md shadow-indigo-200">
+                      <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-2.5 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none">
                           <PieChart size={22} className="text-white" />
                       </div>
                       <div>
-                          <h3 className="text-lg font-bold text-slate-800 tracking-tight">সামারি রিপোর্ট</h3>
-                          <p className="text-xs font-medium text-slate-500">{selectedYear} সাল</p>
+                          <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">সামারি রিপোর্ট</h3>
+                          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{selectedYear} সাল</p>
                       </div>
                   </div>
-                  <button onClick={() => setShowSummaryModal(false)} className="bg-slate-100 hover:bg-slate-200 text-slate-500 p-1.5 rounded-full transition-colors">
+                  <button onClick={() => setShowSummaryModal(false)} className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 p-1.5 rounded-full transition-colors">
                       <X size={16} />
                   </button>
               </div>
 
               <div className="space-y-4">
-                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-2.5 text-slate-600">
-                          <Home size={18} className="text-indigo-500" />
+                  <div className="bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-2xl p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300">
+                          <Home size={18} className="text-indigo-500 dark:text-indigo-400" />
                           <span className="text-sm font-medium">ফ্ল্যাট নম্বর</span>
                       </div>
-                      <span className="text-base font-bold text-slate-800">{selectedUnit}</span>
+                      <span className="text-base font-bold text-slate-800 dark:text-white">{selectedUnit}</span>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-2.5 text-slate-600">
-                          <Users size={18} className="text-blue-500" />
+                  <div className="bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-2xl p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300">
+                          <Users size={18} className="text-blue-500 dark:text-blue-400" />
                           <span className="text-sm font-medium">ফ্ল্যাট মালিক</span>
                       </div>
-                      <span className="text-sm font-bold text-slate-800 text-right">{FLAT_OWNERS.find(f => f.flat === selectedUnit)?.name || 'অজানা'}</span>
+                      <span className="text-sm font-bold text-slate-800 dark:text-white text-right">{FLAT_OWNERS.find(f => f.flat === selectedUnit)?.name || 'অজানা'}</span>
                   </div>
 
                   <div 
-                    className={`bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between transition-all ${isAdmin && !processingUpdate ? 'cursor-pointer hover:bg-indigo-50 hover:border-indigo-100 active:scale-[0.98]' : (processingUpdate ? 'opacity-70 cursor-wait' : '')}`}
+                    className={`bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 rounded-2xl p-4 flex items-center justify-between transition-all ${isAdmin && !processingUpdate ? 'cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:border-indigo-100 dark:hover:border-indigo-800 active:scale-[0.98]' : (processingUpdate ? 'opacity-70 cursor-wait' : '')}`}
                     onClick={() => handleToggleOccupancy(selectedUnit)}
                   >
-                      <div className="flex items-center gap-2.5 text-slate-600">
+                      <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300">
                           <Grid size={18} className={occupancyStatus === t.occupied ? 'text-green-500' : 'text-orange-500'} />
                           <span className="text-sm font-medium">বসবাসের ধরন</span>
                       </div>
@@ -819,7 +819,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                            <RefreshCw size={12} className="animate-spin text-indigo-500" />
                         ) : (
                           <>
-                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${occupancyStatus === t.occupied ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${occupancyStatus === t.occupied ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'}`}>
                                 {occupancyStatus}
                             </span>
                             {isAdmin && <Edit3 size={10} className="text-slate-400" />}
@@ -829,11 +829,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
-                      <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 text-white shadow-lg shadow-slate-900/20">
+                      <div className="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-700 dark:to-slate-800 rounded-2xl p-4 text-white shadow-lg shadow-slate-900/20 dark:shadow-none">
                           <p className="text-[10px] text-slate-300 font-medium uppercase tracking-wider mb-1">মোট টাকা</p>
                           <p className="font-bold text-lg">৳ {totalAmount.toLocaleString()}</p>
                       </div>
-                      <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-4 text-white shadow-lg shadow-red-500/20">
+                      <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-4 text-white shadow-lg shadow-red-500/20 dark:shadow-none">
                           <p className="text-[10px] text-red-100 font-medium uppercase tracking-wider mb-1">মোট বকেয়া</p>
                           <p className="font-bold text-lg">৳ {totalDue.toLocaleString()}</p>
                       </div>
@@ -842,7 +842,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
               
               <button 
                   onClick={() => setShowSummaryModal(false)}
-                  className="w-full mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors text-sm"
+                  className="w-full mt-6 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl transition-colors text-sm"
               >
                   বন্ধ করুন
               </button>
@@ -854,15 +854,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     // Unit Selector Modal
     const unitSelectorModalContent = showUnitSelector && (
       <div className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowUnitSelector(false)}>
-        <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-          <h3 className="text-lg font-bold text-slate-800 text-center mb-4">ইউনিট সিলেক্ট করুন</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white text-center mb-4">ইউনিট সিলেক্ট করুন</h3>
           
           <button 
             onClick={() => {
               onUnitSelect(null);
               setShowUnitSelector(false);
             }}
-            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl mb-4 transition-colors shadow-md shadow-indigo-200"
+            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl mb-4 transition-colors shadow-md shadow-indigo-200 dark:shadow-none"
           >
             সকল ইউনিট
           </button>
@@ -877,8 +877,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 }}
                 className={`py-1.5 rounded-lg font-bold text-xs transition-all shadow-sm border ${
                   selectedUnit === unit 
-                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
-                    : 'bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100'
+                    ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700' 
+                    : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600'
                 }`}
               >
                 {unit}
@@ -886,8 +886,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             ))}
           </div>
           
-          <div className="mt-4 border-t border-slate-100 pt-3">
-             <marquee className="text-red-600 text-xs font-bold">
+          <div className="mt-4 border-t border-slate-100 dark:border-slate-700 pt-3">
+             <marquee className="text-red-600 dark:text-red-400 text-xs font-bold">
                । কোনো ইউনিট এর হিসাব দেখতে উপরের ইউনিট এ ক্লিক করুন। সকল ইউনিট এর হিসাব ডিটেইস এ দেওয়া আছে।
              </marquee>
           </div>
@@ -895,7 +895,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
           <div className="flex justify-center mt-3">
             <button 
               onClick={() => setShowUnitSelector(false)}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-10 rounded-xl transition-colors text-sm shadow-md shadow-red-200"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-10 rounded-xl transition-colors text-sm shadow-md shadow-red-200 dark:shadow-none"
             >
               বন্ধ
             </button>
@@ -905,18 +905,18 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     );
 
     return (
-      <div key={`${selectedUnit}-${selectedYear}`} className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 min-h-screen relative">
+      <div key={`${selectedUnit}-${selectedYear}`} className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 dark:bg-slate-900 min-h-screen relative">
         {loginModalContent}
         {paymentEditModalContent}
         {summaryModalContent}
         {unitSelectorModalContent}
         
         {/* Navigation Header Section */}
-        <div className="bg-white relative border-b border-slate-100 shadow-sm transition-all">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
+        <div className="bg-white dark:bg-slate-800 relative border-b border-slate-100 dark:border-slate-700 shadow-sm transition-all">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50 dark:border-slate-700">
                  <button 
                   onClick={() => onUnitSelect(null)}
-                  className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors py-1 group"
+                  className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors py-1 group"
                 >
                   <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
                   <span className="text-base font-bold">{t.back}</span>
@@ -925,7 +925,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 {/* Admin Toggle in Unit View */}
                 <button 
                   onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)}
-                  className={`p-2 rounded-full transition-colors ${isAdmin ? 'bg-indigo-100 text-indigo-600' : 'text-slate-300 hover:text-slate-500'}`}
+                  className={`p-2 rounded-full transition-colors ${isAdmin ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300'}`}
                 >
                   {isAdmin ? <Unlock size={18} /> : <Lock size={18} />}
                 </button>
@@ -935,7 +935,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                  <button 
                     onClick={() => prevUnit && onUnitSelect(prevUnit)}
                     disabled={!prevUnit}
-                    className={`p-2 rounded-full transition-all ${!prevUnit ? 'text-slate-100 cursor-not-allowed' : 'text-slate-500 hover:bg-slate-100 active:scale-95 hover:text-primary-600'}`}
+                    className={`p-2 rounded-full transition-all ${!prevUnit ? 'text-slate-100 dark:text-slate-800 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 hover:text-primary-600 dark:hover:text-primary-400'}`}
                  >
                     <ChevronLeft size={32} />
                  </button>
@@ -944,8 +944,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     onClick={() => setShowUnitSelector(true)}
                     className="text-center animate-in zoom-in duration-300 cursor-pointer hover:scale-105 transition-transform active:scale-95"
                   >
-                    <h2 className="text-4xl font-black text-slate-800 tracking-tight">{selectedUnit}</h2>
-                    <p className="text-sm font-bold text-primary-600 mt-1">
+                    <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{selectedUnit}</h2>
+                    <p className="text-sm font-bold text-primary-600 dark:text-primary-400 mt-1">
                       {FLAT_OWNERS.find(f => f.flat === selectedUnit)?.name || 'Unknown'}
                     </p>
                  </div>
@@ -953,7 +953,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                  <button 
                     onClick={() => nextUnit && onUnitSelect(nextUnit)}
                     disabled={!nextUnit}
-                    className={`p-2 rounded-full transition-all ${!nextUnit ? 'text-slate-100 cursor-not-allowed' : 'text-slate-500 hover:bg-slate-100 active:scale-95 hover:text-primary-600'}`}
+                    className={`p-2 rounded-full transition-all ${!nextUnit ? 'text-slate-100 dark:text-slate-800 cursor-not-allowed' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 hover:text-primary-600 dark:hover:text-primary-400'}`}
                  >
                     <ChevronRight size={32} />
                  </button>
@@ -969,16 +969,16 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
         {/* Year Selection Tabs */}
         <div className="px-4 pt-4 pb-0">
-             <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-100 flex">
+             <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex">
                 <button 
                     onClick={() => setSelectedYear(2025)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                 >
                     <CalendarDays size={16} /> 2025
                 </button>
                 <button 
                     onClick={() => setSelectedYear(2026)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 text-primary-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                 >
                     <CalendarDays size={16} /> 2026
                 </button>
@@ -988,7 +988,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         {/* Summary Box */}
         <div className="px-4 pt-4">
             <div 
-                className="rounded-2xl p-4 shadow-lg border border-white/10 grid grid-cols-3 gap-2 divide-x divide-white/20 text-white transition-all duration-500"
+                className="rounded-2xl p-4 shadow-lg border border-white/10 dark:border-white/5 grid grid-cols-3 gap-2 divide-x divide-white/20 text-white transition-all duration-500"
                 style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
             >
                 <button 
@@ -997,7 +997,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     className={`text-center px-1 flex flex-col items-center justify-center transition-all ${isAdmin && !processingUpdate ? 'active:scale-95 cursor-pointer' : 'opacity-80 cursor-not-allowed'}`}
                 >
                     <p className="text-[10px] text-white/80 font-medium uppercase mb-1">{t.occupancy}</p>
-                    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${occupancyStatus === t.occupied ? 'bg-white text-blue-600' : 'bg-white/90 text-orange-600'}`}>
+                    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${occupancyStatus === t.occupied ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400' : 'bg-white/90 dark:bg-slate-800/90 text-orange-600 dark:text-orange-400'}`}>
                         {processingUpdate ? (
                             <RefreshCw size={12} className="animate-spin" />
                         ) : (
@@ -1021,17 +1021,17 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
         {/* Ledger Table Section */}
         <div className="p-4">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden mb-6">
                 <table className="w-full">
                     <thead>
-                        <tr className="bg-slate-50 border-b border-slate-100">
-                            <th className="py-3 pl-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[28%]">{t.monthDate}</th>
-                            <th className="py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[22%]">{t.amount}</th>
-                            <th className="py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[22%]">{t.due}</th>
-                            <th className="py-3 pr-3 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider w-[28%]">{t.status}</th>
+                        <tr className="bg-slate-50 dark:bg-slate-700 border-b border-slate-100 dark:border-slate-600">
+                            <th className="py-3 pl-3 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[28%]">{t.monthDate}</th>
+                            <th className="py-3 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[22%]">{t.amount}</th>
+                            <th className="py-3 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[22%]">{t.due}</th>
+                            <th className="py-3 pr-3 text-right text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[28%]">{t.status}</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                         {records.map((record, idx) => {
                             const isEditable = isAdmin && !processingUpdate;
                             // For DB operations, we need the original month name (Bangla)
@@ -1042,21 +1042,21 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 key={idx} 
                                 className={`
                                   transition-all duration-200 
-                                  ${record.status === 'DUE' ? 'bg-red-50/10' : ''}
-                                  ${isEditable ? 'hover:bg-indigo-50 active:bg-indigo-100/50' : 'hover:bg-slate-50/50'}
+                                  ${record.status === 'DUE' ? 'bg-red-50/10 dark:bg-red-900/10' : ''}
+                                  ${isEditable ? 'hover:bg-indigo-50 dark:hover:bg-indigo-900/30 active:bg-indigo-100/50 dark:active:bg-indigo-900/50' : 'hover:bg-slate-50/50 dark:hover:bg-slate-700/50'}
                                 `}
                               >
                                   <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 pl-3 align-middle cursor-pointer">
-                                      <div className="font-bold text-slate-800 text-sm">{record.month}</div>
-                                      <div className="text-[10px] text-slate-400 font-medium mt-0.5 whitespace-nowrap">{record.date}</div>
+                                      <div className="font-bold text-slate-800 dark:text-white text-sm">{record.month}</div>
+                                      <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 whitespace-nowrap">{record.date}</div>
                                   </td>
                                   <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 align-middle text-center cursor-pointer">
-                                      <div className={`font-semibold text-sm ${record.amount > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
+                                      <div className={`font-semibold text-sm ${record.amount > 0 ? 'text-slate-700 dark:text-slate-200' : 'text-slate-300 dark:text-slate-600'}`}>
                                           {record.amount > 0 ? `৳${record.amount}` : '-'}
                                       </div>
                                   </td>
                                   <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 align-middle text-center cursor-pointer">
-                                        <div className={`font-semibold text-sm ${record.due > 0 ? 'text-red-600' : 'text-slate-300'}`}>
+                                        <div className={`font-semibold text-sm ${record.due > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-300 dark:text-slate-600'}`}>
                                           {record.due > 0 ? `৳${record.due}` : '-'}
                                         </div>
                                   </td>
@@ -1065,10 +1065,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                         {isAdmin ? (
                                             <div className={`px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                                             record.status === 'PAID' 
-                                                ? 'bg-green-100 text-green-700 border-green-200 shadow-sm' 
+                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 shadow-sm' 
                                                 : record.status === 'DUE'
-                                                ? 'bg-white text-red-500 border-red-200 shadow-sm'
-                                                : 'bg-slate-100 text-slate-500 border-slate-200 shadow-sm'
+                                                ? 'bg-white dark:bg-slate-800 text-red-500 dark:text-red-400 border-red-200 dark:border-red-800 shadow-sm'
+                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600 shadow-sm'
                                             }`}>
                                             {record.status === 'PAID' ? <CheckCircle2 size={10} /> : record.status === 'DUE' ? <XCircle size={10} /> : <Clock size={10} />}
                                             {record.status === 'PAID' ? t.paid : record.status === 'DUE' ? t.due : t.upcoming}
@@ -1082,11 +1082,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                           );
                         })}
                     </tbody>
-                    <tfoot className="bg-slate-50 border-t border-slate-200">
+                    <tfoot className="bg-slate-50 dark:bg-slate-700 border-t border-slate-200 dark:border-slate-600">
                         <tr>
-                            <td className="py-3 pl-3 text-sm font-bold text-slate-700">{t.total}</td>
-                            <td className="py-3 text-center text-sm font-bold text-slate-700">৳ {totalAmount.toLocaleString()}</td>
-                            <td className="py-3 text-center text-sm font-bold text-red-600">{totalDue > 0 ? `৳ ${totalDue.toLocaleString()}` : '-'}</td>
+                            <td className="py-3 pl-3 text-sm font-bold text-slate-700 dark:text-slate-200">{t.total}</td>
+                            <td className="py-3 text-center text-sm font-bold text-slate-700 dark:text-slate-200">৳ {totalAmount.toLocaleString()}</td>
+                            <td className="py-3 text-center text-sm font-bold text-red-600 dark:text-red-400">{totalDue > 0 ? `৳ ${totalDue.toLocaleString()}` : '-'}</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -1094,20 +1094,20 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             </div>
             
             {/* Premium Note Box */}
-            <div className="mb-6 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden relative group">
+            <div className="mb-6 bg-white dark:bg-slate-800 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-slate-100 dark:border-slate-700 overflow-hidden relative group">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-amber-400 to-orange-500"></div>
                 <div className="p-5">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2.5">
-                            <div className="bg-amber-100/50 p-2 rounded-xl text-amber-600">
+                            <div className="bg-amber-100/50 dark:bg-amber-900/30 p-2 rounded-xl text-amber-600 dark:text-amber-400">
                                 <Edit3 size={18} strokeWidth={2.5} />
                             </div>
-                            <h4 className="text-base font-bold text-slate-800 tracking-tight">জরুরী নোট</h4>
+                            <h4 className="text-base font-bold text-slate-800 dark:text-white tracking-tight">জরুরী নোট</h4>
                         </div>
                         {isAdmin && !editingNote && (
                             <button 
                                 onClick={() => { setNoteInput(unitNote); setEditingNote(true); }}
-                                className="text-[11px] font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
+                                className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
                             >
                                 <Edit3 size={12} /> এডিট
                             </button>
@@ -1120,20 +1120,20 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 <textarea 
                                     value={noteInput}
                                     onChange={(e) => setNoteInput(e.target.value)}
-                                    className="w-full bg-slate-50 border border-amber-200/60 rounded-xl p-3.5 text-sm text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 min-h-[100px] resize-none transition-all"
+                                    className="w-full bg-slate-50 dark:bg-slate-700 border border-amber-200/60 dark:border-amber-700/60 rounded-xl p-3.5 text-sm text-slate-700 dark:text-white focus:outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 min-h-[100px] resize-none transition-all"
                                     placeholder="এখানে জরুরী নোট লিখুন..."
                                     autoFocus
                                 />
                                 <div className="flex justify-end gap-2 mt-3">
                                     <button 
                                         onClick={() => setEditingNote(false)}
-                                        className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
+                                        className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
                                     >
                                         বাতিল
                                     </button>
                                     <button 
                                         onClick={handleSaveNote}
-                                        className="px-5 py-2 text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 rounded-xl transition-all shadow-md shadow-amber-500/20 active:scale-95"
+                                        className="px-5 py-2 text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 rounded-xl transition-all shadow-md shadow-amber-500/20 dark:shadow-none active:scale-95"
                                     >
                                         সেভ করুন
                                     </button>
@@ -1141,7 +1141,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                             </div>
                         ) : (
                             <div 
-                                className={`text-sm leading-relaxed ${unitNote ? 'text-slate-700' : 'text-slate-400 italic'} min-h-[40px] ${isAdmin ? 'cursor-pointer' : ''}`}
+                                className={`text-sm leading-relaxed ${unitNote ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500 italic'} min-h-[40px] ${isAdmin ? 'cursor-pointer' : ''}`}
                                 onClick={() => {
                                     if (isAdmin) {
                                         setNoteInput(unitNote);
@@ -1157,10 +1157,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             </div>
 
             {/* Payment Status Graph */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-                <div className="flex items-center gap-2 mb-6 border-b border-slate-50 pb-3">
-                    <PieChart size={20} className="text-indigo-600" />
-                    <h3 className="font-bold text-slate-800 text-lg">{t.paymentStatus} ({selectedYear})</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
+                <div className="flex items-center gap-2 mb-6 border-b border-slate-50 dark:border-slate-700 pb-3">
+                    <PieChart size={20} className="text-indigo-600 dark:text-indigo-400" />
+                    <h3 className="font-bold text-slate-800 dark:text-white text-lg">{t.paymentStatus} ({selectedYear})</h3>
                 </div>
                 
                 {/* Premium Pie Chart */}
@@ -1186,7 +1186,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                         const y = cy + radius * Math.sin(-midAngle * RADIAN);
                                         
                                         return (
-                                            <text x={x} y={y} fill="#334155" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
+                                            <text x={x} y={y} fill="#94a3b8" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
                                                 {`${name} ${value}`}
                                             </text>
                                         );
@@ -1206,27 +1206,27 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
                     {/* Status List */}
                     <div className="w-full grid grid-cols-3 gap-3 mt-4">
-                        <div className="bg-green-50/50 border border-green-100 rounded-xl p-3 flex flex-col items-center justify-center">
-                            <span className="text-xl font-black text-green-600">{paidCount}</span>
-                            <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">{t.paid}</span>
+                        <div className="bg-green-50/50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-xl p-3 flex flex-col items-center justify-center">
+                            <span className="text-xl font-black text-green-600 dark:text-green-400">{paidCount}</span>
+                            <span className="text-[10px] font-bold text-green-700 dark:text-green-300 uppercase tracking-wider">{t.paid}</span>
                         </div>
-                        <div className="bg-red-50/50 border border-red-100 rounded-xl p-3 flex flex-col items-center justify-center">
-                            <span className="text-xl font-black text-red-600">{dueCount}</span>
-                            <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">{t.due}</span>
+                        <div className="bg-red-50/50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl p-3 flex flex-col items-center justify-center">
+                            <span className="text-xl font-black text-red-600 dark:text-red-400">{dueCount}</span>
+                            <span className="text-[10px] font-bold text-red-700 dark:text-red-300 uppercase tracking-wider">{t.due}</span>
                         </div>
-                        <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 flex flex-col items-center justify-center">
-                            <span className="text-xl font-black text-slate-600">{upcomingCount}</span>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t.upcoming}</span>
+                        <div className="bg-slate-50/50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-600 rounded-xl p-3 flex flex-col items-center justify-center">
+                            <span className="text-xl font-black text-slate-600 dark:text-slate-400">{upcomingCount}</span>
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t.upcoming}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Month Grid Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-                <div className="flex items-center gap-2 mb-4 border-b border-slate-50 pb-2">
-                    <CalendarDays size={18} className="text-primary-600" />
-                    <h3 className="font-bold text-slate-700">{t.month} গ্রিড ({selectedYear})</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
+                <div className="flex items-center gap-2 mb-4 border-b border-slate-50 dark:border-slate-700 pb-2">
+                    <CalendarDays size={18} className="text-primary-600 dark:text-primary-400" />
+                    <h3 className="font-bold text-slate-700 dark:text-white">{t.month} গ্রিড ({selectedYear})</h3>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                     {records.map((record, idx) => {
@@ -1239,7 +1239,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 aspect-[4/3] rounded-lg flex flex-col items-center justify-center text-center transition-all relative overflow-hidden shadow-sm border
                                 ${record.status === 'PAID' ? 'bg-green-500 text-white border-green-600' : ''}
                                 ${record.status === 'DUE' ? 'bg-red-500 text-white border-red-600' : ''}
-                                ${record.status === 'UPCOMING' ? 'bg-slate-50 text-slate-400 border-slate-100' : ''}
+                                ${record.status === 'UPCOMING' ? 'bg-slate-50 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-600' : ''}
                                 ${isAdmin ? 'cursor-pointer hover:opacity-90 active:scale-95' : ''}
                             `}
                         >

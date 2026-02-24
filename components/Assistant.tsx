@@ -130,7 +130,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm md:items-end md:justify-end md:p-6 md:bottom-20 md:right-4 md:inset-auto"
           >
             {/* Height: h-[500px] and max-h-[70vh] for mobile optimization */}
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[500px] max-h-[70vh] border border-gray-100 ring-1 ring-black/5">
+            <div className="w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[500px] max-h-[70vh] border border-gray-100 dark:border-slate-700 ring-1 ring-black/5">
               
               {/* Header */}
               <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-3.5 flex justify-between items-center text-white shadow-md relative overflow-hidden">
@@ -161,14 +161,14 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
               </div>
 
               {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-3 bg-slate-50 space-y-3">
+              <div className="flex-1 overflow-y-auto p-3 bg-slate-50 dark:bg-slate-900 space-y-3">
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}
                   >
                     {msg.role === 'assistant' && (
-                       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 shadow-sm border border-white">
+                       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 shadow-sm border border-white dark:border-slate-600">
                           <Bot size={14} className="text-white" />
                        </div>
                     )}
@@ -177,7 +177,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
                       className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm ${
                         msg.role === 'user'
                           ? 'bg-indigo-600 text-white rounded-br-none'
-                          : 'bg-white border border-gray-200 text-gray-700 rounded-bl-none'
+                          : 'bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200 rounded-bl-none'
                       }`}
                     >
                       {msg.text}
@@ -190,7 +190,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
                         <Bot size={14} className="text-white" />
                      </div>
-                    <div className="bg-white border border-gray-100 px-4 py-3 rounded-2xl rounded-bl-none shadow-sm">
+                    <div className="bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 px-4 py-3 rounded-2xl rounded-bl-none shadow-sm">
                       <div className="flex gap-1">
                         <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
                         <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-75"></span>
@@ -204,12 +204,12 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
 
               {/* Suggestions Chips */}
               {!isLoading && (
-                <div className="px-3 py-2 bg-slate-50 flex gap-2 overflow-x-auto no-scrollbar border-t border-gray-100">
+                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-900 flex gap-2 overflow-x-auto no-scrollbar border-t border-gray-100 dark:border-slate-700">
                   {suggestions.map((suggestion, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleSend(suggestion)}
-                      className="whitespace-nowrap px-3 py-1 bg-white border border-indigo-100 rounded-full text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-colors shadow-sm flex-shrink-0 active:scale-95"
+                      className="whitespace-nowrap px-3 py-1 bg-white dark:bg-slate-800 border border-indigo-100 dark:border-slate-600 rounded-full text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 hover:border-indigo-200 transition-colors shadow-sm flex-shrink-0 active:scale-95"
                     >
                       {suggestion}
                     </button>
@@ -218,14 +218,14 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
               )}
 
               {/* Input Area */}
-              <div className="p-3 bg-white border-t border-gray-100 flex gap-2 items-center">
+              <div className="p-3 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 flex gap-2 items-center">
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                   placeholder={lang === 'bn' ? "এখানে লিখুন..." : "Type here..."}
-                  className="flex-1 bg-gray-100 border border-transparent focus:bg-white focus:border-indigo-200 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder:text-gray-400 text-gray-700"
+                  className="flex-1 bg-gray-100 dark:bg-slate-700 border border-transparent focus:bg-white dark:focus:bg-slate-600 focus:border-indigo-200 dark:focus:border-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-slate-400 text-gray-700 dark:text-slate-200"
                 />
                 <button
                   onClick={() => handleSend()}

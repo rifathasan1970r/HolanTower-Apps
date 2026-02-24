@@ -13,9 +13,9 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 pb-0">
       {/* Premium Glass Container with Rounded Top - White Theme */}
-      <div className="absolute inset-0 bg-white/90 backdrop-blur-2xl border-t border-purple-100/50 shadow-[0_-8px_30px_-5px_rgba(0,0,0,0.1),0_-2px_10px_-2px_rgba(0,0,0,0.05)] rounded-t-[24px]">
+      <div className="absolute inset-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-t border-purple-100/50 dark:border-slate-800/50 shadow-[0_-8px_30px_-5px_rgba(0,0,0,0.1),0_-2px_10px_-2px_rgba(0,0,0,0.05)] rounded-t-[24px]">
          {/* Soft Gradient Overlay */}
-         <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-white/20 rounded-t-[24px] pointer-events-none" />
+         <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-white/20 dark:from-slate-800/50 dark:to-slate-800/20 rounded-t-[24px] pointer-events-none" />
       </div>
       
       <div className="relative max-w-lg mx-auto px-2 h-[80px] flex justify-around items-end pb-3">
@@ -38,8 +38,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
                     transition={{ duration: 0.4, ease: "easeOut" }}
                     className={`relative p-4 rounded-full shadow-[0_10px_25px_-5px_rgba(76,29,149,0.3)] transition-all duration-500 ${
                       isActive 
-                        ? 'bg-gradient-to-br from-[#4C1D95] to-[#6D28D9] text-white ring-[6px] ring-white shadow-[0_15px_35px_-5px_rgba(76,29,149,0.4)]' 
-                        : 'bg-white text-[#4C1D95] shadow-slate-200 border border-purple-50 ring-[6px] ring-white'
+                        ? 'bg-gradient-to-br from-[#4C1D95] to-[#6D28D9] text-white ring-[6px] ring-white dark:ring-slate-900 shadow-[0_15px_35px_-5px_rgba(76,29,149,0.4)]' 
+                        : 'bg-white dark:bg-slate-800 text-[#4C1D95] dark:text-purple-400 shadow-slate-200 dark:shadow-none border border-purple-50 dark:border-slate-700 ring-[6px] ring-white dark:ring-slate-900'
                     }`}
                   >
                     {/* Subtle Pulse Animation for Home */}
@@ -73,7 +73,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
                     {isActive && (
                       <motion.div
                         layoutId="nav-pill"
-                        className="absolute inset-0 bg-purple-50 rounded-xl -z-10"
+                        className="absolute inset-0 bg-purple-50 dark:bg-slate-800 rounded-xl -z-10"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
@@ -88,8 +88,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
                         strokeWidth={isActive ? 2.5 : 2} 
                         className={`transition-all duration-300 ${
                             isActive 
-                            ? 'text-[#4C1D95] drop-shadow-[0_2px_8px_rgba(76,29,149,0.25)]' 
-                            : 'text-slate-400 group-hover:text-[#4C1D95]'
+                            ? 'text-[#4C1D95] dark:text-purple-400 drop-shadow-[0_2px_8px_rgba(76,29,149,0.25)]' 
+                            : 'text-slate-400 dark:text-slate-500 group-hover:text-[#4C1D95] dark:group-hover:text-purple-400'
                         }`} 
                         />
                     </motion.div>
@@ -97,7 +97,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
                   
                   {/* Label */}
                   <span className={`text-[10px] font-bold tracking-wide transition-all duration-300 ${
-                    isActive ? 'text-[#4C1D95]' : 'text-slate-400'
+                    isActive ? 'text-[#4C1D95] dark:text-purple-400' : 'text-slate-400 dark:text-slate-500'
                   }`}>
                     {item.label}
                   </span>
@@ -106,7 +106,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
                   {isActive && (
                      <motion.div 
                        layoutId="nav-line"
-                       className="absolute -bottom-2 w-8 h-1 bg-[#4C1D95] rounded-t-full shadow-[0_-2px_6px_rgba(76,29,149,0.3)]"
+                       className="absolute -bottom-2 w-8 h-1 bg-[#4C1D95] dark:bg-purple-500 rounded-t-full shadow-[0_-2px_6px_rgba(76,29,149,0.3)]"
                      />
                   )}
                 </motion.div>

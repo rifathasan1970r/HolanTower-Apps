@@ -106,14 +106,14 @@ const Card = ({
   <motion.div 
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
-    className={`glass-card p-5 rounded-2xl border border-white/40 shadow-sm ${colorClass} relative overflow-hidden`}
+    className={`glass-card p-5 rounded-2xl border border-white/40 dark:border-slate-700 shadow-sm ${colorClass} dark:bg-slate-800 relative overflow-hidden transition-colors duration-300`}
   >
     <div className="flex items-start justify-between mb-3">
       <div>
-         <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+         <h3 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2">
            <Icon size={18} className={iconColor} /> {title}
          </h3>
-         <div className="bg-slate-100/80 text-slate-600 text-[10px] px-2 py-0.5 rounded-md inline-block mt-1">
+         <div className="bg-slate-100/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 text-[10px] px-2 py-0.5 rounded-md inline-block mt-1">
            {desc}
          </div>
       </div>
@@ -249,7 +249,7 @@ export const EmergencyView = () => {
         )}
         <button 
           onClick={() => copyText(phone)} 
-          className="px-4 py-2.5 bg-slate-100 rounded-xl text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors shadow-sm flex items-center justify-center gap-1.5 active:scale-95"
+          className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-xl text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors shadow-sm flex items-center justify-center gap-1.5 active:scale-95"
         >
           <Copy size={14} /> কপি
         </button>
@@ -282,22 +282,22 @@ export const EmergencyView = () => {
           initial={{ scale: 0.9, y: -20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: -20 }}
-          className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl relative"
+          className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-xl relative"
           onClick={e => e.stopPropagation()}
         >
-          <button onClick={onClose} className='absolute top-3 right-3 bg-slate-100 text-slate-600 p-1.5 rounded-full hover:bg-slate-200'>
+          <button onClick={onClose} className='absolute top-3 right-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600'>
             <X size={16}/>
           </button>
-          <h3 className="text-lg font-bold text-slate-800 mb-4">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
             {contact.id ? 'নম্বর এডিট করুন' : 'নতুন নম্বর যোগ করুন'}
           </h3>
           <form onSubmit={handleSubmit} className='space-y-3'>
-            <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="নাম" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" required />
-            <input type="text" name="role" value={formData.role} onChange={handleChange} placeholder="ভূমিকা" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" required />
-            <input type="text" name="phone" value={formData.phone} onChange={handleChange} placeholder="মোবাইল নম্বর" className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" required />
+            <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="নাম" className="w-full p-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-slate-400" required />
+            <input type="text" name="role" value={formData.role} onChange={handleChange} placeholder="ভূমিকা" className="w-full p-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-slate-400" required />
+            <input type="text" name="phone" value={formData.phone} onChange={handleChange} placeholder="মোবাইল নম্বর" className="w-full p-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-slate-400" required />
             <div className='flex items-center gap-2'>
               <input type="checkbox" name="wa" id="wa" checked={formData.wa} onChange={handleChange} className='h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500' />
-              <label htmlFor="wa" className='text-sm font-medium text-slate-700'>WhatsApp আছে</label>
+              <label htmlFor="wa" className='text-sm font-medium text-slate-700 dark:text-slate-300'>WhatsApp আছে</label>
             </div>
             <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-colors">
               সেভ করুন
@@ -330,20 +330,20 @@ export const EmergencyView = () => {
           initial={{ scale: 0.9, y: -20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: -20 }}
-          className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl relative"
+          className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-xl relative"
           onClick={e => e.stopPropagation()}
         >
-          <button onClick={onClose} className='absolute top-3 right-3 bg-slate-100 text-slate-600 p-1.5 rounded-full hover:bg-slate-200'>
+          <button onClick={onClose} className='absolute top-3 right-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600'>
             <X size={16}/>
           </button>
-          <h3 className="text-lg font-bold text-slate-800 mb-4">নতুন ডিপার্টমেন্ট যোগ করুন</h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">নতুন ডিপার্টমেন্ট যোগ করুন</h3>
           <form onSubmit={handleSubmit} className='space-y-3'>
             <input 
               type="text" 
               value={name} 
               onChange={e => setName(e.target.value)} 
               placeholder="ডিপার্টমেন্টের নাম"
-              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+              className="w-full p-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-slate-400" 
               required 
             />
             <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-colors">
@@ -370,16 +370,16 @@ export const EmergencyView = () => {
               initial={{ scale: 0.9, y: -20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: -20 }}
-              className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl"
+              className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-xl"
               onClick={e => e.stopPropagation()}
             >
-              <h3 className="text-lg font-bold text-slate-800 mb-4">অ্যাডমিন লগইন</h3>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">অ্যাডমিন লগইন</h3>
               <input 
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="পাসওয়ার্ড দিন"
-                className="w-full p-3 border border-slate-300 rounded-lg mb-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full p-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg mb-2 focus:ring-2 focus:ring-indigo-500 outline-none placeholder:text-slate-400"
               />
               {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
               <button onClick={handleLogin} className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-colors">
@@ -404,21 +404,21 @@ export const EmergencyView = () => {
       </AnimatePresence>
 
       <div className="flex justify-between items-center pr-2">
-        <h2 className="text-2xl font-bold text-slate-800 px-1 border-l-4 border-red-500 pl-3">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white px-1 border-l-4 border-red-500 pl-3">
           জরুরী সার্ভিস ও কন্ট্রাক্টর
         </h2>
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <button onClick={() => setShowCategoryEditor(true)} className="text-sm font-medium text-indigo-600 hover:underline">
+            <button onClick={() => setShowCategoryEditor(true)} className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
               নতুন ডিপার্টমেন্ট
             </button>
           )}
           {!isAdmin ? (
-            <button onClick={() => setShowLogin(true)} className="text-slate-600 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-slate-100">
+            <button onClick={() => setShowLogin(true)} className="text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
               <Settings size={20}/>
             </button>
           ) : (
-            <button onClick={handleLogout} className="text-sm font-medium text-red-600 hover:underline flex items-center gap-1">
+            <button onClick={handleLogout} className="text-sm font-medium text-red-600 dark:text-red-400 hover:underline flex items-center gap-1">
               <LogOut size={14}/> লগআউট
             </button>
           )}
@@ -429,19 +429,19 @@ export const EmergencyView = () => {
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="glass-card rounded-2xl p-5 shadow-lg border border-red-100 bg-gradient-to-r from-red-50 to-white"
+        className="glass-card rounded-2xl p-5 shadow-lg border border-red-100 dark:border-red-900/30 bg-gradient-to-r from-red-50 to-white dark:from-red-900/20 dark:to-slate-800"
       >
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-red-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-red-200">
+          <div className="w-14 h-14 rounded-2xl bg-red-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-red-200 dark:shadow-none">
             <Siren size={28} className="animate-pulse" />
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-extrabold text-red-600 leading-none mb-1">জরুরী জাতীয় হেল্পলাইন</h2>
-            <p className="text-xs text-slate-600 font-medium">বাংলাদেশের যে কোনো জরুরী সহায়তা</p>
+            <h2 className="text-xl font-extrabold text-red-600 dark:text-red-400 leading-none mb-1">জরুরী জাতীয় হেল্পলাইন</h2>
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">বাংলাদেশের যে কোনো জরুরী সহায়তা</p>
           </div>
         </div>
-        <div className="mt-4 flex items-center justify-between bg-white p-3 rounded-xl border border-red-100">
-           <span className="text-3xl font-black tracking-widest text-red-600 pl-2">৯৯৯</span>
+        <div className="mt-4 flex items-center justify-between bg-white dark:bg-slate-700 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
+           <span className="text-3xl font-black tracking-widest text-red-600 dark:text-red-400 pl-2">৯৯৯</span>
            <a className="px-5 py-2.5 bg-red-600 text-white rounded-lg font-bold text-sm shadow hover:bg-red-700 active:scale-95 transition-all flex items-center gap-2" href="tel:999">
              <Phone size={16} /> কল করুন
            </a>
@@ -462,34 +462,34 @@ export const EmergencyView = () => {
             >
               {isAdmin && (
                 <div className="absolute top-2 right-2 flex gap-1">
-                  <button onClick={() => handleAdd(category)} className="bg-blue-100 text-blue-600 p-1.5 rounded-full hover:bg-blue-200">
+                  <button onClick={() => handleAdd(category)} className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 p-1.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50">
                     <Plus size={12}/>
                   </button>
-                  <button onClick={() => handleDeleteCategory(category.id)} className="bg-red-100 text-red-600 p-1.5 rounded-full hover:bg-red-200">
+                  <button onClick={() => handleDeleteCategory(category.id)} className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-1.5 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50">
                     <Trash2 size={12}/>
                   </button>
                 </div>
               )}
               <div className="space-y-3 mt-2">
                 {category.people.map(person => (
-                  <div key={person.id} className="relative border-t border-slate-100 pt-3">
+                  <div key={person.id} className="relative border-t border-slate-100 dark:border-slate-700 pt-3">
                     {isAdmin && (
                       <div className="absolute top-3 right-0 flex gap-1">
-                        <button onClick={() => handleEdit(category, person)} className="bg-slate-100 text-slate-600 p-1 rounded-full hover:bg-slate-200">
+                        <button onClick={() => handleEdit(category, person)} className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600">
                           <Edit size={12}/>
                         </button>
-                        <button onClick={() => handleDelete(person.id)} className="bg-red-100 text-red-600 p-1 rounded-full hover:bg-red-200">
+                        <button onClick={() => handleDelete(person.id)} className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-1 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50">
                           <Trash2 size={12}/>
                         </button>
                       </div>
                     )}
                     <div className="flex justify-between items-center">
-                      <p className="text-xs text-slate-500 font-medium">{person.role}</p>
-                      <p className="font-bold text-red-600 text-base">{person.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{person.role}</p>
+                      <p className="font-bold text-red-600 dark:text-red-400 text-base">{person.name}</p>
                     </div>
                     <div className="flex justify-between items-center mt-1">
-                      <p className="font-bold text-slate-800 text-base">নম্বর</p>
-                      <p className="font-mono font-extrabold text-red-600 text-lg">{person.phone}</p>
+                      <p className="font-bold text-slate-800 dark:text-white text-base">নম্বর</p>
+                      <p className="font-mono font-extrabold text-red-600 dark:text-red-400 text-lg">{person.phone}</p>
                     </div>
                     <ActionButtons phone={person.phone} wa={person.wa} />
                   </div>

@@ -256,27 +256,27 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
   };
 
   return (
-    <div className="pb-28 bg-slate-50 min-h-screen relative overflow-hidden font-sans">
+    <div className="pb-28 bg-slate-50 dark:bg-slate-900 min-h-screen relative overflow-hidden font-sans transition-colors duration-300">
       
       {/* Background Decor */}
-      <div className="fixed top-0 left-0 w-full h-[500px] bg-gradient-to-b from-indigo-100/40 via-white to-slate-50 pointer-events-none" />
-      <div className="fixed -top-20 -right-20 w-64 h-64 bg-indigo-200/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed top-0 left-0 w-full h-[500px] bg-gradient-to-b from-indigo-100/40 via-white to-slate-50 dark:from-indigo-900/20 dark:via-slate-900 dark:to-slate-900 pointer-events-none" />
+      <div className="fixed -top-20 -right-20 w-64 h-64 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header Section */}
       <div className="pt-6 px-4 pb-4 relative z-10">
         <div className="flex items-center justify-between mb-6">
             <div>
-                <h2 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
                     <Zap className="text-yellow-500 fill-yellow-500" size={24} />
                     {t.title}
                 </h2>
-                <p className="text-sm text-slate-500 font-medium ml-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium ml-1">
                     {t.subtitle}
                 </p>
             </div>
             {/* Logo Placeholder or Icon */}
-            <div className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center border border-slate-100">
-                <Lightbulb size={20} className="text-indigo-600" />
+            <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center border border-slate-100 dark:border-slate-700">
+                <Lightbulb size={20} className="text-indigo-600 dark:text-indigo-400" />
             </div>
         </div>
 
@@ -312,19 +312,19 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
         </div>
 
         {/* Search & Filter Bar - Fixed: Added background and padding to mask content behind */}
-        <div className="sticky top-[64px] z-30 bg-slate-50/95 backdrop-blur-md py-2 -mx-4 px-4 mb-2 transition-all shadow-sm">
+        <div className="sticky top-[64px] z-30 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md py-2 -mx-4 px-4 mb-2 transition-all shadow-sm">
             <div className="flex gap-3">
-                <div className="relative flex-1 group shadow-lg shadow-slate-200/50 rounded-2xl">
+                <div className="relative flex-1 group shadow-lg shadow-slate-200/50 dark:shadow-none rounded-2xl">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input 
                         type="text" 
                         placeholder={t.searchPlaceholder}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-white border border-slate-100 rounded-2xl py-2.5 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-400 h-10"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl py-2.5 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 h-10"
                     />
                 </div>
-                <div className="relative w-[32%] shadow-lg shadow-slate-200/50 rounded-2xl">
+                <div className="relative w-[32%] shadow-lg shadow-slate-200/50 dark:shadow-none rounded-2xl">
                     <select 
                         value={selectedFloor}
                         onChange={(e) => setSelectedFloor(e.target.value)}
@@ -346,9 +346,9 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
         </div>
         
         {/* Notice Bar */}
-        <div className="mt-4 bg-orange-50 border border-orange-100 rounded-lg px-3 py-2 flex items-center gap-2">
+        <div className="mt-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 rounded-lg px-3 py-2 flex items-center gap-2">
             <ShieldCheck size={14} className="text-orange-500 shrink-0" />
-            <p className="text-[11px] font-medium text-orange-700 leading-tight">
+            <p className="text-[11px] font-medium text-orange-700 dark:text-orange-400 leading-tight">
                 {t.notice}
             </p>
         </div>
@@ -360,11 +360,11 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
           <div key={floorKey}>
             {/* Floor Header */}
             <div className="flex items-center gap-3 mb-3 pl-1">
-                <div className="bg-slate-200 h-px flex-1"></div>
+                <div className="bg-slate-200 dark:bg-slate-700 h-px flex-1"></div>
                 <span className="text-xs font-bold text-white bg-red-600 border border-red-500 px-3 py-1 rounded-full shadow-sm uppercase">
                     {getFloorLabel(floorKey)}
                 </span>
-                <div className="bg-slate-200 h-px flex-1"></div>
+                <div className="bg-slate-200 dark:bg-slate-700 h-px flex-1"></div>
             </div>
 
             <div className="grid grid-cols-1 gap-3">
@@ -376,7 +376,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     key={idx} 
-                    className="bg-white rounded-2xl p-3 sm:p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden group"
+                    className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-slate-100 dark:border-slate-700 relative overflow-hidden group"
                   >
                      <div className="flex items-center gap-2 sm:gap-4">
                         {/* Flat Avatar */}
@@ -387,8 +387,8 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                         {/* Info */}
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                                <h3 className="font-bold text-slate-800 truncate text-sm sm:text-base">{item.name}</h3>
-                                {isMain && <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 rounded border border-slate-200 font-bold">POST</span>}
+                                <h3 className="font-bold text-slate-800 dark:text-white truncate text-sm sm:text-base">{item.name}</h3>
+                                {isMain && <span className="text-[9px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 px-1.5 rounded border border-slate-200 dark:border-slate-600 font-bold">POST</span>}
                             </div>
                             
                             <p className="text-[9px] text-slate-400 font-bold mb-0.5 ml-0.5">{t.account}</p>
@@ -396,10 +396,10 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                             {/* Copyable Account Chip - Removed truncate, adjusted font size */}
                             <button 
                                 onClick={() => handleCopy(item.account)}
-                                className="flex items-center gap-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-1.5 py-1 transition-colors group/acc w-fit"
+                                className="flex items-center gap-1 bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 rounded-lg px-1.5 py-1 transition-colors group/acc w-fit"
                             >
                                 <Hash size={10} className="text-slate-400 shrink-0" />
-                                <span className="font-mono text-[11px] sm:text-sm font-bold text-slate-600 tracking-normal">{item.account}</span>
+                                <span className="font-mono text-[11px] sm:text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">{item.account}</span>
                                 <Copy size={10} className="text-slate-300 group-hover/acc:text-indigo-500 shrink-0" />
                             </button>
                         </div>
@@ -424,30 +424,30 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
 
         {sortedFloors.length === 0 && (
             <div className="text-center py-20 opacity-50">
-                <Search size={48} className="mx-auto mb-3 text-slate-300" />
-                <p className="font-bold text-slate-400">কোনো মিটার পাওয়া যায়নি</p>
+                <Search size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+                <p className="font-bold text-slate-400 dark:text-slate-500">কোনো মিটার পাওয়া যায়নি</p>
             </div>
         )}
 
         {/* Disclaimer Note - Enhanced Graphic Version */}
         <div className="mx-4 mt-8 mb-6">
-            <div className="relative bg-white rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(239,68,68,0.15)] border border-red-100 overflow-hidden group">
+            <div className="relative bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(239,68,68,0.15)] border border-red-100 dark:border-red-900/30 overflow-hidden group">
                 {/* Background Pattern */}
-                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-red-50 rounded-full blur-2xl opacity-50 pointer-events-none group-hover:bg-red-100 transition-colors duration-500"></div>
-                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-orange-50 rounded-full blur-2xl opacity-50 pointer-events-none group-hover:bg-orange-100 transition-colors duration-500"></div>
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-red-50 dark:bg-red-900/10 rounded-full blur-2xl opacity-50 pointer-events-none group-hover:bg-red-100 dark:group-hover:bg-red-900/20 transition-colors duration-500"></div>
+                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-orange-50 dark:bg-orange-900/10 rounded-full blur-2xl opacity-50 pointer-events-none group-hover:bg-orange-100 dark:group-hover:bg-orange-900/20 transition-colors duration-500"></div>
 
                 <div className="relative z-10 flex flex-col items-center text-center">
-                    <div className="mb-3 p-2.5 bg-gradient-to-br from-red-50 to-white rounded-full ring-1 ring-red-100 shadow-sm">
+                    <div className="mb-3 p-2.5 bg-gradient-to-br from-red-50 to-white dark:from-red-900/20 dark:to-slate-800 rounded-full ring-1 ring-red-100 dark:ring-red-900/30 shadow-sm">
                          <ShieldCheck className="text-red-500" size={24} />
                     </div>
                     
-                    <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed mb-3">
-                        শুধুমাত্র <span className="font-extrabold text-slate-800 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">❝হলান টাওয়ার❞</span> এর মোট ২৭ টি ইউনিট এর ডেসকো মিটার নম্বর দেওয়া হয়েছে রিচার্জ করার সুবিধার জন্য।
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed mb-3">
+                        শুধুমাত্র <span className="font-extrabold text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-600">❝হলান টাওয়ার❞</span> এর মোট ২৭ টি ইউনিট এর ডেসকো মিটার নম্বর দেওয়া হয়েছে রিচার্জ করার সুবিধার জন্য।
                     </p>
                     
-                    <div className="w-full h-px bg-gradient-to-r from-transparent via-red-200 to-transparent mb-3 opacity-50"></div>
+                    <div className="w-full h-px bg-gradient-to-r from-transparent via-red-200 dark:via-red-900/50 to-transparent mb-3 opacity-50"></div>
                     
-                    <p className="text-[11px] font-bold text-red-600 flex items-center justify-center gap-1.5 bg-red-50 px-4 py-2 rounded-lg border border-red-100">
+                    <p className="text-[11px] font-bold text-red-600 dark:text-red-400 flex items-center justify-center gap-1.5 bg-red-50 dark:bg-red-900/20 px-4 py-2 rounded-lg border border-red-100 dark:border-red-900/30">
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                         ভুল নম্বরে রিচার্জ করলে কর্তৃপক্ষ দায়ী থাকবে না
                     </p>
@@ -477,17 +477,17 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-3xl w-full max-w-sm shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto no-scrollbar"
+              className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-sm shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto no-scrollbar"
            >
               {/* Header */}
               <div className="px-6 pt-6 pb-4 flex justify-between items-center">
                   <div>
-                      <h3 className="text-xl font-bold text-slate-800">{t.confirmTitle}</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">{t.confirmDesc}</p>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t.confirmTitle}</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.confirmDesc}</p>
                   </div>
                   <button 
                     onClick={() => setConfirmModalData(null)}
-                    className="p-2 bg-slate-50 rounded-full text-slate-400 hover:bg-slate-100 hover:text-red-500 transition-colors"
+                    className="p-2 bg-slate-50 dark:bg-slate-700 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 hover:text-red-500 transition-colors"
                   >
                     <X size={20} />
                   </button>
@@ -496,7 +496,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
               <div className="p-6 pt-2 space-y-6">
                  
                  {/* Account Number Hero Card */}
-                 <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-6 text-white shadow-xl shadow-indigo-200 relative overflow-hidden group">
+                 <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-6 text-white shadow-xl shadow-indigo-200 dark:shadow-none relative overflow-hidden group">
                      {/* Background patterns */}
                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full blur-xl -ml-8 -mb-8 pointer-events-none"></div>
@@ -516,20 +516,20 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
 
                  {/* Details Grid */}
                  <div className="grid grid-cols-2 gap-4">
-                     <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-center">
-                         <span className="block text-[10px] text-slate-400 font-bold uppercase mb-1">{t.flat}</span>
-                         <span className="block text-2xl font-black text-slate-700">{confirmModalData.flat}</span>
+                     <div className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-4 border border-slate-100 dark:border-slate-600 text-center">
+                         <span className="block text-[10px] text-slate-400 dark:text-slate-300 font-bold uppercase mb-1">{t.flat}</span>
+                         <span className="block text-2xl font-black text-slate-700 dark:text-white">{confirmModalData.flat}</span>
                      </div>
-                     <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-center">
-                         <span className="block text-[10px] text-slate-400 font-bold uppercase mb-1">{t.owner}</span>
-                         <span className="block text-lg font-bold text-slate-700 truncate">{confirmModalData.name}</span>
+                     <div className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-4 border border-slate-100 dark:border-slate-600 text-center">
+                         <span className="block text-[10px] text-slate-400 dark:text-slate-300 font-bold uppercase mb-1">{t.owner}</span>
+                         <span className="block text-lg font-bold text-slate-700 dark:text-white truncate">{confirmModalData.name}</span>
                      </div>
                  </div>
 
                  {/* Instructions */}
-                 <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 flex gap-3 items-start">
+                 <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 rounded-xl p-3 flex gap-3 items-start">
                      <Info size={16} className="text-orange-500 shrink-0 mt-0.5" />
-                     <p className="text-xs text-orange-800 font-medium leading-relaxed">
+                     <p className="text-xs text-orange-800 dark:text-orange-300 font-medium leading-relaxed">
                         {t.paymentNote}
                      </p>
                  </div>
@@ -538,7 +538,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                  <div className="flex flex-col gap-4">
                     <button 
                         onClick={handleProceedToPayment}
-                        className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-200 hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-200 dark:shadow-none hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                     >
                         <span>{t.payNow}</span>
                         <ExternalLink size={18} />
