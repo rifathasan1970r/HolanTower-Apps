@@ -33,12 +33,12 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
                 // Floating Home Button - High End Style
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2">
                    <motion.div
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: 0.98 }}
                     whileHover={{ y: -2 }}
-                    transition={{ duration: 0.4, ease: "easeInOut" }}
-                    className={`relative p-4 rounded-full shadow-[0_10px_25px_-5px_rgba(76,29,149,0.3)] transition-all duration-400 ${
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className={`relative p-4 rounded-full shadow-[0_10px_25px_-5px_rgba(76,29,149,0.3)] transition-all duration-500 ${
                       isActive 
-                        ? 'bg-gradient-to-br from-[#4C1D95] to-[#6D28D9] text-white ring-[6px] ring-white shadow-[0_15px_35px_-5px_rgba(76,29,149,0.5)]' 
+                        ? 'bg-gradient-to-br from-[#4C1D95] to-[#6D28D9] text-white ring-[6px] ring-white shadow-[0_15px_35px_-5px_rgba(76,29,149,0.4)]' 
                         : 'bg-white text-[#4C1D95] shadow-slate-200 border border-purple-50 ring-[6px] ring-white'
                     }`}
                   >
@@ -46,9 +46,9 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView }) => {
                     {isActive && (
                         <motion.div
                             className="absolute inset-0 rounded-full bg-[#4C1D95]"
-                            initial={{ opacity: 0.4, scale: 1 }}
-                            animate={{ opacity: 0, scale: 1.4 }}
-                            transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut" }}
+                            initial={{ opacity: 0.3, scale: 1 }}
+                            animate={{ opacity: 0, scale: 1.35 }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
                         />
                     )}
                     
