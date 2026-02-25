@@ -461,19 +461,11 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
       </div>
 
       {/* Confirmation Modal - Centered Style */}
-      <AnimatePresence>
       {confirmModalData && (
-        <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+        <div 
             className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
         >
-           <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+           <div 
               className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-sm shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto no-scrollbar"
            >
               {/* Header */}
@@ -551,35 +543,27 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                     </div>
                  </div>
               </div>
-           </motion.div>
-        </motion.div>
+           </div>
+        </div>
       )}
-      </AnimatePresence>
 
       {/* Toast Notification */}
-      <AnimatePresence>
       {showToast && (
-        <motion.div 
-            initial={{ y: 50, opacity: 0, x: "-50%" }}
-            animate={{ y: 0, opacity: 1, x: "-50%" }}
-            exit={{ y: 50, opacity: 0, x: "-50%" }}
-            className="fixed bottom-24 left-1/2 z-[200] bg-[#1e1b4b] text-white px-5 py-3 rounded-full text-sm font-bold shadow-2xl flex items-center gap-2 whitespace-nowrap"
+        <div 
+            className="fixed bottom-24 left-1/2 z-[200] -translate-x-1/2 bg-[#1e1b4b] text-white px-5 py-3 rounded-full text-sm font-bold shadow-2xl flex items-center gap-2 whitespace-nowrap"
         >
            <Check size={16} className="text-green-400" />
            {t.copySuccess}
-        </motion.div>
+        </div>
       )}
-      </AnimatePresence>
 
       {/* Quick Recharge Modal Overlay */}
-      <AnimatePresence>
-        {showQuickRecharge && (
-           <QuickRechargeModal 
-             onClose={() => setShowQuickRecharge(false)} 
-             data={DESCO_DATA} 
-           />
-        )}
-      </AnimatePresence>
+      {showQuickRecharge && (
+         <QuickRechargeModal 
+           onClose={() => setShowQuickRecharge(false)} 
+           data={DESCO_DATA} 
+         />
+      )}
 
       {/* Floating Action Widget */}
       <style>{`
@@ -615,76 +599,64 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
       </div>
 
       {/* Popup */}
-      <AnimatePresence>
-        {isPopupOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="fixed right-[18px] bottom-[140px] w-[280px] sm:w-[300px] p-3 bg-gradient-to-br from-[#6a11cb] to-[#2575fc] rounded-[10px] border border-black/5 shadow-2xl z-[60]"
-          >
-             <h4 className="m-0 mb-1.5 text-base text-white font-extrabold">বিদ্যুৎ বিল রিচার্জ</h4>
-             
-             <div className="bg-white p-2.5 rounded-lg border border-black/5 mb-2.5">
-                <p className="m-0 mb-2 p-0 text-[#333] text-[13px] leading-snug font-semibold">
-                  আপনার বিদ্যুৎ বিল দ্রুত ও সহজে রিচার্জ করুন — এখনই ekPay এ যেয়ে।
-                </p>
-                <strong className="block text-[#b32222] font-bold text-[13px] mt-1.5 mb-2">(নোট: অবশ্যই DESCO PREPAID সিলেক্ট করবেন।)</strong>
-                
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setIsDetailsOpen(!isDetailsOpen); }}
-                  className="w-full py-2 px-2.5 bg-[#fff7e6] rounded-md border border-black/10 font-bold text-left text-[13px] flex items-center justify-between gap-2 text-slate-800"
-                >
-                  <span>{isDetailsOpen ? 'বিস্তারিত লুকান' : 'বিস্তারিত দেখুন'}</span>
-                  <ChevronRight size={16} className={`transition-transform duration-200 ${isDetailsOpen ? 'rotate-90' : ''}`} />
-                </button>
+      {isPopupOpen && (
+        <div
+          className="fixed right-[18px] bottom-[140px] w-[280px] sm:w-[300px] p-3 bg-gradient-to-br from-[#6a11cb] to-[#2575fc] rounded-[10px] border border-black/5 shadow-2xl z-[60]"
+        >
+           <h4 className="m-0 mb-1.5 text-base text-white font-extrabold">বিদ্যুৎ বিল রিচার্জ</h4>
+           
+           <div className="bg-white p-2.5 rounded-lg border border-black/5 mb-2.5">
+              <p className="m-0 mb-2 p-0 text-[#333] text-[13px] leading-snug font-semibold">
+                আপনার বিদ্যুৎ বিল দ্রুত ও সহজে রিচার্জ করুন — এখনই ekPay এ যেয়ে।
+              </p>
+              <strong className="block text-[#b32222] font-bold text-[13px] mt-1.5 mb-2">(নোট: অবশ্যই DESCO PREPAID সিলেক্ট করবেন।)</strong>
+              
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsDetailsOpen(!isDetailsOpen); }}
+                className="w-full py-2 px-2.5 bg-[#fff7e6] rounded-md border border-black/10 font-bold text-left text-[13px] flex items-center justify-between gap-2 text-slate-800"
+              >
+                <span>{isDetailsOpen ? 'বিস্তারিত লুকান' : 'বিস্তারিত দেখুন'}</span>
+                <ChevronRight size={16} className={`transition-transform duration-200 ${isDetailsOpen ? 'rotate-90' : ''}`} />
+              </button>
 
-                <AnimatePresence>
-                  {isDetailsOpen && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                       <div className="bg-[#fff7e6] mt-1.5 p-2 rounded-md border border-black/5 text-xs font-semibold text-[#111] leading-relaxed">
-                          সেবা প্রদানকারী প্রতিষ্ঠানের নাম (DESCO PREPAID) সিলেক্ট করতে হবে। এরপর সঠিকভাবে অ্যাকাউন্ট নম্বর, রিচার্জের পরিমাণ, মোবাইল নম্বর দিতে হবে। তারপর প্রদানকারীর তথ্য দিতে হবে। এরপর মোবাইল ব্যাংকিং সিলেক্ট করে বিকাশ / নগদ / উপায় / রকেট এর মাধ্যমে পেমেন্ট সম্পূর্ণ করতে হবে।
-                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-             </div>
+              {isDetailsOpen && (
+                <div className="overflow-hidden">
+                   <div className="bg-[#fff7e6] mt-1.5 p-2 rounded-md border border-black/5 text-xs font-semibold text-[#111] leading-relaxed">
+                      সেবা প্রদানকারী প্রতিষ্ঠানের নাম (DESCO PREPAID) সিলেক্ট করতে হবে। এরপর সঠিকভাবে অ্যাকাউন্ট নম্বর, রিচার্জের পরিমাণ, মোবাইল নম্বর দিতে হবে। তারপর প্রদানকারীর তথ্য দিতে হবে। এরপর মোবাইল ব্যাংকিং সিলেক্ট করে বিকাশ / নগদ / উপায় / রকেট এর মাধ্যমে পেমেন্ট সম্পূর্ণ করতে হবে।
+                   </div>
+                </div>
+              )}
+           </div>
 
-             <div className="flex flex-col gap-2">
-                <button 
-                  onClick={() => {
-                     setIsPopupOpen(false);
-                     setShowQuickRecharge(true);
-                  }}
-                  className="w-full py-2 px-2.5 rounded-lg bg-gradient-to-r from-[#ff7373] to-[#ff3d3d] text-white font-bold text-[13px] border-none shadow-sm hover:opacity-90 active:scale-95 transition-all"
-                >
-                  এখনি রিচার্জ করুন
-                </button>
+           <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => {
+                   setIsPopupOpen(false);
+                   setShowQuickRecharge(true);
+                }}
+                className="w-full py-2 px-2.5 rounded-lg bg-gradient-to-r from-[#ff7373] to-[#ff3d3d] text-white font-bold text-[13px] border-none shadow-sm hover:opacity-90 active:scale-95 transition-all"
+              >
+                এখনি রিচার্জ করুন
+              </button>
 
-                <a 
-                  href={BLOG_LINK}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full py-2 px-2.5 rounded-lg bg-white text-[#222] font-bold text-[13px] border border-black/5 shadow-sm text-center no-underline hover:bg-gray-50 active:scale-95 transition-all"
-                >
-                  মোবাইল ব্যাংকিং/অ্যাপস এর মাধ্যমে
-                </a>
+              <a 
+                href={BLOG_LINK}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2 px-2.5 rounded-lg bg-white text-[#222] font-bold text-[13px] border border-black/5 shadow-sm text-center no-underline hover:bg-gray-50 active:scale-95 transition-all"
+              >
+                মোবাইল ব্যাংকিং/অ্যাপস এর মাধ্যমে
+              </a>
 
-                <button 
-                  onClick={() => setIsPopupOpen(false)}
-                  className="w-full py-2 px-2.5 rounded-lg bg-white text-[#444] font-bold text-[13px] border border-black/10 shadow-sm hover:bg-gray-50 active:scale-95 transition-all"
-                >
-                   বাতিল করুন
-                </button>
-             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <button 
+                onClick={() => setIsPopupOpen(false)}
+                className="w-full py-2 px-2.5 rounded-lg bg-white text-[#444] font-bold text-[13px] border border-black/10 shadow-sm hover:bg-gray-50 active:scale-95 transition-all"
+              >
+                 বাতিল করুন
+              </button>
+           </div>
+        </div>
+      )}
 
     </div>
   );

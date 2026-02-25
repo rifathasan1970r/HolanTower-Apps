@@ -432,50 +432,42 @@ const App: React.FC = () => {
 
 
       {/* Exit Confirmation Dialog */}
-      <AnimatePresence>
-        {showExitDialog && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowExitDialog(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-xs bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden"
-            >
-              <div className="p-6 text-center">
-                <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/20 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertTriangle size={32} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{t.exitTitle}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                  {t.exitMessage}
-                </p>
+      {showExitDialog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div
+            onClick={() => setShowExitDialog(false)}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+          />
+          <div
+            className="relative w-full max-w-xs bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden"
+          >
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/20 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle size={32} />
               </div>
-              <div className="flex border-t border-slate-100 dark:border-slate-700">
-                <button
-                  onClick={() => setShowExitDialog(false)}
-                  className="flex-1 py-4 text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border-r border-slate-100 dark:border-slate-700"
-                >
-                  {t.exitCancel}
-                </button>
-                <button
-                  onClick={handleExitApp}
-                  className="flex-1 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-colors flex items-center justify-center gap-2"
-                >
-                  <LogOut size={16} />
-                  {t.exitConfirm}
-                </button>
-              </div>
-            </motion.div>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{t.exitTitle}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                {t.exitMessage}
+              </p>
+            </div>
+            <div className="flex border-t border-slate-100 dark:border-slate-700">
+              <button
+                onClick={() => setShowExitDialog(false)}
+                className="flex-1 py-4 text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border-r border-slate-100 dark:border-slate-700"
+              >
+                {t.exitCancel}
+              </button>
+              <button
+                onClick={handleExitApp}
+                className="flex-1 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-colors flex items-center justify-center gap-2"
+              >
+                <LogOut size={16} />
+                {t.exitConfirm}
+              </button>
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
 
     {/* Gemini Assistant - Only visible on HOME view */}
