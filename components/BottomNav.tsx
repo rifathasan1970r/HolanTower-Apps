@@ -67,9 +67,10 @@ const NavButton = React.memo(({ item, isActive, onNavigate }: NavButtonProps) =>
             {/* Active Soft Highlight */}
             {isActive && (
               <motion.div
-                layoutId="nav-pill"
                 className="absolute inset-0 bg-purple-50 dark:bg-slate-800 rounded-xl -z-10"
-                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.2 }}
               />
             )}
             
@@ -100,8 +101,10 @@ const NavButton = React.memo(({ item, isActive, onNavigate }: NavButtonProps) =>
           {/* Active Indicator Line */}
           {isActive && (
              <motion.div 
-               layoutId="nav-line"
                className="absolute -bottom-2 w-8 h-1 bg-[#4C1D95] dark:bg-purple-500 rounded-t-full shadow-[0_-2px_6px_rgba(76,29,149,0.3)]"
+               initial={{ opacity: 0, width: 0 }}
+               animate={{ opacity: 1, width: 32 }}
+               transition={{ duration: 0.2 }}
              />
           )}
         </motion.div>

@@ -393,9 +393,9 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                 const isMain = item.flat === 'MAIN';
                 return (
                   <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
                     key={idx} 
                     className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-slate-100 dark:border-slate-700 relative overflow-hidden group"
                   >

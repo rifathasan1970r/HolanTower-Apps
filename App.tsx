@@ -103,68 +103,45 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // History Initialization - Runs only once
-  useEffect(() => {
-    if (!window.history.state || window.history.state.view === undefined) {
-      window.history.replaceState({ view: 'BASE' }, '');
-      window.history.pushState({ view: 'HOME', unit: null, summary: false }, '');
-    }
-  }, []);
-
-  // Advanced Back Navigation Support
+  // Simple Back Navigation Support
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
-      const state = event.state;
-      
-      if (state) {
-        if (state.view === 'BASE') {
-          // We hit the bottom of our app history
-          setShowExitDialog(true);
-          // Push the current view back so we stay in the app
-          window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
-        } else if (state.view) {
-          // Navigate to the view stored in history
-          setCurrentView(state.view);
-          setSelectedUnit(state.unit !== undefined ? state.unit : null);
-          setShowSummaryList(state.summary !== undefined ? !!state.summary : false);
+      // If state exists, use it. Otherwise, if we are at root, maybe show exit dialog.
+      if (event.state && event.state.view) {
+        setCurrentView(event.state.view);
+        setSelectedUnit(event.state.unit || null);
+        setShowSummaryList(event.state.summary || false);
+      } else {
+        // Fallback for when history state is empty (e.g. initial load or external nav)
+        // If we are not on HOME, go HOME. If on HOME, show exit dialog.
+        if (currentView !== 'HOME') {
+           setCurrentView('HOME');
+        } else {
+           setShowExitDialog(true);
         }
       }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [currentView, selectedUnit, showSummaryList]);
+  }, [currentView]);
 
-  // Scroll to top on view or unit change
+  // Sync state with history - SIMPLIFIED
+  // We only push state when changing views, not on every render or minor update
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [currentView, selectedUnit, showSummaryList]);
-
-  // Sync manual navigation with History API
-  useEffect(() => {
+    // Debounce or check if state actually needs updating to avoid loops
     const state = window.history.state;
-    if (!state || state.view === 'BASE') return;
-
-    const viewChanged = state.view !== currentView;
-    const summaryChanged = state.summary !== showSummaryList;
-    const unitChanged = state.unit !== selectedUnit;
-
-    // Only push/replace state if something actually changed
-    if (viewChanged || summaryChanged || unitChanged) {
-      // Rule: When switching/sliding between units, DO NOT create new history entries.
-      // If we are already in a unit and we change to another unit, use replaceState.
-      const isSlidingUnits = !viewChanged && !summaryChanged && unitChanged && state.unit !== null && selectedUnit !== null;
-      
-      // Rule: Switching between Grid and Summary List -> replaceState (to keep "All Unit List" as one level)
-      const isSwitchingListType = !viewChanged && summaryChanged && !unitChanged && selectedUnit === null;
-
-      if (isSlidingUnits || isSwitchingListType) {
-        window.history.replaceState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
-      } else {
-        window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
-      }
+    const isSameState = state && state.view === currentView && state.unit === selectedUnit && state.summary === showSummaryList;
+    
+    if (!isSameState) {
+       window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
     }
   }, [currentView, selectedUnit, showSummaryList]);
+
+  // Scroll to top on view change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView]);
 
   const t = TRANSLATIONS['bn']; // Default to Bangla for now, can be dynamic if needed
 
@@ -383,7 +360,7 @@ const App: React.FC = () => {
 
   return (
     <>
-    <div className={`min-h-screen max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl transition-colors duration-300 ${hasNotice ? 'has-notice' : ''}`}>
+    <div className={`min-h-screen pb-24 max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl transition-colors duration-300 ${hasNotice ? 'has-notice' : ''}`}>
       {/* Decorative Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[20%] bg-teal-200/20 dark:bg-teal-900/20 blur-[100px] rounded-full"></div>
@@ -432,10 +409,9 @@ const App: React.FC = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentView}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
           >
             {renderContent()}
           </motion.div>
@@ -493,8 +469,8 @@ const App: React.FC = () => {
     {/* Gemini Assistant - Only visible on HOME view */}
     <Assistant isVisible={currentView === 'HOME'} />
 
-    {/* Bottom Navigation Removed */}
-    {/* <BottomNav currentView={currentView} setView={setCurrentView} /> */}
+    {/* Bottom Navigation */}
+    <BottomNav currentView={currentView} setView={setCurrentView} />
     </>
   );
 };
