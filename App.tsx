@@ -427,17 +427,7 @@ const App: React.FC = () => {
         className="px-5 relative z-10"
         style={{ paddingTop: 'var(--header-height)' }}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentView}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25 }}
-          >
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
+        {renderContent()}
       </main>
 
 

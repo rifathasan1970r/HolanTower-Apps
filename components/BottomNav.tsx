@@ -66,18 +66,13 @@ const NavButton = React.memo(({ item, isActive, onNavigate }: NavButtonProps) =>
           <div className="relative p-1">
             {/* Active Soft Highlight */}
             {isActive && (
-              <motion.div
-                layoutId="nav-pill"
+              <div
                 className="absolute inset-0 bg-purple-50 dark:bg-slate-800 rounded-xl -z-10"
-                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
               />
             )}
             
             {/* Icon with Bounce Effect */}
-            <motion.div
-                animate={isActive ? { y: [0, -4, 0] } : { y: 0 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-            >
+            <div>
                 <item.icon 
                 size={24} 
                 strokeWidth={isActive ? 2.5 : 2} 
@@ -87,7 +82,7 @@ const NavButton = React.memo(({ item, isActive, onNavigate }: NavButtonProps) =>
                     : 'text-slate-400 dark:text-slate-500 group-hover:text-[#4C1D95] dark:group-hover:text-purple-400'
                 }`} 
                 />
-            </motion.div>
+            </div>
           </div>
           
           {/* Label */}
@@ -99,8 +94,7 @@ const NavButton = React.memo(({ item, isActive, onNavigate }: NavButtonProps) =>
           
           {/* Active Indicator Line */}
           {isActive && (
-             <motion.div 
-               layoutId="nav-line"
+             <div 
                className="absolute -bottom-2 w-8 h-1 bg-[#4C1D95] dark:bg-purple-500 rounded-t-full shadow-[0_-2px_6px_rgba(76,29,149,0.3)]"
              />
           )}
