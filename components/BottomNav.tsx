@@ -6,7 +6,6 @@ import { ViewState } from '../types';
 interface BottomNavProps {
   currentView: ViewState;
   setView: (view: ViewState) => void;
-  lang?: 'bn' | 'en';
 }
 
 const BottomNav: React.FC<BottomNavProps> = React.memo(({ currentView, setView }) => {
