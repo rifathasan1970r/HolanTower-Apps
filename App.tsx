@@ -381,7 +381,7 @@ const App: React.FC = () => {
 
   return (
     <>
-    <div className={`min-h-screen pb-24 max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl transition-colors duration-300 ${hasNotice ? 'has-notice' : ''}`}>
+    <div className={`min-h-screen max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl transition-colors duration-300 ${hasNotice ? 'has-notice' : ''}`}>
       {/* Decorative Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[20%] bg-teal-200/20 dark:bg-teal-900/20 blur-[100px] rounded-full"></div>
@@ -491,8 +491,8 @@ const App: React.FC = () => {
     {/* Gemini Assistant - Only visible on HOME view */}
     <Assistant isVisible={currentView === 'HOME'} />
 
-    {/* Bottom Navigation */}
-    <BottomNav currentView={currentView} setView={setCurrentView} />
+    {/* Bottom Navigation Removed */}
+    {/* <BottomNav currentView={currentView} setView={setCurrentView} /> */}
     </>
   );
 };
