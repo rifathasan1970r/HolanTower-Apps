@@ -127,15 +127,30 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [currentView]);
 
-  // Sync state with history - SIMPLIFIED
-  // We only push state when changing views, not on every render or minor update
+  // Sync state with history
   useEffect(() => {
-    // Debounce or check if state actually needs updating to avoid loops
     const state = window.history.state;
-    const isSameState = state && state.view === currentView && state.unit === selectedUnit && state.summary === showSummaryList;
-    
-    if (!isSameState) {
-       window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+    // If no state (e.g. external load), we rely on the initialization effect.
+    if (!state) return;
+
+    const viewChanged = state.view !== currentView;
+    const summaryChanged = state.summary !== showSummaryList;
+    const unitChanged = state.unit !== selectedUnit;
+
+    // Only act if something actually changed
+    if (viewChanged || summaryChanged || unitChanged) {
+      // Rule: When switching/sliding between units, DO NOT create new history entries.
+      // If we are already in a unit (state.unit !== null) and moving to another unit (selectedUnit !== null), use replaceState.
+      const isSlidingUnits = !viewChanged && unitChanged && state.unit !== null && selectedUnit !== null;
+      
+      // Rule: Switching between Grid and Summary List -> replaceState (to keep "All Unit List" as one level)
+      const isSwitchingListType = !viewChanged && summaryChanged;
+
+      if (isSlidingUnits || isSwitchingListType) {
+        window.history.replaceState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+      } else {
+        window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+      }
     }
   }, [currentView, selectedUnit, showSummaryList]);
 
