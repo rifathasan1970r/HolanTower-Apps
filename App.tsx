@@ -140,8 +140,9 @@ const App: React.FC = () => {
     // Only act if something actually changed
     if (viewChanged || summaryChanged || unitChanged) {
       // Rule: When switching/sliding between units, DO NOT create new history entries.
-      // If we are already in a unit (state.unit !== null) and moving to another unit (selectedUnit !== null), use replaceState.
-      const isSlidingUnits = !viewChanged && unitChanged && state.unit !== null && selectedUnit !== null;
+      // If we are already in a unit (state.unit is truthy) and moving to another unit (selectedUnit is truthy), use replaceState.
+      // This ensures Back button goes to the List, not the previous unit.
+      const isSlidingUnits = !viewChanged && unitChanged && state.unit && selectedUnit;
       
       // Rule: Switching between Grid and Summary List -> replaceState (to keep "All Unit List" as one level)
       const isSwitchingListType = !viewChanged && summaryChanged;
