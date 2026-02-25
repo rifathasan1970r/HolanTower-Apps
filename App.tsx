@@ -103,14 +103,16 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Advanced Back Navigation Support
+  // History Initialization - Runs only once
   useEffect(() => {
-    // Initialize history state if not already set
     if (!window.history.state || window.history.state.view === undefined) {
       window.history.replaceState({ view: 'BASE' }, '');
       window.history.pushState({ view: 'HOME', unit: null, summary: false }, '');
     }
+  }, []);
 
+  // Advanced Back Navigation Support
+  useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
       const state = event.state;
       

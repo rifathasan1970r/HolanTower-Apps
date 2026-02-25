@@ -147,6 +147,27 @@ interface DescoViewProps {
   setView: (view: ViewState) => void;
 }
 
+// Memoized Styles Component
+const DescoStyles = React.memo(() => (
+  <style>{`
+    @keyframes redPulse {
+      0% { box-shadow:0 0 8px rgba(255,0,0,.6),0 0 16px rgba(255,0,0,.7),0 0 28px rgba(255,0,0,.8); }
+      50% { box-shadow:0 0 14px rgba(255,0,0,1),0 0 28px rgba(255,0,0,1),0 0 45px rgba(255,0,0,1); }
+      100% { box-shadow:0 0 8px rgba(255,0,0,.6),0 0 16px rgba(255,0,0,.7),0 0 28px rgba(255,0,0,.8); }
+    }
+    .eb-icon-custom {
+      animation: redPulse 3s ease-in-out infinite;
+    }
+    @keyframes iconPulsePremium {
+      0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+      50% { box-shadow: 0 0 12px rgba(255,255,255,0.4); }
+    }
+    .icon-premium-pulse {
+      animation: iconPulsePremium 3s ease-in-out infinite;
+    }
+  `}</style>
+));
+
 export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) => {
   // State
   const [searchTerm, setSearchTerm] = useState('');
@@ -585,23 +606,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
       </AnimatePresence>
 
       {/* Floating Action Widget */}
-      <style>{`
-        @keyframes redPulse {
-          0% { box-shadow:0 0 8px rgba(255,0,0,.6),0 0 16px rgba(255,0,0,.7),0 0 28px rgba(255,0,0,.8); }
-          50% { box-shadow:0 0 14px rgba(255,0,0,1),0 0 28px rgba(255,0,0,1),0 0 45px rgba(255,0,0,1); }
-          100% { box-shadow:0 0 8px rgba(255,0,0,.6),0 0 16px rgba(255,0,0,.7),0 0 28px rgba(255,0,0,.8); }
-        }
-        .eb-icon-custom {
-          animation: redPulse 3s ease-in-out infinite;
-        }
-        @keyframes iconPulsePremium {
-          0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
-          50% { box-shadow: 0 0 12px rgba(255,255,255,0.4); }
-        }
-        .icon-premium-pulse {
-          animation: iconPulsePremium 3s ease-in-out infinite;
-        }
-      `}</style>
+      <DescoStyles />
 
       {/* Floating Button */}
       <div 
