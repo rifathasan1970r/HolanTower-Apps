@@ -305,7 +305,6 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
         <div className="grid grid-cols-2 gap-3 mb-4">
             <button 
                 onClick={() => {
-                    window.history.pushState({ view: 'DESCO_INFO', unit: null, summary: false }, '');
                     setView('DESCO_INFO');
                 }}
                 className="bg-gradient-to-br from-red-500 to-rose-600 border border-red-400 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all text-left flex flex-col items-start justify-center gap-1 h-20 group active:scale-95 relative overflow-hidden"

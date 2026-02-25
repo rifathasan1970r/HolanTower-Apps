@@ -212,7 +212,7 @@ const App: React.FC = () => {
         return <DescoInfoView onBack={() => window.history.back()} />;
 
       case 'DESCO_RULES':
-        return <DescoRulesView />;
+        return <DescoRulesView onBack={() => window.history.back()} />;
 
       case 'ACCOUNTS':
         return <AccountsView onBack={() => window.history.back()} />;
