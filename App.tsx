@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset, Wrench, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PullToRefresh } from './components/PullToRefresh';
 
 import { APP_NAME, MENU_ITEMS, TRANSLATIONS, MENU_NOTICE_TEXT, DESCO_NOTICE_TEXT, SERVICE_CHARGE_NOTICE_TEXT, EMERGENCY_NOTICE_TEXT } from './constants';
 import { ViewState } from './types';
@@ -359,7 +360,7 @@ const App: React.FC = () => {
   const hasNotice = (currentView === 'HOME' || currentView === 'MENU' || currentView === 'DESCO' || currentView === 'SERVICE_CHARGE' || currentView === 'EMERGENCY');
 
   return (
-    <>
+    <PullToRefresh>
     <div className={`min-h-screen pb-24 max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl transition-colors duration-300 ${hasNotice ? 'has-notice' : ''}`}>
       {/* Decorative Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
@@ -471,7 +472,7 @@ const App: React.FC = () => {
 
     {/* Bottom Navigation */}
     <BottomNav currentView={currentView} setView={setCurrentView} />
-    </>
+    </PullToRefresh>
   );
 };
 
