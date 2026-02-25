@@ -107,14 +107,24 @@ const App: React.FC = () => {
   // Simple Back Navigation Support
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
-      // If state exists, use it. Otherwise, if we are at root, maybe show exit dialog.
-      if (event.state && event.state.view) {
-        setCurrentView(event.state.view);
-        setSelectedUnit(event.state.unit || null);
-        setShowSummaryList(event.state.summary || false);
+      const state = event.state;
+      
+      // Check for BASE state first - This handles the "Exit App" scenario
+      if (state && state.view === 'BASE') {
+          setShowExitDialog(true);
+          // Restore the current view in history so we don't actually leave the page
+          // This effectively "traps" the back button at the root
+          window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+          return;
+      }
+
+      // Normal navigation
+      if (state && state.view) {
+        setCurrentView(state.view);
+        setSelectedUnit(state.unit || null);
+        setShowSummaryList(state.summary || false);
       } else {
-        // Fallback for when history state is empty (e.g. initial load or external nav)
-        // If we are not on HOME, go HOME. If on HOME, show exit dialog.
+        // Fallback for when history state is empty or invalid
         if (currentView !== 'HOME') {
            setCurrentView('HOME');
         } else {
@@ -125,7 +135,7 @@ const App: React.FC = () => {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [currentView]);
+  }, [currentView, selectedUnit, showSummaryList]);
 
   // Sync state with history
   useEffect(() => {
