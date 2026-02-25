@@ -74,7 +74,7 @@ export const PullToRefresh: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (isHolding) {
       const startTime = Date.now();
-      const duration = 3000; // 3 seconds
+      const duration = 2000; // 2 seconds
 
       const interval = setInterval(() => {
         const elapsed = Date.now() - startTime;
