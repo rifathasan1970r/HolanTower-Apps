@@ -22,6 +22,7 @@ import { MaintenanceView } from './components/MaintenanceView';
 import { SettingsView } from './components/SettingsView';
 import { PrayerTimeView } from './components/PrayerTimeView';
 import { RechargeRulesView } from './components/RechargeRulesView';
+import { PullToRefresh } from './components/PullToRefresh';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -427,7 +428,9 @@ const App: React.FC = () => {
         className="px-5 relative z-10"
         style={{ paddingTop: 'var(--header-height)' }}
       >
-        {renderContent()}
+        <PullToRefresh>
+          {renderContent()}
+        </PullToRefresh>
       </main>
 
 
