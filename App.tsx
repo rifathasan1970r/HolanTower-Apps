@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset, Wrench, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PullToRefresh } from './components/PullToRefresh';
 
 import { APP_NAME, MENU_ITEMS, TRANSLATIONS, MENU_NOTICE_TEXT, DESCO_NOTICE_TEXT, SERVICE_CHARGE_NOTICE_TEXT, EMERGENCY_NOTICE_TEXT } from './constants';
 import { ViewState } from './types';
@@ -104,31 +103,28 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Simple Back Navigation Support
+  // Advanced Back Navigation Support
   useEffect(() => {
+    // Initialize history state if not already set
+    if (!window.history.state || window.history.state.view === undefined) {
+      window.history.replaceState({ view: 'BASE' }, '');
+      window.history.pushState({ view: 'HOME', unit: null, summary: false }, '');
+    }
+
     const handlePopState = (event: PopStateEvent) => {
       const state = event.state;
       
-      // Check for BASE state first - This handles the "Exit App" scenario
-      if (state && state.view === 'BASE') {
+      if (state) {
+        if (state.view === 'BASE') {
+          // We hit the bottom of our app history
           setShowExitDialog(true);
-          // Restore the current view in history so we don't actually leave the page
-          // This effectively "traps" the back button at the root
+          // Push the current view back so we stay in the app
           window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
-          return;
-      }
-
-      // Normal navigation
-      if (state && state.view) {
-        setCurrentView(state.view);
-        setSelectedUnit(state.unit || null);
-        setShowSummaryList(state.summary || false);
-      } else {
-        // Fallback for when history state is empty or invalid
-        if (currentView !== 'HOME') {
-           setCurrentView('HOME');
-        } else {
-           setShowExitDialog(true);
+        } else if (state.view) {
+          // Navigate to the view stored in history
+          setCurrentView(state.view);
+          setSelectedUnit(state.unit !== undefined ? state.unit : null);
+          setShowSummaryList(state.summary !== undefined ? !!state.summary : false);
         }
       }
     };
@@ -137,25 +133,28 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [currentView, selectedUnit, showSummaryList]);
 
-  // Sync state with history
+  // Scroll to top on view or unit change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView, selectedUnit, showSummaryList]);
+
+  // Sync manual navigation with History API
   useEffect(() => {
     const state = window.history.state;
-    // If no state (e.g. external load), we rely on the initialization effect.
-    if (!state) return;
+    if (!state || state.view === 'BASE') return;
 
     const viewChanged = state.view !== currentView;
     const summaryChanged = state.summary !== showSummaryList;
     const unitChanged = state.unit !== selectedUnit;
 
-    // Only act if something actually changed
+    // Only push/replace state if something actually changed
     if (viewChanged || summaryChanged || unitChanged) {
       // Rule: When switching/sliding between units, DO NOT create new history entries.
-      // If we are already in a unit (state.unit is truthy) and moving to another unit (selectedUnit is truthy), use replaceState.
-      // This ensures Back button goes to the List, not the previous unit.
-      const isSlidingUnits = !viewChanged && unitChanged && state.unit && selectedUnit;
+      // If we are already in a unit and we change to another unit, use replaceState.
+      const isSlidingUnits = !viewChanged && !summaryChanged && unitChanged && state.unit !== null && selectedUnit !== null;
       
       // Rule: Switching between Grid and Summary List -> replaceState (to keep "All Unit List" as one level)
-      const isSwitchingListType = !viewChanged && summaryChanged;
+      const isSwitchingListType = !viewChanged && summaryChanged && !unitChanged && selectedUnit === null;
 
       if (isSlidingUnits || isSwitchingListType) {
         window.history.replaceState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
@@ -164,11 +163,6 @@ const App: React.FC = () => {
       }
     }
   }, [currentView, selectedUnit, showSummaryList]);
-
-  // Scroll to top on view change
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [currentView]);
 
   const t = TRANSLATIONS['bn']; // Default to Bangla for now, can be dynamic if needed
 
@@ -212,7 +206,7 @@ const App: React.FC = () => {
         return <DescoInfoView onBack={() => window.history.back()} />;
 
       case 'DESCO_RULES':
-        return <DescoRulesView onBack={() => window.history.back()} />;
+        return <DescoRulesView />;
 
       case 'ACCOUNTS':
         return <AccountsView onBack={() => window.history.back()} />;
@@ -386,7 +380,7 @@ const App: React.FC = () => {
   const hasNotice = (currentView === 'HOME' || currentView === 'MENU' || currentView === 'DESCO' || currentView === 'SERVICE_CHARGE' || currentView === 'EMERGENCY');
 
   return (
-    <PullToRefresh>
+    <>
     <div className={`min-h-screen pb-24 max-w-md mx-auto bg-[#F8FAFC] dark:bg-slate-900 relative shadow-2xl transition-colors duration-300 ${hasNotice ? 'has-notice' : ''}`}>
       {/* Decorative Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
@@ -436,9 +430,10 @@ const App: React.FC = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentView}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
           >
             {renderContent()}
           </motion.div>
@@ -498,7 +493,7 @@ const App: React.FC = () => {
 
     {/* Bottom Navigation */}
     <BottomNav currentView={currentView} setView={setCurrentView} />
-    </PullToRefresh>
+    </>
   );
 };
 
