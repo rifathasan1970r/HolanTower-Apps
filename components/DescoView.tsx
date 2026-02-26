@@ -129,6 +129,9 @@ const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: type
           </div>
        </div>
 
+       {/* Credit */}
+       <div className="fixed right-[10px] bottom-[6px] text-[10px] font-[700] text-white/90 select-none pointer-events-none tracking-[0.2px] z-[101]">Design by A.H.M RIFAT HASAN</div>
+       
        {/* Toast */}
        {toastMsg && (
          <div className="fixed left-1/2 -translate-x-1/2 bottom-[22px] bg-black/85 text-white p-[8px_12px] rounded-[8px] text-[13px] z-[200] whitespace-nowrap">
@@ -448,9 +451,16 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                 </div>
             </div>
         </div>
+
+        {/* Footer Credit */}
+        <div className="py-4 text-center">
+            <p className="text-[10px] font-bold text-slate-400/60 tracking-widest select-none">
+                Design by A.H.M RIFAT HASAN
+            </p>
+        </div>
       </div>
 
-       {/* Confirmation Modal - Centered Style */}
+      {/* Confirmation Modal - Centered Style */}
       {confirmModalData && (
         <div 
             className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"

@@ -432,7 +432,7 @@ const App: React.FC = () => {
           {renderContent()}
           {currentView !== 'HOME' && (
             <div className="mt-12 mb-8 text-center">
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 tracking-widest">
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 tracking-widest uppercase">
                 Design By A.H.M RIFAT HASAN
               </p>
             </div>
