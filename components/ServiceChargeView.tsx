@@ -1307,112 +1307,112 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   // Month Detail Modal
   const monthDetailModal = selectedMonthStat && (
     <div className="fixed inset-0 z-[90] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedMonthStat(null)}>
-      <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
          {/* Decorative Background */}
          <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-50 dark:bg-blue-900/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
          
-         <div className="relative z-10 flex flex-col h-full">
+         <div className="relative z-10 flex flex-col h-full overflow-hidden">
             {/* Header */}
-            <div className="flex justify-between items-center mb-6 shrink-0">
+            <div className="flex justify-between items-center mb-3 shrink-0">
                 <div>
                     {detailViewType === 'SUMMARY' ? (
                         <>
-                            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{selectedMonthStat.month}</h3>
-                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{selectedYear} এর হিসাব</p>
+                            <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">{selectedMonthStat.month}</h3>
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{selectedYear} এর হিসাব</p>
                         </>
                     ) : (
                         <button 
                             onClick={() => setDetailViewType('SUMMARY')}
                             className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                         >
-                            <ArrowLeft size={20} />
-                            <span className="font-bold text-lg">{detailViewType === 'PAID_LIST' ? 'পরিশোধিত তালিকা' : 'বকেয়া তালিকা'}</span>
+                            <ArrowLeft size={18} />
+                            <span className="font-bold text-base">{detailViewType === 'PAID_LIST' ? 'পরিশোধিত তালিকা' : 'বকেয়া তালিকা'}</span>
                         </button>
                     )}
                 </div>
-                <button onClick={() => setSelectedMonthStat(null)} className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 p-2 rounded-full transition-colors">
-                    <X size={20} />
+                <button onClick={() => setSelectedMonthStat(null)} className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 p-1.5 rounded-full transition-colors">
+                    <X size={16} />
                 </button>
             </div>
 
             {detailViewType === 'SUMMARY' ? (
-                <div className="space-y-4 overflow-y-auto pr-1 custom-scrollbar">
+                <div className="space-y-3 overflow-y-auto pr-1 custom-scrollbar">
                     {/* Main Stats Grid */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm">
-                            <div className="bg-green-100 dark:bg-green-800 p-2 rounded-full text-green-600 dark:text-green-300 mb-2">
-                                <CheckCircle2 size={20} />
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
+                            <div className="bg-green-100 dark:bg-green-800 p-1.5 rounded-full text-green-600 dark:text-green-300 mb-1">
+                                <CheckCircle2 size={16} />
                             </div>
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{t.totalCollected}</span>
-                            <span className="text-lg font-black text-green-600 dark:text-green-400">৳ {selectedMonthStat.collected.toLocaleString()}</span>
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-0.5">{t.totalCollected}</span>
+                            <span className="text-base font-black text-green-600 dark:text-green-400">৳ {selectedMonthStat.collected.toLocaleString()}</span>
                         </div>
 
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm">
-                            <div className="bg-red-100 dark:bg-red-800 p-2 rounded-full text-red-600 dark:text-red-300 mb-2">
-                                <XCircle size={20} />
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
+                            <div className="bg-red-100 dark:bg-red-800 p-1.5 rounded-full text-red-600 dark:text-red-300 mb-1">
+                                <XCircle size={16} />
                             </div>
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{t.totalDue}</span>
-                            <span className="text-lg font-black text-red-600 dark:text-red-400">৳ {selectedMonthStat.due.toLocaleString()}</span>
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-0.5">{t.totalDue}</span>
+                            <span className="text-base font-black text-red-600 dark:text-red-400">৳ {selectedMonthStat.due.toLocaleString()}</span>
                         </div>
                     </div>
 
                     {/* Unit Counts */}
-                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
-                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-50 dark:border-slate-700">
-                            <span className="text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                                <Home size={16} className="text-indigo-500" />
+                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-50 dark:border-slate-700">
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                                <Home size={14} className="text-indigo-500" />
                                 {t.unit} সংখ্যা
                             </span>
-                            <span className="text-lg font-black text-slate-800 dark:text-white">{selectedMonthStat.totalUnits} টি</span>
+                            <span className="text-base font-black text-slate-800 dark:text-white">{selectedMonthStat.totalUnits} টি</span>
                         </div>
                         
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                             <button 
                                 onClick={() => setDetailViewType('PAID_LIST')}
-                                className="w-full flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-700/50 p-2 -mx-2 rounded-xl transition-colors"
+                                className="w-full flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-700/50 p-1.5 -mx-1.5 rounded-lg transition-colors"
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 font-bold text-xs">
-                                        <Check size={14} />
-                                    </div>
-                                    <span className="text-sm font-bold text-slate-600 dark:text-slate-300">পরিশোধ করেছে</span>
-                                </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-base font-bold text-green-600 dark:text-green-400">{selectedMonthStat.paidUnits.length} টি</span>
-                                    <ChevronRight size={16} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400" />
+                                    <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 font-bold text-[10px]">
+                                        <Check size={12} />
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">পরিশোধ করেছে</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-sm font-bold text-green-600 dark:text-green-400">{selectedMonthStat.paidUnits.length} টি</span>
+                                    <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400" />
                                 </div>
                             </button>
 
                             <button 
                                 onClick={() => setDetailViewType('DUE_LIST')}
-                                className="w-full flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-700/50 p-2 -mx-2 rounded-xl transition-colors"
+                                className="w-full flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-700/50 p-1.5 -mx-1.5 rounded-lg transition-colors"
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 font-bold text-xs">
-                                        <X size={14} />
-                                    </div>
-                                    <span className="text-sm font-bold text-slate-600 dark:text-slate-300">বাকি আছে</span>
-                                </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-base font-bold text-red-600 dark:text-red-400">{selectedMonthStat.dueUnits.length} টি</span>
-                                    <ChevronRight size={16} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400" />
+                                    <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 font-bold text-[10px]">
+                                        <X size={12} />
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">বাকি আছে</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-sm font-bold text-red-600 dark:text-red-400">{selectedMonthStat.dueUnits.length} টি</span>
+                                    <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400" />
                                 </div>
                             </button>
                         </div>
                     </div>
 
                     {/* One Line Status */}
-                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-200 dark:shadow-none">
-                        <div className="flex items-start gap-3">
-                            <div className="bg-white/20 p-2 rounded-lg shrink-0">
-                                <Info size={18} className="text-white" />
+                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-3 text-white shadow-md shadow-indigo-200 dark:shadow-none">
+                        <div className="flex items-start gap-2">
+                            <div className="bg-white/20 p-1.5 rounded-lg shrink-0">
+                                <Info size={14} className="text-white" />
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-xs font-medium text-indigo-100 leading-relaxed">
+                            <div className="space-y-0.5">
+                                <p className="text-[10px] font-medium text-indigo-100 leading-relaxed">
                                     এই মাসে <span className="font-bold text-white">{selectedMonthStat.totalUnits}</span> ইউনিটের মধ্যে <span className="font-bold text-white">{selectedMonthStat.paidUnits.length}টি</span> পরিশোধ করেছে।
                                 </p>
-                                <p className="text-xs font-medium text-indigo-100 leading-relaxed">
+                                <p className="text-[10px] font-medium text-indigo-100 leading-relaxed">
                                     এবং <span className="font-bold text-white">{selectedMonthStat.totalUnits}</span> ইউনিটের মধ্যে <span className="font-bold text-white">{selectedMonthStat.dueUnits.length}টি</span> বাকি আছে।
                                 </p>
                             </div>
@@ -1422,19 +1422,19 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             ) : (
                 // LIST VIEW (PAID or DUE)
                 <div className="flex-1 overflow-hidden flex flex-col">
-                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 mb-4 shrink-0">
-                        <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2">
+                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-2 mb-2 shrink-0">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2">
                             <span>ইউনিট</span>
                             <span>ফ্ল্যাট মালিক</span>
                         </div>
                     </div>
                     
-                    <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar space-y-2">
+                    <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar space-y-1.5">
                         {(detailViewType === 'PAID_LIST' ? selectedMonthStat.paidUnits : selectedMonthStat.dueUnits).map((unit: string, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/30 rounded-xl border border-slate-100 dark:border-slate-700">
-                                <div className="flex items-center gap-3">
+                            <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-slate-100 dark:border-slate-700">
+                                <div className="flex items-center gap-2">
                                     <span className={`
-                                        font-bold text-sm w-10 h-10 rounded-lg flex items-center justify-center
+                                        font-bold text-xs w-8 h-8 rounded-lg flex items-center justify-center
                                         ${detailViewType === 'PAID_LIST' 
                                             ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
                                             : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}
@@ -1442,25 +1442,25 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                         {unit}
                                     </span>
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
                                             {FLAT_OWNERS.find(f => f.flat === unit)?.name || 'Unknown'}
                                         </span>
-                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">
                                             {detailViewType === 'PAID_LIST' ? 'পরিশোধিত' : 'বকেয়া'}
                                         </span>
                                     </div>
                                 </div>
                                 {detailViewType === 'PAID_LIST' ? (
-                                    <CheckCircle2 size={18} className="text-green-500 dark:text-green-400" />
+                                    <CheckCircle2 size={14} className="text-green-500 dark:text-green-400" />
                                 ) : (
-                                    <XCircle size={18} className="text-red-500 dark:text-red-400" />
+                                    <XCircle size={14} className="text-red-500 dark:text-red-400" />
                                 )}
                             </div>
                         ))}
                         
                         {(detailViewType === 'PAID_LIST' ? selectedMonthStat.paidUnits : selectedMonthStat.dueUnits).length === 0 && (
-                            <div className="text-center py-10 text-slate-400 dark:text-slate-500">
-                                <p className="text-sm">কোনো ইউনিট পাওয়া যায়নি</p>
+                            <div className="text-center py-6 text-slate-400 dark:text-slate-500">
+                                <p className="text-xs">কোনো ইউনিট পাওয়া যায়নি</p>
                             </div>
                         )}
                     </div>
