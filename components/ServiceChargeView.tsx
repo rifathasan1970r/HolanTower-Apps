@@ -1896,12 +1896,23 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                         <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                         <input 
                                             type="text" 
-                                            defaultValue={phone}
-                                            onBlur={(e) => {
+                                            value={uInfo.phone || ''}
+                                            onChange={(e) => {
                                                 const val = e.target.value;
-                                                // Update local state to reflect change immediately without API call yet
                                                 const newInfo = { ...unitsInfo };
                                                 const key = `${unit}-${selectedYear}`;
+                                                // Ensure object exists
+                                                if (!newInfo[key]) {
+                                                    newInfo[key] = { 
+                                                        unit_text: unit, 
+                                                        year_num: selectedYear, 
+                                                        is_occupied: true, // Default
+                                                        note: '',
+                                                        phone: '',
+                                                        confirm_template: '',
+                                                        due_template: ''
+                                                    };
+                                                }
                                                 newInfo[key] = { ...newInfo[key], phone: val };
                                                 setUnitsInfo(newInfo);
                                             }}
@@ -1916,28 +1927,52 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Confirm Template</label>
                                         <textarea 
-                                            defaultValue={confirmTemplate}
-                                            onBlur={(e) => {
+                                            value={uInfo.confirm_template || ''}
+                                            onChange={(e) => {
                                                 const val = e.target.value;
                                                 const newInfo = { ...unitsInfo };
                                                 const key = `${unit}-${selectedYear}`;
+                                                if (!newInfo[key]) {
+                                                    newInfo[key] = { 
+                                                        unit_text: unit, 
+                                                        year_num: selectedYear, 
+                                                        is_occupied: true,
+                                                        note: '',
+                                                        phone: '',
+                                                        confirm_template: '',
+                                                        due_template: ''
+                                                    };
+                                                }
                                                 newInfo[key] = { ...newInfo[key], confirm_template: val };
                                                 setUnitsInfo(newInfo);
                                             }}
+                                            placeholder="Dear Owner, Payment received for Unit {unit}. Month: {month}. Amount: {amount}."
                                             className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 text-xs h-16"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Due Template</label>
                                         <textarea 
-                                            defaultValue={dueTemplate}
-                                            onBlur={(e) => {
+                                            value={uInfo.due_template || ''}
+                                            onChange={(e) => {
                                                 const val = e.target.value;
                                                 const newInfo = { ...unitsInfo };
                                                 const key = `${unit}-${selectedYear}`;
+                                                if (!newInfo[key]) {
+                                                    newInfo[key] = { 
+                                                        unit_text: unit, 
+                                                        year_num: selectedYear, 
+                                                        is_occupied: true,
+                                                        note: '',
+                                                        phone: '',
+                                                        confirm_template: '',
+                                                        due_template: ''
+                                                    };
+                                                }
                                                 newInfo[key] = { ...newInfo[key], due_template: val };
                                                 setUnitsInfo(newInfo);
                                             }}
+                                            placeholder="Dear Owner, Payment DUE for Unit {unit}. Month: {month}. Amount: {amount}. Total Due: {due_amount}."
                                             className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 text-xs h-16"
                                         />
                                     </div>
@@ -1950,28 +1985,55 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                             // Save Logic
                                             const key = `${unit}-${selectedYear}`;
                                             const info = unitsInfo[key] || {};
+                                            
+                                            // Optimistic UI feedback (optional, but good)
+                                            // We already updated local state via onChange.
+                                            
                                             try {
-                                                // We use upsert on units_info. 
-                                                // Note: We need to ensure we don't overwrite other fields if they are missing in local state.
-                                                // But unitsInfo should have them.
+                                                // Check if record exists
+                                                const { data: existing } = await supabase
+                                                    .from('units_info')
+                                                    .select('id')
+                                                    .eq('unit_text', unit)
+                                                    .eq('year_num', selectedYear)
+                                                    .maybeSingle();
+
+                                                let error;
+                                                if (existing) {
+                                                    // Update
+                                                    const { error: upError } = await supabase
+                                                        .from('units_info')
+                                                        .update({
+                                                            phone: info.phone,
+                                                            confirm_template: info.confirm_template,
+                                                            due_template: info.due_template,
+                                                            // We don't update is_occupied/note here to avoid overwriting if they weren't loaded correctly or changed elsewhere?
+                                                            // Actually, we should probably preserve them if we have them.
+                                                            // But `info` comes from `unitsInfo` which should be complete.
+                                                        })
+                                                        .eq('id', existing.id);
+                                                    error = upError;
+                                                } else {
+                                                    // Insert
+                                                    const { error: inError } = await supabase
+                                                        .from('units_info')
+                                                        .insert({
+                                                            unit_text: unit,
+                                                            year_num: selectedYear,
+                                                            phone: info.phone,
+                                                            confirm_template: info.confirm_template,
+                                                            due_template: info.due_template,
+                                                            is_occupied: info.is_occupied !== undefined ? info.is_occupied : (unit.slice(-1) !== 'B'),
+                                                            note: info.note || ''
+                                                        });
+                                                    error = inError;
+                                                }
                                                 
-                                                // If we are using the composite key approach for local state, we need to map it back to DB columns.
-                                                // DB has: unit_text, year_num, phone, confirm_template, due_template
-                                                
-                                                await supabase.from('units_info').upsert({
-                                                    unit_text: unit,
-                                                    year_num: selectedYear,
-                                                    phone: info.phone,
-                                                    confirm_template: info.confirm_template,
-                                                    due_template: info.due_template,
-                                                    is_occupied: info.is_occupied, // Preserve existing
-                                                    note: info.note // Preserve existing
-                                                }, { onConflict: 'unit_text, year_num' }); // Assuming composite constraint or just unit_text if that's the PK
-                                                
-                                                alert("Saved!");
-                                            } catch (e) {
-                                                console.error(e);
-                                                alert("Error saving");
+                                                if (error) throw error;
+                                                alert("Saved successfully!");
+                                            } catch (e: any) {
+                                                console.error("Save error:", e);
+                                                alert(`Error saving: ${e.message || 'Unknown error'}`);
                                             }
                                         }}
                                         className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors"
