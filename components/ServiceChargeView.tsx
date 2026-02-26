@@ -515,6 +515,79 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     return stats;
   }, [selectedYear, dbData, unitsInfo, lang]);
 
+  // New: Unit Wise Summary for Monthly Summary View
+  const unitWiseSummary = useMemo(() => {
+    return ALL_UNITS.map(unit => {
+        const owner = FLAT_OWNERS.find(f => f.flat === unit);
+        // We need to call getUnitData inside here, but getUnitData depends on state.
+        // Since getUnitData is defined in the component scope, we can use it.
+        // However, getUnitData is not memoized, so it might be re-created on every render.
+        // But since we are inside the component, it's fine.
+        // Wait, getUnitData uses selectedYear and dbData which are dependencies of this useMemo.
+        
+        // Let's copy the logic of getUnitData or just call it if it's stable enough.
+        // Actually, getUnitData is defined in the component body, so it's accessible.
+        // But to be safe and avoid stale closures if getUnitData changes (it doesn't seem to depend on anything that isn't in the dependency array of this useMemo),
+        // we should be fine.
+        
+        // Re-implementing getUnitData logic here to be safe and efficient inside the loop
+        const now = new Date();
+        const currentRealYear = now.getFullYear();
+        const currentRealMonthIdx = now.getMonth();
+
+        const records = MONTHS_LOGIC.map((month, index) => {
+            const paymentRecord = dbData.find(
+                d => d.unit_text === unit && d.month_name === month && d.year_num === selectedYear
+            );
+            
+            // Display month string
+            // const displayMonth = t.months[index]; // Not needed for calculation
+
+            if (paymentRecord) {
+                let recStatus = 'DUE';
+                if (paymentRecord.amount > 0) recStatus = 'PAID';
+                else if (paymentRecord.amount === 0 && paymentRecord.due === 0) recStatus = 'UPCOMING';
+
+                return {
+                    date: paymentRecord.paid_date || '-',
+                    amount: paymentRecord.amount,
+                    due: paymentRecord.due,
+                    status: recStatus
+                };
+            }
+
+            const defaultAmount = (unit.slice(-1) !== 'B') ? 2000 : 500;
+            const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && index > currentRealMonthIdx);
+            
+            if (isFuture) {
+                return { date: '-', amount: 0, due: 0, status: 'UPCOMING' };
+            } else {
+                return { date: '-', amount: 0, due: defaultAmount, status: 'DUE' };
+            }
+        });
+        
+        // Monthly Charge: 2000 for A/C, 500 for B
+        const monthlyCharge = (unit.slice(-1) !== 'B') ? 2000 : 500;
+        
+        // Total Due for the year
+        const totalDue = records.reduce((sum, r) => sum + r.due, 0);
+        
+        // Last Payment Date (Latest PAID record)
+        const paidRecords = records.filter(r => r.status === 'PAID');
+        const lastPaidRecord = paidRecords.length > 0 ? paidRecords[paidRecords.length - 1] : null;
+        const lastPaymentDate = lastPaidRecord ? lastPaidRecord.date : '-';
+        
+        return {
+            unit,
+            ownerName: owner?.name || 'Unknown',
+            monthlyCharge,
+            totalDue,
+            lastPaymentDate,
+            paymentMethod: 'Cash' // Hardcoded as per request
+        };
+    });
+  }, [selectedYear, dbData, unitsInfo, lang]);
+
   const [selectedMonthStat, setSelectedMonthStat] = useState<any>(null);
   const [detailViewType, setDetailViewType] = useState<'SUMMARY' | 'PAID_LIST' | 'DUE_LIST'>('SUMMARY');
 
@@ -1307,7 +1380,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   // Month Detail Modal
   const monthDetailModal = selectedMonthStat && (
     <div className="fixed inset-0 z-[90] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedMonthStat(null)}>
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
+      <div className={`bg-white dark:bg-slate-800 rounded-2xl p-4 w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden flex flex-col ${detailViewType === 'SUMMARY' ? 'max-h-[85vh]' : 'max-h-[50vh]'}`} onClick={e => e.stopPropagation()}>
          {/* Decorative Background */}
          <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-50 dark:bg-blue-900/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
@@ -1720,6 +1793,65 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                             );
                         })}
                     </div>
+                </div>
+            </div>
+
+            {/* Unit Wise Summary List */}
+            <div>
+                <div className="flex items-center justify-between mb-4 px-1">
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                        <ListFilter size={16} className="text-indigo-500" />
+                        ইউনিট ভিত্তিক সামারি
+                    </h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {unitWiseSummary.map((item, idx) => (
+                        <div key={idx} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-3 border-b border-slate-50 dark:border-slate-700 pb-2">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-0.5 rounded-md">
+                                            {item.unit}
+                                        </span>
+                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                            {item.ownerName}
+                                        </span>
+                                    </div>
+                                </div>
+                                {item.totalDue > 0 ? (
+                                    <span className="text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">
+                                        বকেয়া
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] font-bold text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
+                                        পরিশোধিত
+                                    </span>
+                                )}
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-500 dark:text-slate-400">মাসিক চার্জ</span>
+                                    <span className="font-bold text-slate-700 dark:text-slate-300">৳ {item.monthlyCharge.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-500 dark:text-slate-400">মোট বকেয়া</span>
+                                    <span className={`font-bold ${item.totalDue > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                        ৳ {item.totalDue.toLocaleString()}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-500 dark:text-slate-400">সর্বশেষ পেমেন্ট</span>
+                                    <span className="font-bold text-slate-700 dark:text-slate-300">{item.lastPaymentDate}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-slate-500 dark:text-slate-400">পেমেন্ট মেথড</span>
+                                    <span className="font-bold text-slate-700 dark:text-slate-300">{item.paymentMethod}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
           </div>
