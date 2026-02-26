@@ -138,6 +138,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
           .from('units_info')
           .select('*');
         
+        // Load local WhatsApp data backup
+        let localWhatsApp: Record<string, any> = {};
+        try {
+            const localStr = localStorage.getItem('whatsapp_data_local');
+            if (localStr) localWhatsApp = JSON.parse(localStr);
+        } catch (e) {
+            console.error("Error parsing local WhatsApp data", e);
+        }
+
         if (uError) {
             console.warn("units_info table not found or error, using localStorage fallback.");
             const localData = localStorage.getItem('units_info_fallback');
@@ -153,13 +162,20 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             uData.forEach((u: any) => {
                 // Use year-specific key if available, otherwise fallback to unit_text
                 const key = u.year_num ? `${u.unit_text}-${u.year_num}` : u.unit_text;
+                
+                // Hybrid Merge: DB takes precedence if value exists, otherwise fallback to local backup
+                // This handles the case where DB columns (phone, templates) might be missing
+                const phone = u.phone || localWhatsApp[key]?.phone || '';
+                const confirm_template = u.confirm_template || localWhatsApp[key]?.confirm_template || '';
+                const due_template = u.due_template || localWhatsApp[key]?.due_template || '';
+
                 mapping[key] = { 
                     unit_text: u.unit_text,
                     is_occupied: u.is_occupied, 
                     note: u.note || '',
-                    phone: u.phone || '',
-                    confirm_template: u.confirm_template || '',
-                    due_template: u.due_template || '',
+                    phone: phone,
+                    confirm_template: confirm_template,
+                    due_template: due_template,
                     year_num: u.year_num
                 };
             });
@@ -1986,8 +2002,19 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                             const key = `${unit}-${selectedYear}`;
                                             const info = unitsInfo[key] || {};
                                             
-                                            // Optimistic UI feedback (optional, but good)
-                                            // We already updated local state via onChange.
+                                            // 1. Save to LocalStorage Backup immediately
+                                            try {
+                                                const localStr = localStorage.getItem('whatsapp_data_local');
+                                                const localData = localStr ? JSON.parse(localStr) : {};
+                                                localData[key] = {
+                                                    phone: info.phone,
+                                                    confirm_template: info.confirm_template,
+                                                    due_template: info.due_template
+                                                };
+                                                localStorage.setItem('whatsapp_data_local', JSON.stringify(localData));
+                                            } catch (e) {
+                                                console.error("Local backup failed", e);
+                                            }
                                             
                                             try {
                                                 // Check if record exists
@@ -2007,14 +2034,12 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                             phone: info.phone,
                                                             confirm_template: info.confirm_template,
                                                             due_template: info.due_template,
-                                                            // We don't update is_occupied/note here to avoid overwriting if they weren't loaded correctly or changed elsewhere?
-                                                            // Actually, we should probably preserve them if we have them.
-                                                            // But `info` comes from `unitsInfo` which should be complete.
                                                         })
                                                         .eq('id', existing.id);
                                                     error = upError;
                                                 } else {
                                                     // Insert
+                                                    // Removing 'note' field to prevent "column not found" error if schema is missing it
                                                     const { error: inError } = await supabase
                                                         .from('units_info')
                                                         .insert({
@@ -2023,8 +2048,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                             phone: info.phone,
                                                             confirm_template: info.confirm_template,
                                                             due_template: info.due_template,
-                                                            is_occupied: info.is_occupied !== undefined ? info.is_occupied : (unit.slice(-1) !== 'B'),
-                                                            note: info.note || ''
+                                                            is_occupied: info.is_occupied !== undefined ? info.is_occupied : (unit.slice(-1) !== 'B')
                                                         });
                                                     error = inError;
                                                 }
@@ -2033,7 +2057,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                 alert("Saved successfully!");
                                             } catch (e: any) {
                                                 console.error("Save error:", e);
-                                                alert(`Error saving: ${e.message || 'Unknown error'}`);
+                                                // Show a more helpful message if it's a DB error, but clarify data is safe locally
+                                                alert(`Saved locally! (Database Warning: ${e.message || 'Check connection'})`);
                                             }
                                         }}
                                         className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors"
