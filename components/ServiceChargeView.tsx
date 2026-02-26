@@ -1987,8 +1987,18 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                             const ph = info.phone;
                                             
                                             if (!ph) {
-                                                alert("Please save a phone number first.");
+                                                alert("Please enter a phone number first.");
                                                 return;
+                                            }
+
+                                            // Sanitization Logic
+                                            let cleanPh = ph.replace(/\D/g, ''); // Remove non-digits
+                                            if (cleanPh.startsWith('880')) {
+                                                // Already has country code
+                                            } else if (cleanPh.startsWith('0')) {
+                                                cleanPh = '88' + cleanPh;
+                                            } else {
+                                                cleanPh = '880' + cleanPh;
                                             }
 
                                             const tmpl = status === 'PAID' 
@@ -2001,7 +2011,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                 .replace(/{amount}/g, amount.toString())
                                                 .replace(/{due_amount}/g, dueAmount.toString());
 
-                                            const url = `https://wa.me/88${ph}?text=${encodeURIComponent(msg)}`;
+                                            const url = `https://wa.me/${cleanPh}?text=${encodeURIComponent(msg)}`;
                                             
                                             // Log
                                             const newCount = (log?.sent_count || 0) + 1;
