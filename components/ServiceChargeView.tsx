@@ -590,13 +590,182 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   const [selectedMonthStat, setSelectedMonthStat] = useState<any>(null);
   const [detailViewType, setDetailViewType] = useState<'SUMMARY' | 'PAID_LIST' | 'DUE_LIST'>('SUMMARY');
+  const [selectedUnitSummary, setSelectedUnitSummary] = useState<any>(null);
+  const [showYearlySummary, setShowYearlySummary] = useState<boolean>(false);
 
 
   const grandTotalCollected = allUnitsSummary.reduce((acc, curr) => acc + curr.collected, 0);
   const grandTotalDue = allUnitsSummary.reduce((acc, curr) => acc + curr.due, 0);
 
+  // Calculate highest due month
+  const highestDueMonthStat = useMemo(() => {
+      return monthlyStats.reduce((max, current) => (current.due > max.due ? current : max), monthlyStats[0]);
+  }, [monthlyStats]);
+
+  // Aging Report Stats
+  const agingStats = useMemo(() => {
+    let oneMonth = 0;
+    let twoMonths = 0;
+    let threePlusMonths = 0;
+    let totalAccumulatedDue = 0;
+
+    ALL_UNITS.forEach(unit => {
+        // We need to get unit data. Since getUnitData is not memoized but available in scope, 
+        // we'll duplicate the logic slightly to ensure correctness inside this useMemo 
+        // or rely on the fact that we can call it.
+        // Calling getUnitData(unit) is safe here as it uses state variables which are dependencies.
+        const records = getUnitData(unit);
+        
+        // Only count actual DUE records (past/current months)
+        const dueRecords = records.filter(r => r.status === 'DUE');
+        const count = dueRecords.length;
+        
+        if (count === 1) oneMonth++;
+        else if (count === 2) twoMonths++;
+        else if (count >= 3) threePlusMonths++;
+
+        totalAccumulatedDue += dueRecords.reduce((sum, r) => sum + r.due, 0);
+    });
+
+    return { oneMonth, twoMonths, threePlusMonths, totalAccumulatedDue };
+  }, [selectedYear, dbData, unitsInfo, lang]);
+
   const filteredUnitsData = allUnitsSummary.filter(data => 
     data.unit.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Yearly Summary Modal
+  const yearlySummaryModal = showYearlySummary && (
+    <div className="fixed inset-0 z-[90] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowYearlySummary(false)}>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden" onClick={e => e.stopPropagation()}>
+         {/* Decorative Background */}
+         <div className="absolute -top-20 -right-20 w-64 h-64 bg-emerald-50 dark:bg-emerald-900/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+         <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-teal-50 dark:bg-teal-900/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+         
+         <div className="relative z-10">
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-lg text-emerald-600 dark:text-emerald-400">
+                        <PieChart size={20} />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-white">বাৎসরিক সামারি</h3>
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{selectedYear} এর হিসাব</p>
+                    </div>
+                </div>
+                <button onClick={() => setShowYearlySummary(false)} className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 p-1.5 rounded-full transition-colors">
+                    <X size={18} />
+                </button>
+            </div>
+
+            <div className="space-y-3">
+                {/* Total Collected */}
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/50 rounded-xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-green-100 dark:bg-green-800 p-2 rounded-full text-green-600 dark:text-green-300">
+                            <CheckCircle2 size={18} />
+                        </div>
+                        <span className="text-sm font-bold text-slate-600 dark:text-slate-300">বছরে মোট আদায়</span>
+                    </div>
+                    <span className="text-lg font-black text-green-600 dark:text-green-400">৳ {grandTotalCollected.toLocaleString()}</span>
+                </div>
+
+                {/* Total Due */}
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 rounded-xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-red-100 dark:bg-red-800 p-2 rounded-full text-red-600 dark:text-red-300">
+                            <XCircle size={18} />
+                        </div>
+                        <span className="text-sm font-bold text-slate-600 dark:text-slate-300">বছরে মোট বকেয়া</span>
+                    </div>
+                    <span className="text-lg font-black text-red-600 dark:text-red-400">৳ {grandTotalDue.toLocaleString()}</span>
+                </div>
+
+                {/* Highest Due Month */}
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/50 rounded-xl p-4">
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2">
+                            <TrendingUp size={16} className="text-orange-500" />
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">সবচেয়ে বেশি বকেয়া</span>
+                        </div>
+                        <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/40 px-2 py-0.5 rounded-md">
+                            {highestDueMonthStat?.month}
+                        </span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">এই মাসে বকেয়া ছিল</span>
+                        <span className="text-lg font-black text-slate-800 dark:text-white">৳ {highestDueMonthStat?.due.toLocaleString()}</span>
+                    </div>
+                </div>
+
+                {/* Total Billable (Collected + Due) */}
+                <div className="bg-slate-50 dark:bg-slate-700/30 border border-slate-100 dark:border-slate-700 rounded-xl p-4 flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">বছরের মোট দাবি (Billable)</span>
+                    <span className="text-base font-black text-slate-700 dark:text-slate-300">৳ {(grandTotalCollected + grandTotalDue).toLocaleString()}</span>
+                </div>
+            </div>
+         </div>
+      </div>
+    </div>
+  );
+
+  // Unit Summary Modal
+  const unitSummaryModal = selectedUnitSummary && (
+    <div className="fixed inset-0 z-[90] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedUnitSummary(null)}>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden" onClick={e => e.stopPropagation()}>
+         {/* Decorative Background */}
+         <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-50 dark:bg-purple-900/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+         <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+         
+         <div className="relative z-10">
+            <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-3">
+                    <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-lg font-black px-3 py-1 rounded-lg">
+                        {selectedUnitSummary.unit}
+                    </span>
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">{selectedUnitSummary.ownerName}</h3>
+                        <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{selectedYear} এর হিসাব</p>
+                    </div>
+                </div>
+                <button onClick={() => setSelectedUnitSummary(null)} className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 p-1.5 rounded-full transition-colors">
+                    <X size={18} />
+                </button>
+            </div>
+
+            <div className="space-y-3">
+                <div className="bg-slate-50 dark:bg-slate-700/30 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">মাসিক চার্জ</span>
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">৳ {selectedUnitSummary.monthlyCharge.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">সর্বশেষ পেমেন্ট</span>
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{selectedUnitSummary.lastPaymentDate}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">পেমেন্ট মেথড</span>
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{selectedUnitSummary.paymentMethod}</span>
+                    </div>
+                </div>
+
+                <div className={`rounded-xl p-4 flex items-center justify-between ${selectedUnitSummary.totalDue > 0 ? 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50' : 'bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/50'}`}>
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${selectedUnitSummary.totalDue > 0 ? 'bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-300' : 'bg-green-100 dark:bg-green-800 text-green-600 dark:text-green-300'}`}>
+                            {selectedUnitSummary.totalDue > 0 ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
+                        </div>
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">
+                            {selectedUnitSummary.totalDue > 0 ? 'মোট বকেয়া' : 'সব পরিশোধিত'}
+                        </span>
+                    </div>
+                    <span className={`text-lg font-black ${selectedUnitSummary.totalDue > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                        {selectedUnitSummary.totalDue > 0 ? `৳ ${selectedUnitSummary.totalDue.toLocaleString()}` : 'OK'}
+                    </span>
+                </div>
+            </div>
+         </div>
+      </div>
+    </div>
   );
 
   const getStatusElement = (status: Status) => {
@@ -1550,6 +1719,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       {loginModalContent}
       {paymentEditModalContent}
       {monthDetailModal}
+      {unitSummaryModal}
+      {yearlySummaryModal}
       
       {/* Loading State */}
       {loading && (
@@ -1796,62 +1967,112 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 </div>
             </div>
 
-            {/* Unit Wise Summary List */}
+            {/* Unit Wise Summary List - Horizontal Scrollable Strip */}
             <div>
-                <div className="flex items-center justify-between mb-4 px-1">
+                <div className="flex items-center justify-between mb-2 px-1">
                     <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                         <ListFilter size={16} className="text-indigo-500" />
                         ইউনিট ভিত্তিক সামারি
                     </h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {unitWiseSummary.map((item, idx) => (
-                        <div key={idx} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow">
-                            <div className="flex justify-between items-start mb-3 border-b border-slate-50 dark:border-slate-700 pb-2">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-0.5 rounded-md">
-                                            {item.unit}
-                                        </span>
-                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                                            {item.ownerName}
-                                        </span>
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-2 overflow-x-auto no-scrollbar">
+                    <div className="flex gap-2 min-w-max">
+                        {unitWiseSummary.map((item, idx) => (
+                            <button 
+                                key={idx}
+                                onClick={() => setSelectedUnitSummary(item)}
+                                className={`
+                                    group flex flex-col items-center justify-center px-3 py-2 rounded-xl border transition-all min-w-[80px] relative overflow-hidden
+                                    ${item.totalDue > 0
+                                        ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/50 hover:border-red-300 dark:hover:border-red-600' 
+                                        : 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800/50 hover:border-green-300 dark:hover:border-green-600'}
+                                `}
+                            >
+                                <span className={`text-[10px] font-bold mb-1 ${item.totalDue > 0 ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'}`}>
+                                    {item.unit}
+                                </span>
+                                <div className="flex flex-col items-center gap-0.5 w-full">
+                                    <div className="h-1 w-full bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full rounded-full ${item.totalDue > 0 ? 'bg-red-500' : 'bg-green-500'}`}
+                                            style={{ width: '100%' }}
+                                        ></div>
                                     </div>
-                                </div>
-                                {item.totalDue > 0 ? (
-                                    <span className="text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">
-                                        বকেয়া
-                                    </span>
-                                ) : (
-                                    <span className="text-[10px] font-bold text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
-                                        পরিশোধিত
-                                    </span>
-                                )}
-                            </div>
-                            
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="text-slate-500 dark:text-slate-400">মাসিক চার্জ</span>
-                                    <span className="font-bold text-slate-700 dark:text-slate-300">৳ {item.monthlyCharge.toLocaleString()}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="text-slate-500 dark:text-slate-400">মোট বকেয়া</span>
-                                    <span className={`font-bold ${item.totalDue > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                                        ৳ {item.totalDue.toLocaleString()}
+                                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+                                        {item.totalDue > 0 ? 'বকেয়া' : 'পরিশোধিত'}
                                     </span>
                                 </div>
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="text-slate-500 dark:text-slate-400">সর্বশেষ পেমেন্ট</span>
-                                    <span className="font-bold text-slate-700 dark:text-slate-300">{item.lastPaymentDate}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="text-slate-500 dark:text-slate-400">পেমেন্ট মেথড</span>
-                                    <span className="font-bold text-slate-700 dark:text-slate-300">{item.paymentMethod}</span>
-                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Yearly Summary Trigger */}
+            <div className="mt-6">
+                <button 
+                    onClick={() => setShowYearlySummary(true)}
+                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl p-4 shadow-lg shadow-emerald-200 dark:shadow-none text-white flex items-center justify-between group active:scale-95 transition-all"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white/20 p-2.5 rounded-lg backdrop-blur-sm">
+                            <PieChart size={24} className="text-white" />
+                        </div>
+                        <div className="text-left">
+                            <h3 className="text-base font-bold text-white">বাৎসরিক সামারি</h3>
+                            <p className="text-[10px] text-emerald-100 font-medium opacity-90">পুরো বছরের হিসাব দেখুন</p>
+                        </div>
+                    </div>
+                    <div className="bg-white/20 p-2 rounded-full group-hover:bg-white/30 transition-colors">
+                        <ChevronRight size={20} className="text-white" />
+                    </div>
+                </button>
+            </div>
+
+            {/* Due Analysis / Aging Report */}
+            <div className="mt-6 mb-8">
+                <div className="flex items-center justify-between mb-3 px-1">
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                        <Clock size={16} className="text-indigo-500" />
+                        বকেয়া বিশ্লেষণ (Aging Report)
+                    </h3>
+                </div>
+                
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-3 text-center border border-yellow-100 dark:border-yellow-800/50 flex flex-col items-center justify-center">
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">১ মাস বকেয়া</p>
+                            <div className="flex items-baseline gap-1">
+                                <p className="text-xl font-black text-yellow-600 dark:text-yellow-400">{agingStats.oneMonth}</p>
+                                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">ইউনিট</p>
                             </div>
                         </div>
-                    ))}
+                        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3 text-center border border-orange-100 dark:border-orange-800/50 flex flex-col items-center justify-center">
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">২ মাস বকেয়া</p>
+                            <div className="flex items-baseline gap-1">
+                                <p className="text-xl font-black text-orange-600 dark:text-orange-400">{agingStats.twoMonths}</p>
+                                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">ইউনিট</p>
+                            </div>
+                        </div>
+                        <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center border border-red-100 dark:border-red-800/50 flex flex-col items-center justify-center">
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">৩+ মাস বকেয়া</p>
+                            <div className="flex items-baseline gap-1">
+                                <p className="text-xl font-black text-red-600 dark:text-red-400">{agingStats.threePlusMonths}</p>
+                                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">ইউনিট</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-slate-50 dark:bg-slate-700/30 rounded-xl p-3 flex justify-between items-center border border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-red-100 dark:bg-red-800 p-1.5 rounded-full text-red-600 dark:text-red-300">
+                                <Wallet size={14} />
+                            </div>
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">মোট জমে থাকা বকেয়া</span>
+                        </div>
+                        <span className="text-base font-black text-red-600 dark:text-red-400">৳ {agingStats.totalAccumulatedDue.toLocaleString()}</span>
+                    </div>
                 </div>
             </div>
           </div>
