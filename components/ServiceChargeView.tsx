@@ -1867,6 +1867,22 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 </div>
              </div>
 
+             {/* Target Selector */}
+             <div className="grid grid-cols-2 gap-3 mb-4">
+                <button
+                    onClick={() => setWhatsAppTarget('tenant')}
+                    className={`p-3 rounded-xl font-bold text-xs text-center transition-all ${whatsAppTarget === 'tenant' ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 ring-2 ring-green-500 ring-offset-2 dark:ring-offset-slate-900' : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                >
+                    চলতি মাসের বার্তা
+                </button>
+                <button
+                    onClick={() => setWhatsAppTarget('owner')}
+                    className={`p-3 rounded-xl font-bold text-xs text-center transition-all ${whatsAppTarget === 'owner' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-slate-900' : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                >
+                    বকেয়া মাসের বার্তা (মালিকপক্ষ)
+                </button>
+             </div>
+
              {/* Units List */}
              <div className="space-y-4">
                 {ALL_UNITS.map((unit) => {
