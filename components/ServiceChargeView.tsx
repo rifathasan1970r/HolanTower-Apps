@@ -1808,7 +1808,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       </div>
 
       {isAdmin && (
-         <div className="mb-4 grid grid-cols-2 gap-3">
+         <div className="mb-4 grid grid-cols-1 gap-3">
              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl p-3 flex items-start gap-3">
                  <div className="bg-indigo-100 dark:bg-indigo-800 p-2 rounded-full text-indigo-600 dark:text-indigo-300 mt-0.5">
                    <Edit3 size={16} />
@@ -1821,14 +1821,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
              
              <button 
                 onClick={() => setShowWhatsAppView(true)}
-                className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-xl p-3 flex items-start gap-3 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors text-left"
+                className="bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl p-3 flex items-start gap-3 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors text-left"
              >
-                 <div className="bg-green-100 dark:bg-green-800 p-2 rounded-full text-green-600 dark:text-green-300 mt-0.5">
+                 <div className="bg-purple-100 dark:bg-purple-800 p-2 rounded-full text-purple-600 dark:text-purple-300 mt-0.5">
                    <MessageCircle size={16} />
                  </div>
                  <div>
-                   <p className="text-sm font-bold text-green-900 dark:text-green-200">WhatsApp বার্তা</p>
-                   <p className="text-[10px] text-green-600 dark:text-green-300 mt-0.5">নোটিফিকেশন পাঠান</p>
+                   <p className="text-sm font-bold text-purple-900 dark:text-purple-200">হোয়াটসঅ্যাপ বার্তা</p>
+                   <p className="text-[10px] text-purple-600 dark:text-purple-300 mt-0.5">নোটিফিকেশন পাঠান</p>
                  </div>
              </button>
          </div>
@@ -1977,73 +1977,133 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
                                 {/* Templates */}
                                 <div className="grid grid-cols-1 gap-2 mt-2">
-                                    <div>
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Confirm Template</label>
-                                        <textarea 
-                                            value={whatsAppTarget === 'tenant' ? (uInfo.confirm_template || '') : (uInfo.owner_confirm_template || '')}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                const newInfo = { ...unitsInfo };
-                                                const key = `${unit}-${selectedYear}`;
-                                                if (!newInfo[key]) {
-                                                    newInfo[key] = { 
-                                                        unit_text: unit, 
-                                                        year_num: selectedYear, 
-                                                        is_occupied: true,
-                                                        note: '',
-                                                        phone: '',
-                                                        confirm_template: '',
-                                                        due_template: '',
-                                                        owner_phone: '',
-                                                        owner_confirm_template: '',
-                                                        owner_due_template: ''
-                                                    };
-                                                }
-                                                
-                                                if (whatsAppTarget === 'tenant') {
-                                                    newInfo[key] = { ...newInfo[key], confirm_template: val };
-                                                } else {
-                                                    newInfo[key] = { ...newInfo[key], owner_confirm_template: val };
-                                                }
-                                                setUnitsInfo(newInfo);
-                                            }}
-                                            placeholder={`Dear ${whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner'}, Payment received...`}
-                                            className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 text-xs h-16"
-                                        />
+                                    {/* Confirm Template */}
+                                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-2 border border-slate-200 dark:border-slate-700">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase">Confirm Template</label>
+                                            <button 
+                                                onClick={() => {
+                                                    const key = `${unit}-${selectedYear}-confirm`;
+                                                    const el = document.getElementById(key);
+                                                    if (el) el.classList.toggle('hidden');
+                                                }}
+                                                className="text-[10px] text-blue-500 hover:underline flex items-center gap-1"
+                                            >
+                                                <Edit3 size={10} /> এডিট করুন
+                                            </button>
+                                        </div>
+                                        <div id={`${unit}-${selectedYear}-confirm`} className="hidden mt-2">
+                                            <textarea 
+                                                value={whatsAppTarget === 'tenant' ? (uInfo.confirm_template || `🏢 হলান টাওয়ার
+
+প্রিয় বাসিন্দা,
+
+ইউনিট: {unit}
+
+গত {previous_month} মাসের সার্ভিস চার্জ সফলভাবে গ্রহণ করা হয়েছে।
+
+পরিশোধিত পরিমাণ: ৳{amount}
+
+আপনার সময়মতো পরিশোধ ও সহযোগিতার জন্য আন্তরিক ধন্যবাদ।
+
+— হলান টাওয়ার ব্যবস্থাপনা`) : (uInfo.owner_confirm_template || '')}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    const newInfo = { ...unitsInfo };
+                                                    const key = `${unit}-${selectedYear}`;
+                                                    if (!newInfo[key]) {
+                                                        newInfo[key] = { 
+                                                            unit_text: unit, 
+                                                            year_num: selectedYear, 
+                                                            is_occupied: true,
+                                                            note: '',
+                                                            phone: '',
+                                                            confirm_template: '',
+                                                            due_template: '',
+                                                            owner_phone: '',
+                                                            owner_confirm_template: '',
+                                                            owner_due_template: ''
+                                                        };
+                                                    }
+                                                    
+                                                    if (whatsAppTarget === 'tenant') {
+                                                        newInfo[key] = { ...newInfo[key], confirm_template: val };
+                                                    } else {
+                                                        newInfo[key] = { ...newInfo[key], owner_confirm_template: val };
+                                                    }
+                                                    setUnitsInfo(newInfo);
+                                                }}
+                                                placeholder={`Dear ${whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner'}, Payment received...`}
+                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 text-xs h-32"
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Due Template</label>
-                                        <textarea 
-                                            value={whatsAppTarget === 'tenant' ? (uInfo.due_template || '') : (uInfo.owner_due_template || '')}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                const newInfo = { ...unitsInfo };
-                                                const key = `${unit}-${selectedYear}`;
-                                                if (!newInfo[key]) {
-                                                    newInfo[key] = { 
-                                                        unit_text: unit, 
-                                                        year_num: selectedYear, 
-                                                        is_occupied: true,
-                                                        note: '',
-                                                        phone: '',
-                                                        confirm_template: '',
-                                                        due_template: '',
-                                                        owner_phone: '',
-                                                        owner_confirm_template: '',
-                                                        owner_due_template: ''
-                                                    };
-                                                }
-                                                
-                                                if (whatsAppTarget === 'tenant') {
-                                                    newInfo[key] = { ...newInfo[key], due_template: val };
-                                                } else {
-                                                    newInfo[key] = { ...newInfo[key], owner_due_template: val };
-                                                }
-                                                setUnitsInfo(newInfo);
-                                            }}
-                                            placeholder={`Dear ${whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner'}, Payment DUE...`}
-                                            className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 text-xs h-16"
-                                        />
+
+                                    {/* Due Template */}
+                                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-2 border border-slate-200 dark:border-slate-700">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase">Due Template</label>
+                                            <button 
+                                                onClick={() => {
+                                                    const key = `${unit}-${selectedYear}-due`;
+                                                    const el = document.getElementById(key);
+                                                    if (el) el.classList.toggle('hidden');
+                                                }}
+                                                className="text-[10px] text-blue-500 hover:underline flex items-center gap-1"
+                                            >
+                                                <Edit3 size={10} /> এডিট করুন
+                                            </button>
+                                        </div>
+                                        <div id={`${unit}-${selectedYear}-due`} className="hidden mt-2">
+                                            <textarea 
+                                                value={whatsAppTarget === 'tenant' ? (uInfo.due_template || `চলতি মাসের ইউটিলিটি চার্জ।
+
+🏢 হলান টাওয়ার
+
+প্রিয় বাসিন্দা,
+
+ইউনিট: {unit}
+
+{current_month} মাস শুরু হওয়ার সাথে সাথে
+গত {previous_month} মাসের সার্ভিস চার্জ এখন পরিশোধযোগ্য হয়েছে।
+
+পরিশোধযোগ্য পরিমাণ: ৳{due_amount}
+
+অনুগ্রহ করে আগামী ৭ তারিখের মধ্যে পরিশোধ করার জন্য অনুরোধ করা হলো।
+
+আপনার সহযোগিতার জন্য ধন্যবাদ।
+
+— হলান টাওয়ার ব্যবস্থাপনা`) : (uInfo.owner_due_template || '')}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    const newInfo = { ...unitsInfo };
+                                                    const key = `${unit}-${selectedYear}`;
+                                                    if (!newInfo[key]) {
+                                                        newInfo[key] = { 
+                                                            unit_text: unit, 
+                                                            year_num: selectedYear, 
+                                                            is_occupied: true,
+                                                            note: '',
+                                                            phone: '',
+                                                            confirm_template: '',
+                                                            due_template: '',
+                                                            owner_phone: '',
+                                                            owner_confirm_template: '',
+                                                            owner_due_template: ''
+                                                        };
+                                                    }
+                                                    
+                                                    if (whatsAppTarget === 'tenant') {
+                                                        newInfo[key] = { ...newInfo[key], due_template: val };
+                                                    } else {
+                                                        newInfo[key] = { ...newInfo[key], owner_due_template: val };
+                                                    }
+                                                    setUnitsInfo(newInfo);
+                                                }}
+                                                placeholder={`Dear ${whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner'}, Payment DUE...`}
+                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 text-xs h-32"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -2105,12 +2165,12 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                 }
 
                                                 const payload = {
-                                                    phone: info.phone,
-                                                    confirm_template: info.confirm_template,
-                                                    due_template: info.due_template,
-                                                    owner_phone: info.owner_phone,
-                                                    owner_confirm_template: info.owner_confirm_template,
-                                                    owner_due_template: info.owner_due_template
+                                                    phone: info.phone || null,
+                                                    confirm_template: info.confirm_template || null,
+                                                    due_template: info.due_template || null,
+                                                    owner_phone: info.owner_phone || null,
+                                                    owner_confirm_template: info.owner_confirm_template || null,
+                                                    owner_due_template: info.owner_due_template || null
                                                 };
 
                                                 if (targetId) {
@@ -2193,19 +2253,55 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                 cleanPhone = '88' + cleanPhone;
                                             }
 
-                                            const template = status === 'PAID' 
-                                                ? (whatsAppTarget === 'tenant' ? info.confirm_template : info.owner_confirm_template)
-                                                : (whatsAppTarget === 'tenant' ? info.due_template : info.owner_due_template);
+                                            const tmpl = status === 'PAID' 
+                                                ? (whatsAppTarget === 'tenant' ? (info.confirm_template || `🏢 হলান টাওয়ার
 
-                                            if (!template) {
+প্রিয় বাসিন্দা,
+
+ইউনিট: {unit}
+
+গত {previous_month} মাসের সার্ভিস চার্জ সফলভাবে গ্রহণ করা হয়েছে।
+
+পরিশোধিত পরিমাণ: ৳{amount}
+
+আপনার সময়মতো পরিশোধ ও সহযোগিতার জন্য আন্তরিক ধন্যবাদ।
+
+— হলান টাওয়ার ব্যবস্থাপনা`) : (info.owner_confirm_template || "Dear Owner, Payment received for Unit {unit}. Month: {month}. Amount: {amount}."))
+                                                : (whatsAppTarget === 'tenant' ? (info.due_template || `চলতি মাসের ইউটিলিটি চার্জ।
+
+🏢 হলান টাওয়ার
+
+প্রিয় বাসিন্দা,
+
+ইউনিট: {unit}
+
+{current_month} মাস শুরু হওয়ার সাথে সাথে
+গত {previous_month} মাসের সার্ভিস চার্জ এখন পরিশোধযোগ্য হয়েছে।
+
+পরিশোধযোগ্য পরিমাণ: ৳{due_amount}
+
+অনুগ্রহ করে আগামী ৭ তারিখের মধ্যে পরিশোধ করার জন্য অনুরোধ করা হলো।
+
+আপনার সহযোগিতার জন্য ধন্যবাদ।
+
+— হলান টাওয়ার ব্যবস্থাপনা`) : (info.owner_due_template || "Dear Owner, Payment DUE for Unit {unit}. Month: {month}. Amount: {amount}. Total Due: {due_amount}."));
+
+                                            if (!tmpl) {
                                                 alert("Please set a message template.");
                                                 return;
                                             }
 
                                             // Dynamic Variables
-                                            const msg = template
+                                            // Calculate Previous Month
+                                            const currentMonthIndex = MONTHS_LOGIC.indexOf(whatsAppMonth);
+                                            const prevMonthIndex = currentMonthIndex === 0 ? 11 : currentMonthIndex - 1;
+                                            const prevMonthName = t.months[prevMonthIndex]; // Use translated name
+
+                                            const msg = tmpl
                                                 .replace(/{unit}/g, unit)
-                                                .replace(/{month}/g, whatsAppMonth)
+                                                .replace(/{month}/g, t.months[currentMonthIndex]) // Use translated name for {month} too if needed, or keep whatsAppMonth
+                                                .replace(/{current_month}/g, t.months[currentMonthIndex])
+                                                .replace(/{previous_month}/g, prevMonthName)
                                                 .replace(/{amount}/g, amount.toString())
                                                 .replace(/{due_amount}/g, dueAmount.toString())
                                                 .replace(/{target}/g, whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner');
@@ -2239,7 +2335,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                 console.error("Log error", e);
                                             }
                                         }}
-                                        className="flex-[2] bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-green-200 dark:shadow-none"
+                                        className={`flex-[2] ${status === 'PAID' ? 'bg-green-500 hover:bg-green-600 shadow-green-200' : 'bg-red-500 hover:bg-red-600 shadow-red-200'} text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg dark:shadow-none`}
                                     >
                                         <Send size={14} /> Send WhatsApp
                                     </button>
