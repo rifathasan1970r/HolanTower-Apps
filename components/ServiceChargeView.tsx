@@ -1421,7 +1421,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 </div>
             ) : (
                 // LIST VIEW (PAID or DUE)
-                <div className="flex-1 overflow-hidden flex flex-col">
+                <div className="flex-1 overflow-hidden flex flex-col min-h-0">
                     <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-2 mb-2 shrink-0">
                         <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2">
                             <span>ইউনিট</span>
