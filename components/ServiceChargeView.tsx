@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabaseClient';
 import { TRANSLATIONS, FLAT_OWNERS } from '../constants';
@@ -41,7 +41,20 @@ interface UnitInfo {
   unit_text: string;
   is_occupied: boolean;
   note?: string;
+  phone?: string;
+  confirm_template?: string;
+  due_template?: string;
   year_num?: number;
+}
+
+interface WhatsAppLog {
+  id?: number;
+  unit_text: string;
+  month_name: string;
+  year_num: number;
+  message_type: 'confirm' | 'due';
+  sent_count: number;
+  last_sent_at: string;
 }
 
 interface ServiceChargeViewProps {
@@ -66,13 +79,16 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   
   // Supabase State
   const [dbData, setDbData] = useState<PaymentData[]>([]);
-  const [unitsInfo, setUnitsInfo] = useState<Record<string, { is_occupied: boolean, note: string }>>({});
+  const [unitsInfo, setUnitsInfo] = useState<Record<string, UnitInfo>>({});
+  const [whatsAppLogs, setWhatsAppLogs] = useState<WhatsAppLog[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [useMock, setUseMock] = useState<boolean>(false);
 
   // Admin State
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [showLogin, setShowLogin] = useState<boolean>(false);
+  const [showWhatsAppView, setShowWhatsAppView] = useState<boolean>(false);
+  const [whatsAppMonth, setWhatsAppMonth] = useState<string>(MONTHS_LOGIC[new Date().getMonth()]);
   const [pinInput, setPinInput] = useState<string>('');
   const [processingUpdate, setProcessingUpdate] = useState<boolean>(false);
   const [editingNote, setEditingNote] = useState<boolean>(false);
@@ -133,16 +149,34 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 }
             }
         } else if (uData) {
-            const mapping: Record<string, { is_occupied: boolean, note: string }> = {};
+            const mapping: Record<string, UnitInfo> = {};
             uData.forEach((u: any) => {
                 // Use year-specific key if available, otherwise fallback to unit_text
                 const key = u.year_num ? `${u.unit_text}-${u.year_num}` : u.unit_text;
-                mapping[key] = { is_occupied: u.is_occupied, note: u.note || '' };
+                mapping[key] = { 
+                    unit_text: u.unit_text,
+                    is_occupied: u.is_occupied, 
+                    note: u.note || '',
+                    phone: u.phone || '',
+                    confirm_template: u.confirm_template || '',
+                    due_template: u.due_template || '',
+                    year_num: u.year_num
+                };
             });
             setUnitsInfo(mapping);
             // Sync to local storage for offline/fallback
             localStorage.setItem('units_info_fallback', JSON.stringify(mapping));
         }
+      }
+
+      // Fetch WhatsApp Logs
+      const { data: logData, error: logError } = await supabase
+        .from('whatsapp_logs')
+        .select('*')
+        .eq('year_num', selectedYear);
+      
+      if (!logError && logData) {
+        setWhatsAppLogs(logData as WhatsAppLog[]);
       }
       
       setUseMock(false);
@@ -175,7 +209,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     
     const yearKey = `${unit}-${selectedYear}`;
     const isOccupiedDefault = unit.slice(-1) !== 'B';
-    const currentInfo = unitsInfo[yearKey] || unitsInfo[unit] || { is_occupied: isOccupiedDefault, note: '' };
+    const currentInfo = unitsInfo[yearKey] || unitsInfo[unit] || { unit_text: unit, is_occupied: isOccupiedDefault, note: '' };
     const newVal = !currentInfo.is_occupied;
 
     // Optimistic update - immediate UI feedback
@@ -408,7 +442,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     setProcessingUpdate(true);
     
     const isOccupiedDefault = selectedUnit.slice(-1) !== 'B';
-    const currentInfo = unitsInfo[selectedUnit] || { is_occupied: isOccupiedDefault, note: '' };
+    const currentInfo = unitsInfo[selectedUnit] || { unit_text: selectedUnit, is_occupied: isOccupiedDefault, note: '' };
 
     try {
         const { error } = await supabase
@@ -1746,19 +1780,274 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       </div>
 
       {isAdmin && (
-         <div className="mb-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl p-3 flex items-start gap-3">
-             <div className="bg-indigo-100 dark:bg-indigo-800 p-2 rounded-full text-indigo-600 dark:text-indigo-300 mt-0.5">
-               <Edit3 size={16} />
+         <div className="mb-4 grid grid-cols-2 gap-3">
+             <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl p-3 flex items-start gap-3">
+                 <div className="bg-indigo-100 dark:bg-indigo-800 p-2 rounded-full text-indigo-600 dark:text-indigo-300 mt-0.5">
+                   <Edit3 size={16} />
+                 </div>
+                 <div>
+                   <p className="text-sm font-bold text-indigo-900 dark:text-indigo-200">{t.adminDashboard}</p>
+                   <p className="text-[10px] text-indigo-600 dark:text-indigo-300 mt-0.5">{t.editInfo}</p>
+                 </div>
              </div>
-             <div>
-               <p className="text-sm font-bold text-indigo-900 dark:text-indigo-200">{t.adminDashboard}</p>
-               <p className="text-xs text-indigo-600 dark:text-indigo-300 mt-1">{t.editInfo}</p>
-             </div>
+             
+             <button 
+                onClick={() => setShowWhatsAppView(true)}
+                className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-xl p-3 flex items-start gap-3 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors text-left"
+             >
+                 <div className="bg-green-100 dark:bg-green-800 p-2 rounded-full text-green-600 dark:text-green-300 mt-0.5">
+                   <MessageCircle size={16} />
+                 </div>
+                 <div>
+                   <p className="text-sm font-bold text-green-900 dark:text-green-200">WhatsApp বার্তা</p>
+                   <p className="text-[10px] text-green-600 dark:text-green-300 mt-0.5">নোটিফিকেশন পাঠান</p>
+                 </div>
+             </button>
          </div>
       )}
 
-      {/* VIEW 2: ALL UNITS SUMMARY LIST */}
-      {showSummaryList ? (
+      {/* VIEW: WHATSAPP ADMIN */}
+      {showWhatsAppView ? (
+        <div className="animate-in slide-in-from-right duration-300 pb-20">
+             <div className="flex items-center gap-3 mb-4">
+                 <button 
+                  onClick={() => setShowWhatsAppView(false)}
+                  className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div className="flex-1">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">WhatsApp বার্তা</h2>
+                    <p className="text-xs text-green-600 dark:text-green-400 font-medium">অ্যাডমিন প্যানেল</p>
+                </div>
+             </div>
+
+             {/* Month Selector */}
+             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 block">মাস নির্বাচন করুন</label>
+                <div className="relative">
+                    <select 
+                        value={whatsAppMonth}
+                        onChange={(e) => setWhatsAppMonth(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-3 pl-4 pr-10 appearance-none font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                        {MONTHS_LOGIC.map((m, i) => (
+                            <option key={i} value={m}>{t.months[i]}</option>
+                        ))}
+                    </select>
+                    <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rotate-90" size={16} />
+                </div>
+             </div>
+
+             {/* Units List */}
+             <div className="space-y-4">
+                {ALL_UNITS.map((unit) => {
+                    // Get Payment Data
+                    const payment = dbData.find(d => d.unit_text === unit && d.month_name === whatsAppMonth && d.year_num === selectedYear);
+                    const status = payment && payment.amount > 0 ? 'PAID' : 'DUE';
+                    const dueAmount = payment ? payment.due : (unit.slice(-1) !== 'B' ? 2000 : 500);
+                    const amount = payment ? payment.amount : 0;
+
+                    // Get Unit Info (Phone & Templates)
+                    // Try specific year key first, then generic unit key
+                    const uInfoKey = `${unit}-${selectedYear}`;
+                    const uInfo = unitsInfo[uInfoKey] || unitsInfo[unit] || {};
+                    const phone = uInfo.phone || '';
+                    const confirmTemplate = uInfo.confirm_template || "Dear Owner, Payment received for Unit {unit}. Month: {month}. Amount: {amount}.";
+                    const dueTemplate = uInfo.due_template || "Dear Owner, Payment DUE for Unit {unit}. Month: {month}. Amount: {amount}. Total Due: {due_amount}.";
+
+                    // Get Logs
+                    const log = whatsAppLogs.find(l => l.unit_text === unit && l.month_name === whatsAppMonth && l.year_num === selectedYear);
+
+                    // Local state for inputs (using refs or just controlled inputs would be heavy for list, 
+                    // but for 27 units it's manageable. However, to avoid creating 27*3 state variables, 
+                    // I'll use a simple approach: direct access or a small sub-component. 
+                    // Since I can't easily create sub-components here, I'll use a trick: 
+                    // I'll just render inputs that update the global `unitsInfo` state directly on change?
+                    // No, that causes re-renders. I'll use a local state for the list? 
+                    // Actually, let's just use `unitsInfo` state as the source of truth for inputs.
+                    // Updating `unitsInfo` on every keystroke might be slow but acceptable for 27 items.
+                    
+                    return (
+                        <div key={unit} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+                            <div className="flex justify-between items-start mb-4 border-b border-slate-100 dark:border-slate-700 pb-3">
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">
+                                        {unit}
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${status === 'PAID' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200'}`}>
+                                            {status === 'PAID' ? 'পরিশোধিত' : 'বকেয়া'}
+                                        </span>
+                                    </h3>
+                                    {status === 'DUE' && (
+                                        <p className="text-xs text-red-500 font-bold mt-1">বকেয়া: ৳ {dueAmount}</p>
+                                    )}
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold">Sent Count</p>
+                                    <p className="text-lg font-black text-slate-700 dark:text-slate-300">{log?.sent_count || 0}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                {/* Phone Number */}
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">WhatsApp Number (880...)</label>
+                                    <div className="relative">
+                                        <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input 
+                                            type="text" 
+                                            defaultValue={phone}
+                                            onBlur={(e) => {
+                                                const val = e.target.value;
+                                                // Update local state to reflect change immediately without API call yet
+                                                const newInfo = { ...unitsInfo };
+                                                const key = `${unit}-${selectedYear}`;
+                                                newInfo[key] = { ...newInfo[key], phone: val };
+                                                setUnitsInfo(newInfo);
+                                            }}
+                                            className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 pl-9 pr-3 text-sm font-mono"
+                                            placeholder="171..."
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Templates */}
+                                <div className="grid grid-cols-1 gap-2">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Confirm Template</label>
+                                        <textarea 
+                                            defaultValue={confirmTemplate}
+                                            onBlur={(e) => {
+                                                const val = e.target.value;
+                                                const newInfo = { ...unitsInfo };
+                                                const key = `${unit}-${selectedYear}`;
+                                                newInfo[key] = { ...newInfo[key], confirm_template: val };
+                                                setUnitsInfo(newInfo);
+                                            }}
+                                            className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 text-xs h-16"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Due Template</label>
+                                        <textarea 
+                                            defaultValue={dueTemplate}
+                                            onBlur={(e) => {
+                                                const val = e.target.value;
+                                                const newInfo = { ...unitsInfo };
+                                                const key = `${unit}-${selectedYear}`;
+                                                newInfo[key] = { ...newInfo[key], due_template: val };
+                                                setUnitsInfo(newInfo);
+                                            }}
+                                            className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 text-xs h-16"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex gap-2 pt-2">
+                                    <button 
+                                        onClick={async () => {
+                                            // Save Logic
+                                            const key = `${unit}-${selectedYear}`;
+                                            const info = unitsInfo[key] || {};
+                                            try {
+                                                // We use upsert on units_info. 
+                                                // Note: We need to ensure we don't overwrite other fields if they are missing in local state.
+                                                // But unitsInfo should have them.
+                                                
+                                                // If we are using the composite key approach for local state, we need to map it back to DB columns.
+                                                // DB has: unit_text, year_num, phone, confirm_template, due_template
+                                                
+                                                await supabase.from('units_info').upsert({
+                                                    unit_text: unit,
+                                                    year_num: selectedYear,
+                                                    phone: info.phone,
+                                                    confirm_template: info.confirm_template,
+                                                    due_template: info.due_template,
+                                                    is_occupied: info.is_occupied, // Preserve existing
+                                                    note: info.note // Preserve existing
+                                                }, { onConflict: 'unit_text, year_num' }); // Assuming composite constraint or just unit_text if that's the PK
+                                                
+                                                alert("Saved!");
+                                            } catch (e) {
+                                                console.error(e);
+                                                alert("Error saving");
+                                            }
+                                        }}
+                                        className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+                                    >
+                                        <Save size={14} /> Save
+                                    </button>
+                                    
+                                    <button 
+                                        onClick={async () => {
+                                            // Send Logic
+                                            const key = `${unit}-${selectedYear}`;
+                                            const info = unitsInfo[key] || {};
+                                            const ph = info.phone;
+                                            
+                                            if (!ph) {
+                                                alert("Please save a phone number first.");
+                                                return;
+                                            }
+
+                                            const tmpl = status === 'PAID' 
+                                                ? (info.confirm_template || "Dear Owner, Payment received for Unit {unit}. Month: {month}. Amount: {amount}.")
+                                                : (info.due_template || "Dear Owner, Payment DUE for Unit {unit}. Month: {month}. Amount: {amount}. Total Due: {due_amount}.");
+
+                                            const msg = tmpl
+                                                .replace(/{unit}/g, unit)
+                                                .replace(/{month}/g, whatsAppMonth)
+                                                .replace(/{amount}/g, amount.toString())
+                                                .replace(/{due_amount}/g, dueAmount.toString());
+
+                                            const url = `https://wa.me/88${ph}?text=${encodeURIComponent(msg)}`;
+                                            
+                                            // Log
+                                            const newCount = (log?.sent_count || 0) + 1;
+                                            await supabase.from('whatsapp_logs').upsert({
+                                                unit_text: unit,
+                                                month_name: whatsAppMonth,
+                                                year_num: selectedYear,
+                                                message_type: status === 'PAID' ? 'confirm' : 'due',
+                                                sent_count: newCount,
+                                                last_sent_at: new Date().toISOString()
+                                            }, { onConflict: 'unit_text, month_name, year_num' }); // Assuming composite constraint
+
+                                            // Update local log state
+                                            const newLog = {
+                                                unit_text: unit,
+                                                month_name: whatsAppMonth,
+                                                year_num: selectedYear,
+                                                message_type: status === 'PAID' ? 'confirm' : 'due',
+                                                sent_count: newCount,
+                                                last_sent_at: new Date().toISOString()
+                                            } as WhatsAppLog;
+                                            
+                                            setWhatsAppLogs(prev => {
+                                                const filtered = prev.filter(l => !(l.unit_text === unit && l.month_name === whatsAppMonth && l.year_num === selectedYear));
+                                                return [...filtered, newLog];
+                                            });
+
+                                            window.open(url, '_blank');
+                                        }}
+                                        className="flex-[2] bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-green-200 dark:shadow-none"
+                                    >
+                                        <Send size={14} /> Send WhatsApp
+                                    </button>
+                                </div>
+                                {log?.last_sent_at && (
+                                    <p className="text-[9px] text-slate-400 text-center pt-1">
+                                        Last sent: {new Date(log.last_sent_at).toLocaleString()}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+             </div>
+        </div>
+      ) : showSummaryList ? (
         <div className="animate-in slide-in-from-right duration-300">
              <div className="flex items-center gap-3 mb-4">
                  <button 
