@@ -2306,7 +2306,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                 .replace(/{due_amount}/g, dueAmount.toString())
                                                 .replace(/{target}/g, whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner');
 
-                                            const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+                                            const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`;
                                             window.open(url, '_blank');
 
                                             // Log to Supabase
