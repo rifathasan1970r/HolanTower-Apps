@@ -1821,14 +1821,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
              
              <button 
                 onClick={() => setShowWhatsAppView(true)}
-                className="bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl p-3 flex items-start gap-3 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors text-left"
+                className="bg-purple-700 dark:bg-purple-800 border border-purple-800 dark:border-purple-700 rounded-xl p-3 flex items-center justify-end gap-3 hover:bg-purple-800 dark:hover:bg-purple-700 transition-colors text-right shadow-sm"
              >
-                 <div className="bg-purple-100 dark:bg-purple-800 p-2 rounded-full text-purple-600 dark:text-purple-300 mt-0.5">
-                   <MessageCircle size={16} />
-                 </div>
                  <div>
-                   <p className="text-sm font-bold text-purple-900 dark:text-purple-200">হোয়াটসঅ্যাপ বার্তা</p>
-                   <p className="text-[10px] text-purple-600 dark:text-purple-300 mt-0.5">নোটিফিকেশন পাঠান</p>
+                   <p className="text-sm font-bold text-white">হোয়াটসঅ্যাপ বার্তা</p>
+                   <p className="text-[10px] text-purple-200 mt-0.5">নোটিফিকেশন পাঠান</p>
+                 </div>
+                 <div className="bg-purple-600 dark:bg-purple-700 p-2 rounded-full text-white">
+                   <MessageCircle size={16} />
                  </div>
              </button>
          </div>
