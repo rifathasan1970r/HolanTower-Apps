@@ -44,6 +44,9 @@ interface UnitInfo {
   phone?: string;
   confirm_template?: string;
   due_template?: string;
+  owner_phone?: string;
+  owner_confirm_template?: string;
+  owner_due_template?: string;
   year_num?: number;
 }
 
@@ -53,6 +56,7 @@ interface WhatsAppLog {
   month_name: string;
   year_num: number;
   message_type: 'confirm' | 'due';
+  target_audience?: 'tenant' | 'owner';
   sent_count: number;
   last_sent_at: string;
 }
@@ -89,6 +93,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showWhatsAppView, setShowWhatsAppView] = useState<boolean>(false);
   const [whatsAppMonth, setWhatsAppMonth] = useState<string>(MONTHS_LOGIC[new Date().getMonth()]);
+  const [whatsAppTarget, setWhatsAppTarget] = useState<'tenant' | 'owner'>('tenant');
   const [pinInput, setPinInput] = useState<string>('');
   const [processingUpdate, setProcessingUpdate] = useState<boolean>(false);
   const [editingNote, setEditingNote] = useState<boolean>(false);
@@ -168,6 +173,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 const phone = u.phone || localWhatsApp[key]?.phone || '';
                 const confirm_template = u.confirm_template || localWhatsApp[key]?.confirm_template || '';
                 const due_template = u.due_template || localWhatsApp[key]?.due_template || '';
+                
+                const owner_phone = u.owner_phone || localWhatsApp[key]?.owner_phone || '';
+                const owner_confirm_template = u.owner_confirm_template || localWhatsApp[key]?.owner_confirm_template || '';
+                const owner_due_template = u.owner_due_template || localWhatsApp[key]?.owner_due_template || '';
 
                 mapping[key] = { 
                     unit_text: u.unit_text,
@@ -176,6 +185,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     phone: phone,
                     confirm_template: confirm_template,
                     due_template: due_template,
+                    owner_phone: owner_phone,
+                    owner_confirm_template: owner_confirm_template,
+                    owner_due_template: owner_due_template,
                     year_num: u.year_num
                 };
             });
@@ -1907,29 +1919,38 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                             <div className="space-y-3">
                                 {/* Phone Number */}
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">WhatsApp Number (880...)</label>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+                                        {whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner'} WhatsApp (880...)
+                                    </label>
                                     <div className="relative">
                                         <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                         <input 
                                             type="text" 
-                                            value={uInfo.phone || ''}
+                                            value={whatsAppTarget === 'tenant' ? (uInfo.phone || '') : (uInfo.owner_phone || '')}
                                             onChange={(e) => {
                                                 const val = e.target.value;
                                                 const newInfo = { ...unitsInfo };
                                                 const key = `${unit}-${selectedYear}`;
-                                                // Ensure object exists
                                                 if (!newInfo[key]) {
                                                     newInfo[key] = { 
                                                         unit_text: unit, 
                                                         year_num: selectedYear, 
-                                                        is_occupied: true, // Default
+                                                        is_occupied: true, 
                                                         note: '',
                                                         phone: '',
                                                         confirm_template: '',
-                                                        due_template: ''
+                                                        due_template: '',
+                                                        owner_phone: '',
+                                                        owner_confirm_template: '',
+                                                        owner_due_template: ''
                                                     };
                                                 }
-                                                newInfo[key] = { ...newInfo[key], phone: val };
+                                                
+                                                if (whatsAppTarget === 'tenant') {
+                                                    newInfo[key] = { ...newInfo[key], phone: val };
+                                                } else {
+                                                    newInfo[key] = { ...newInfo[key], owner_phone: val };
+                                                }
                                                 setUnitsInfo(newInfo);
                                             }}
                                             className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 pl-9 pr-3 text-sm font-mono"
@@ -1939,11 +1960,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 </div>
 
                                 {/* Templates */}
-                                <div className="grid grid-cols-1 gap-2">
+                                <div className="grid grid-cols-1 gap-2 mt-2">
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Confirm Template</label>
                                         <textarea 
-                                            value={uInfo.confirm_template || ''}
+                                            value={whatsAppTarget === 'tenant' ? (uInfo.confirm_template || '') : (uInfo.owner_confirm_template || '')}
                                             onChange={(e) => {
                                                 const val = e.target.value;
                                                 const newInfo = { ...unitsInfo };
@@ -1956,20 +1977,28 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                         note: '',
                                                         phone: '',
                                                         confirm_template: '',
-                                                        due_template: ''
+                                                        due_template: '',
+                                                        owner_phone: '',
+                                                        owner_confirm_template: '',
+                                                        owner_due_template: ''
                                                     };
                                                 }
-                                                newInfo[key] = { ...newInfo[key], confirm_template: val };
+                                                
+                                                if (whatsAppTarget === 'tenant') {
+                                                    newInfo[key] = { ...newInfo[key], confirm_template: val };
+                                                } else {
+                                                    newInfo[key] = { ...newInfo[key], owner_confirm_template: val };
+                                                }
                                                 setUnitsInfo(newInfo);
                                             }}
-                                            placeholder="Dear Owner, Payment received for Unit {unit}. Month: {month}. Amount: {amount}."
+                                            placeholder={`Dear ${whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner'}, Payment received...`}
                                             className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 text-xs h-16"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Due Template</label>
                                         <textarea 
-                                            value={uInfo.due_template || ''}
+                                            value={whatsAppTarget === 'tenant' ? (uInfo.due_template || '') : (uInfo.owner_due_template || '')}
                                             onChange={(e) => {
                                                 const val = e.target.value;
                                                 const newInfo = { ...unitsInfo };
@@ -1982,13 +2011,21 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                         note: '',
                                                         phone: '',
                                                         confirm_template: '',
-                                                        due_template: ''
+                                                        due_template: '',
+                                                        owner_phone: '',
+                                                        owner_confirm_template: '',
+                                                        owner_due_template: ''
                                                     };
                                                 }
-                                                newInfo[key] = { ...newInfo[key], due_template: val };
+                                                
+                                                if (whatsAppTarget === 'tenant') {
+                                                    newInfo[key] = { ...newInfo[key], due_template: val };
+                                                } else {
+                                                    newInfo[key] = { ...newInfo[key], owner_due_template: val };
+                                                }
                                                 setUnitsInfo(newInfo);
                                             }}
-                                            placeholder="Dear Owner, Payment DUE for Unit {unit}. Month: {month}. Amount: {amount}. Total Due: {due_amount}."
+                                            placeholder={`Dear ${whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner'}, Payment DUE...`}
                                             className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 text-xs h-16"
                                         />
                                     </div>
@@ -2007,9 +2044,13 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                 const localStr = localStorage.getItem('whatsapp_data_local');
                                                 const localData = localStr ? JSON.parse(localStr) : {};
                                                 localData[key] = {
+                                                    ...localData[key], // Preserve other fields
                                                     phone: info.phone,
                                                     confirm_template: info.confirm_template,
-                                                    due_template: info.due_template
+                                                    due_template: info.due_template,
+                                                    owner_phone: info.owner_phone,
+                                                    owner_confirm_template: info.owner_confirm_template,
+                                                    owner_due_template: info.owner_due_template
                                                 };
                                                 localStorage.setItem('whatsapp_data_local', JSON.stringify(localData));
                                             } catch (e) {
@@ -2017,48 +2058,93 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                             }
                                             
                                             try {
-                                                // Check if record exists
-                                                const { data: existing } = await supabase
+                                                // Strategy: 
+                                                // 1. Check exact year match -> Update
+                                                // 2. Check generic (null year) match -> Update
+                                                // 3. Insert new specific year record
+                                                // 4. If Insert fails (Unique Constraint), find ANY record for unit and Update it
+
+                                                let targetId = null;
+
+                                                // 1. Exact Match
+                                                const { data: exactMatch } = await supabase
                                                     .from('units_info')
                                                     .select('id')
                                                     .eq('unit_text', unit)
                                                     .eq('year_num', selectedYear)
                                                     .maybeSingle();
 
-                                                let error;
-                                                if (existing) {
-                                                    // Update
+                                                if (exactMatch) {
+                                                    targetId = exactMatch.id;
+                                                } else {
+                                                    // 2. Generic Match (year is null)
+                                                    const { data: genericMatch } = await supabase
+                                                        .from('units_info')
+                                                        .select('id')
+                                                        .eq('unit_text', unit)
+                                                        .is('year_num', null)
+                                                        .maybeSingle();
+                                                    
+                                                    if (genericMatch) targetId = genericMatch.id;
+                                                }
+
+                                                const payload = {
+                                                    phone: info.phone,
+                                                    confirm_template: info.confirm_template,
+                                                    due_template: info.due_template,
+                                                    owner_phone: info.owner_phone,
+                                                    owner_confirm_template: info.owner_confirm_template,
+                                                    owner_due_template: info.owner_due_template
+                                                };
+
+                                                if (targetId) {
+                                                    // Update existing
                                                     const { error: upError } = await supabase
                                                         .from('units_info')
-                                                        .update({
-                                                            phone: info.phone,
-                                                            confirm_template: info.confirm_template,
-                                                            due_template: info.due_template,
-                                                        })
-                                                        .eq('id', existing.id);
-                                                    error = upError;
+                                                        .update(payload)
+                                                        .eq('id', targetId);
+                                                    if (upError) throw upError;
                                                 } else {
-                                                    // Insert
-                                                    // Removing 'note' field to prevent "column not found" error if schema is missing it
+                                                    // Insert new
                                                     const { error: inError } = await supabase
                                                         .from('units_info')
                                                         .insert({
                                                             unit_text: unit,
                                                             year_num: selectedYear,
-                                                            phone: info.phone,
-                                                            confirm_template: info.confirm_template,
-                                                            due_template: info.due_template,
-                                                            is_occupied: info.is_occupied !== undefined ? info.is_occupied : (unit.slice(-1) !== 'B')
+                                                            is_occupied: info.is_occupied !== undefined ? info.is_occupied : (unit.slice(-1) !== 'B'),
+                                                            ...payload
                                                         });
-                                                    error = inError;
+                                                    
+                                                    if (inError) {
+                                                        // 4. Fallback for Unique Constraint on unit_text
+                                                        if (inError.code === '23505') {
+                                                            const { data: anyMatch } = await supabase
+                                                                .from('units_info')
+                                                                .select('id')
+                                                                .eq('unit_text', unit)
+                                                                .limit(1)
+                                                                .maybeSingle();
+                                                            
+                                                            if (anyMatch) {
+                                                                const { error: fallbackError } = await supabase
+                                                                    .from('units_info')
+                                                                    .update(payload)
+                                                                    .eq('id', anyMatch.id);
+                                                                if (fallbackError) throw fallbackError;
+                                                            } else {
+                                                                throw inError;
+                                                            }
+                                                        } else {
+                                                            throw inError;
+                                                        }
+                                                    }
                                                 }
                                                 
-                                                if (error) throw error;
-                                                alert("Saved successfully!");
+                                                await fetchData(false);
+                                                alert("Saved successfully to Supabase!");
                                             } catch (e: any) {
                                                 console.error("Save error:", e);
-                                                // Show a more helpful message if it's a DB error, but clarify data is safe locally
-                                                alert(`Saved locally! (Database Warning: ${e.message || 'Check connection'})`);
+                                                alert(`Saved locally! (Database Error: ${e.message || 'Check connection'})`);
                                             }
                                         }}
                                         className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors"
@@ -2071,62 +2157,71 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                             // Send Logic
                                             const key = `${unit}-${selectedYear}`;
                                             const info = unitsInfo[key] || {};
-                                            const ph = info.phone;
+                                            const ph = whatsAppTarget === 'tenant' ? info.phone : info.owner_phone;
                                             
                                             if (!ph) {
                                                 alert("Please enter a phone number first.");
                                                 return;
                                             }
-
-                                            // Sanitization Logic
-                                            let cleanPh = ph.replace(/\D/g, ''); // Remove non-digits
-                                            if (cleanPh.startsWith('880')) {
+                                            
+                                            // Sanitize Phone Number
+                                            let cleanPhone = ph.replace(/\D/g, ''); // Remove non-digits
+                                            if (cleanPhone.startsWith('880')) {
                                                 // Already has country code
-                                            } else if (cleanPh.startsWith('0')) {
-                                                cleanPh = '88' + cleanPh;
+                                            } else if (cleanPhone.startsWith('01')) {
+                                                cleanPhone = '88' + cleanPhone;
+                                            } else if (cleanPhone.startsWith('1')) {
+                                                cleanPhone = '880' + cleanPhone;
                                             } else {
-                                                cleanPh = '880' + cleanPh;
+                                                // Fallback or assume it's just missing 88
+                                                cleanPhone = '88' + cleanPhone;
                                             }
 
-                                            const tmpl = status === 'PAID' 
-                                                ? (info.confirm_template || "Dear Owner, Payment received for Unit {unit}. Month: {month}. Amount: {amount}.")
-                                                : (info.due_template || "Dear Owner, Payment DUE for Unit {unit}. Month: {month}. Amount: {amount}. Total Due: {due_amount}.");
+                                            const template = status === 'PAID' 
+                                                ? (whatsAppTarget === 'tenant' ? info.confirm_template : info.owner_confirm_template)
+                                                : (whatsAppTarget === 'tenant' ? info.due_template : info.owner_due_template);
 
-                                            const msg = tmpl
+                                            if (!template) {
+                                                alert("Please set a message template.");
+                                                return;
+                                            }
+
+                                            // Dynamic Variables
+                                            const msg = template
                                                 .replace(/{unit}/g, unit)
                                                 .replace(/{month}/g, whatsAppMonth)
                                                 .replace(/{amount}/g, amount.toString())
-                                                .replace(/{due_amount}/g, dueAmount.toString());
+                                                .replace(/{due_amount}/g, dueAmount.toString())
+                                                .replace(/{target}/g, whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner');
 
-                                            const url = `https://wa.me/${cleanPh}?text=${encodeURIComponent(msg)}`;
-                                            
-                                            // Log
-                                            const newCount = (log?.sent_count || 0) + 1;
-                                            await supabase.from('whatsapp_logs').upsert({
-                                                unit_text: unit,
-                                                month_name: whatsAppMonth,
-                                                year_num: selectedYear,
-                                                message_type: status === 'PAID' ? 'confirm' : 'due',
-                                                sent_count: newCount,
-                                                last_sent_at: new Date().toISOString()
-                                            }, { onConflict: 'unit_text, month_name, year_num' }); // Assuming composite constraint
-
-                                            // Update local log state
-                                            const newLog = {
-                                                unit_text: unit,
-                                                month_name: whatsAppMonth,
-                                                year_num: selectedYear,
-                                                message_type: status === 'PAID' ? 'confirm' : 'due',
-                                                sent_count: newCount,
-                                                last_sent_at: new Date().toISOString()
-                                            } as WhatsAppLog;
-                                            
-                                            setWhatsAppLogs(prev => {
-                                                const filtered = prev.filter(l => !(l.unit_text === unit && l.month_name === whatsAppMonth && l.year_num === selectedYear));
-                                                return [...filtered, newLog];
-                                            });
-
+                                            const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
                                             window.open(url, '_blank');
+
+                                            // Log to Supabase
+                                            try {
+                                                await supabase.from('whatsapp_logs').insert({
+                                                    unit_text: unit,
+                                                    month_name: whatsAppMonth,
+                                                    year_num: selectedYear,
+                                                    message_type: status === 'PAID' ? 'confirm' : 'due',
+                                                    target_audience: whatsAppTarget,
+                                                    sent_count: 1,
+                                                    last_sent_at: new Date().toISOString()
+                                                });
+                                                
+                                                // Update local log state
+                                                setWhatsAppLogs(prev => [...prev, {
+                                                    unit_text: unit,
+                                                    month_name: whatsAppMonth,
+                                                    year_num: selectedYear,
+                                                    message_type: status === 'PAID' ? 'confirm' : 'due',
+                                                    target_audience: whatsAppTarget,
+                                                    sent_count: 1,
+                                                    last_sent_at: new Date().toISOString()
+                                                }]);
+                                            } catch (e) {
+                                                console.error("Log error", e);
+                                            }
                                         }}
                                         className="flex-[2] bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-green-200 dark:shadow-none"
                                     >
