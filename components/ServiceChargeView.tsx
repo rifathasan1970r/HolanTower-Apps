@@ -59,6 +59,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   showSummaryList,
   onSummaryToggle
 }) => {
+  const [showMonthlySummary, setShowMonthlySummary] = useState<boolean>(false);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [searchTerm, setSearchTerm] = useState('');
@@ -477,6 +478,46 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         return { unit, collected, due };
     });
   }, [selectedYear, dbData, unitsInfo, lang]); // Added lang dependency to re-calculate month names
+
+  // New: 12-Month Aggregate Stats
+  const monthlyStats = useMemo(() => {
+    const stats = MONTHS_LOGIC.map((m, i) => ({ 
+        month: t.months[i], 
+        originalMonth: m,
+        collected: 0, 
+        due: 0,
+        paidUnits: [] as string[],
+        dueUnits: [] as string[],
+        totalUnits: 0
+    }));
+
+    ALL_UNITS.forEach(unit => {
+        const unitRecords = getUnitData(unit); // Returns 12 records
+        unitRecords.forEach((record, idx) => {
+            if (stats[idx]) {
+                stats[idx].totalUnits++;
+                if (record.status === 'PAID') {
+                    stats[idx].collected += record.amount;
+                    stats[idx].paidUnits.push(unit);
+                } else if (record.status === 'DUE') {
+                    stats[idx].due += record.due;
+                    stats[idx].dueUnits.push(unit);
+                } else {
+                    // UPCOMING or other status, still counts as unit but maybe not in due/paid lists for this specific logic?
+                    // Request says "Paid" and "Due". Upcoming might be considered "Due" or ignored.
+                    // Usually upcoming means not yet due.
+                    // Let's stick to strict PAID vs DUE for the lists.
+                }
+            }
+        });
+    });
+
+    return stats;
+  }, [selectedYear, dbData, unitsInfo, lang]);
+
+  const [selectedMonthStat, setSelectedMonthStat] = useState<any>(null);
+  const [detailViewType, setDetailViewType] = useState<'SUMMARY' | 'PAID_LIST' | 'DUE_LIST'>('SUMMARY');
+
 
   const grandTotalCollected = allUnitsSummary.reduce((acc, curr) => acc + curr.collected, 0);
   const grandTotalDue = allUnitsSummary.reduce((acc, curr) => acc + curr.due, 0);
@@ -1263,11 +1304,179 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     );
   }
 
+  // Month Detail Modal
+  const monthDetailModal = selectedMonthStat && (
+    <div className="fixed inset-0 z-[90] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedMonthStat(null)}>
+      <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+         {/* Decorative Background */}
+         <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-50 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+         <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-50 dark:bg-blue-900/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+         
+         <div className="relative z-10 flex flex-col h-full">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6 shrink-0">
+                <div>
+                    {detailViewType === 'SUMMARY' ? (
+                        <>
+                            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{selectedMonthStat.month}</h3>
+                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{selectedYear} এর হিসাব</p>
+                        </>
+                    ) : (
+                        <button 
+                            onClick={() => setDetailViewType('SUMMARY')}
+                            className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        >
+                            <ArrowLeft size={20} />
+                            <span className="font-bold text-lg">{detailViewType === 'PAID_LIST' ? 'পরিশোধিত তালিকা' : 'বকেয়া তালিকা'}</span>
+                        </button>
+                    )}
+                </div>
+                <button onClick={() => setSelectedMonthStat(null)} className="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 p-2 rounded-full transition-colors">
+                    <X size={20} />
+                </button>
+            </div>
+
+            {detailViewType === 'SUMMARY' ? (
+                <div className="space-y-4 overflow-y-auto pr-1 custom-scrollbar">
+                    {/* Main Stats Grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm">
+                            <div className="bg-green-100 dark:bg-green-800 p-2 rounded-full text-green-600 dark:text-green-300 mb-2">
+                                <CheckCircle2 size={20} />
+                            </div>
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{t.totalCollected}</span>
+                            <span className="text-lg font-black text-green-600 dark:text-green-400">৳ {selectedMonthStat.collected.toLocaleString()}</span>
+                        </div>
+
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm">
+                            <div className="bg-red-100 dark:bg-red-800 p-2 rounded-full text-red-600 dark:text-red-300 mb-2">
+                                <XCircle size={20} />
+                            </div>
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{t.totalDue}</span>
+                            <span className="text-lg font-black text-red-600 dark:text-red-400">৳ {selectedMonthStat.due.toLocaleString()}</span>
+                        </div>
+                    </div>
+
+                    {/* Unit Counts */}
+                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-50 dark:border-slate-700">
+                            <span className="text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                                <Home size={16} className="text-indigo-500" />
+                                {t.unit} সংখ্যা
+                            </span>
+                            <span className="text-lg font-black text-slate-800 dark:text-white">{selectedMonthStat.totalUnits} টি</span>
+                        </div>
+                        
+                        <div className="space-y-3">
+                            <button 
+                                onClick={() => setDetailViewType('PAID_LIST')}
+                                className="w-full flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-700/50 p-2 -mx-2 rounded-xl transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 font-bold text-xs">
+                                        <Check size={14} />
+                                    </div>
+                                    <span className="text-sm font-bold text-slate-600 dark:text-slate-300">পরিশোধ করেছে</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-base font-bold text-green-600 dark:text-green-400">{selectedMonthStat.paidUnits.length} টি</span>
+                                    <ChevronRight size={16} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400" />
+                                </div>
+                            </button>
+
+                            <button 
+                                onClick={() => setDetailViewType('DUE_LIST')}
+                                className="w-full flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-700/50 p-2 -mx-2 rounded-xl transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 font-bold text-xs">
+                                        <X size={14} />
+                                    </div>
+                                    <span className="text-sm font-bold text-slate-600 dark:text-slate-300">বাকি আছে</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-base font-bold text-red-600 dark:text-red-400">{selectedMonthStat.dueUnits.length} টি</span>
+                                    <ChevronRight size={16} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400" />
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* One Line Status */}
+                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-200 dark:shadow-none">
+                        <div className="flex items-start gap-3">
+                            <div className="bg-white/20 p-2 rounded-lg shrink-0">
+                                <Info size={18} className="text-white" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-xs font-medium text-indigo-100 leading-relaxed">
+                                    এই মাসে <span className="font-bold text-white">{selectedMonthStat.totalUnits}</span> ইউনিটের মধ্যে <span className="font-bold text-white">{selectedMonthStat.paidUnits.length}টি</span> পরিশোধ করেছে।
+                                </p>
+                                <p className="text-xs font-medium text-indigo-100 leading-relaxed">
+                                    এবং <span className="font-bold text-white">{selectedMonthStat.totalUnits}</span> ইউনিটের মধ্যে <span className="font-bold text-white">{selectedMonthStat.dueUnits.length}টি</span> বাকি আছে।
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                // LIST VIEW (PAID or DUE)
+                <div className="flex-1 overflow-hidden flex flex-col">
+                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 mb-4 shrink-0">
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2">
+                            <span>ইউনিট</span>
+                            <span>ফ্ল্যাট মালিক</span>
+                        </div>
+                    </div>
+                    
+                    <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar space-y-2">
+                        {(detailViewType === 'PAID_LIST' ? selectedMonthStat.paidUnits : selectedMonthStat.dueUnits).map((unit: string, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/30 rounded-xl border border-slate-100 dark:border-slate-700">
+                                <div className="flex items-center gap-3">
+                                    <span className={`
+                                        font-bold text-sm w-10 h-10 rounded-lg flex items-center justify-center
+                                        ${detailViewType === 'PAID_LIST' 
+                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
+                                            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}
+                                    `}>
+                                        {unit}
+                                    </span>
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                            {FLAT_OWNERS.find(f => f.flat === unit)?.name || 'Unknown'}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                            {detailViewType === 'PAID_LIST' ? 'পরিশোধিত' : 'বকেয়া'}
+                                        </span>
+                                    </div>
+                                </div>
+                                {detailViewType === 'PAID_LIST' ? (
+                                    <CheckCircle2 size={18} className="text-green-500 dark:text-green-400" />
+                                ) : (
+                                    <XCircle size={18} className="text-red-500 dark:text-red-400" />
+                                )}
+                            </div>
+                        ))}
+                        
+                        {(detailViewType === 'PAID_LIST' ? selectedMonthStat.paidUnits : selectedMonthStat.dueUnits).length === 0 && (
+                            <div className="text-center py-10 text-slate-400 dark:text-slate-500">
+                                <p className="text-sm">কোনো ইউনিট পাওয়া যায়নি</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+         </div>
+      </div>
+    </div>
+  );
+
   // VIEW 2 & 3 Combined Logic Wrapper
   return (
     <div className="px-4 pb-24 animate-in slide-in-from-bottom-4 duration-500 bg-slate-50 dark:bg-slate-900 min-h-screen">
       {loginModalContent}
       {paymentEditModalContent}
+      {monthDetailModal}
       
       {/* Loading State */}
       {loading && (
@@ -1429,6 +1638,91 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 </div>
             </div>
         </div>
+      ) : showMonthlySummary ? (
+          // VIEW 4: MONTHLY SUMMARY VIEW
+          <div className="animate-in slide-in-from-right duration-300">
+              <div className="flex items-center gap-3 mb-4">
+                 <button 
+                  onClick={() => setShowMonthlySummary(false)}
+                  className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div className="flex-1">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">মাসিক সামারি</h2>
+                    <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">{t.financialYear}: {selectedYear}</p>
+                </div>
+             </div>
+
+             {/* Year Selection Tabs */}
+             <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex mb-6">
+                <button 
+                    onClick={() => setSelectedYear(2025)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                >
+                    <CalendarDays size={16} /> 2025
+                </button>
+                <button 
+                    onClick={() => setSelectedYear(2026)}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                >
+                    <CalendarDays size={16} /> 2026
+                </button>
+            </div>
+
+            {/* 12 Month Summary Strip - Premium Thin Box */}
+            <div className="mb-6">
+                <div className="flex items-center justify-between mb-2 px-1">
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                        <TrendingUp size={16} className="text-indigo-500" />
+                        মাসিক সামারি
+                    </h3>
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                        {selectedYear}
+                    </span>
+                </div>
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-2 overflow-x-auto no-scrollbar">
+                    <div className="flex gap-2 min-w-max">
+                        {monthlyStats.map((stat, idx) => {
+                            const isCurrentMonth = new Date().getMonth() === idx && selectedYear === new Date().getFullYear();
+                            return (
+                                <button 
+                                    key={idx}
+                                    onClick={() => {
+                                        setSelectedMonthStat(stat);
+                                        setDetailViewType('SUMMARY');
+                                    }}
+                                    className={`
+                                        group flex flex-col items-center justify-center px-3 py-2 rounded-xl border transition-all min-w-[70px] relative overflow-hidden
+                                        ${isCurrentMonth 
+                                            ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' 
+                                            : 'bg-slate-50 dark:bg-slate-700/50 border-slate-100 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'}
+                                    `}
+                                >
+                                    {isCurrentMonth && (
+                                        <div className="absolute top-0 right-0 w-2 h-2 bg-indigo-500 rounded-full -mr-0.5 -mt-0.5"></div>
+                                    )}
+                                    <span className={`text-[10px] font-bold mb-1 ${isCurrentMonth ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}>
+                                        {stat.month}
+                                    </span>
+                                    <div className="flex flex-col items-center gap-0.5 w-full">
+                                        <div className="h-1 w-full bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-green-500 rounded-full" 
+                                                style={{ width: `${stat.collected > 0 ? Math.min((stat.collected / (stat.collected + stat.due)) * 100, 100) : 0}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+                                            {stat.collected > 0 ? `${(stat.collected/1000).toFixed(1)}k` : '0'}
+                                        </span>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+          </div>
       ) : (
         // VIEW 3: MAIN GRID DASHBOARD
         <div>
@@ -1451,7 +1745,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             {/* Grand Summary Box (All Units) - CLICKABLE */}
             <div 
                 onClick={() => onSummaryToggle(true)}
-                className="mb-6 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 dark:border-white/5 p-5 text-white cursor-pointer active:scale-[0.98] transition-all group"
+                className="mb-4 relative overflow-hidden rounded-2xl shadow-lg border border-white/10 dark:border-white/5 p-5 text-white cursor-pointer active:scale-[0.98] transition-all group"
                 style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
             >
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -1486,6 +1780,25 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     {t.details}
                 </p>
             </div>
+
+            {/* Monthly Summary Button - New Separate Box */}
+            <button 
+                onClick={() => setShowMonthlySummary(true)}
+                className="mb-6 w-full relative overflow-hidden rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-800 flex items-center justify-between group active:scale-[0.98] transition-all"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2.5 rounded-xl text-indigo-600 dark:text-indigo-400">
+                        <TrendingUp size={20} />
+                    </div>
+                    <div className="text-left">
+                        <h3 className="text-base font-bold text-slate-800 dark:text-white">মাসিক সামারি</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">প্রতি মাসের বিস্তারিত হিসাব দেখুন</p>
+                    </div>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-700 p-2 rounded-full text-slate-400 dark:text-slate-500 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-500 transition-colors">
+                    <ChevronRight size={20} />
+                </div>
+            </button>
 
             {/* Search Bar */}
             <div className="relative mb-6">
