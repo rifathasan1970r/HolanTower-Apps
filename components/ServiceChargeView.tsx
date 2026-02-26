@@ -2232,7 +2232,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                         onClick={async () => {
                                             // Send Logic
                                             const key = `${unit}-${selectedYear}`;
-                                            const info = unitsInfo[key] || {};
+                                            // Use same fallback logic as render to ensure we get the phone number if it exists in generic key
+                                            const info = unitsInfo[key] || unitsInfo[unit] || {};
                                             const ph = whatsAppTarget === 'tenant' ? info.phone : info.owner_phone;
                                             
                                             if (!ph) {
@@ -2306,8 +2307,25 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                 .replace(/{due_amount}/g, dueAmount.toString())
                                                 .replace(/{target}/g, whatsAppTarget === 'tenant' ? 'Tenant' : 'Owner');
 
-                                            const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`;
-                                            window.open(url, '_blank');
+                                            // Robust WhatsApp Opening Logic
+                                            const isAndroid = /Android/i.test(navigator.userAgent);
+                                            const webUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`;
+
+                                            if (isAndroid) {
+                                                // Android Intent with Fallback
+                                                // This tells the Android OS to open WhatsApp directly, or fallback to the web URL if not installed/handled
+                                                const intentUrl = `intent://send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}#Intent;scheme=whatsapp;package=com.whatsapp;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
+                                                window.location.href = intentUrl;
+                                            } else {
+                                                // iOS / Desktop - Use anchor click which is often more reliable than window.open in WebViews
+                                                const link = document.createElement('a');
+                                                link.href = webUrl;
+                                                link.target = '_blank';
+                                                link.rel = 'noopener noreferrer';
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                document.body.removeChild(link);
+                                            }
 
                                             // Log to Supabase
                                             try {
