@@ -23,6 +23,7 @@ import { SettingsView } from './components/SettingsView';
 import { PrayerTimeView } from './components/PrayerTimeView';
 import { RechargeRulesView } from './components/RechargeRulesView';
 import { PullToRefresh } from './components/PullToRefresh';
+import { PolicyView } from './components/PolicyView';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -238,6 +239,9 @@ const App: React.FC = () => {
 
       case 'RECHARGE_RULES':
         return <RechargeRulesView onBack={() => window.history.back()} />;
+
+      case 'POLICY':
+        return <PolicyView onBack={() => window.history.back()} />;
 
       case 'MENU':
       case 'HOME':

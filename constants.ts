@@ -18,7 +18,8 @@ import {
   Flame,
   FireExtinguisher,
   Clock,
-  Smartphone
+  Smartphone,
+  FileText
 } from 'lucide-react';
 import { MenuItem, Notice } from './types';
 
@@ -127,6 +128,15 @@ export const MENU_ITEMS: MenuItem[] = [
     color: 'bg-indigo-500',
     description: 'আজকের নামাজের সময়সূচী',
     gradient: 'from-indigo-400 to-purple-600'
+  },
+  { 
+    id: 'policy', 
+    label: 'পরিচালনার প্রস্তাবিত নীতিমালা', 
+    icon: FileText, 
+    view: 'POLICY',
+    color: 'bg-rose-500',
+    description: 'নিয়মাবলী ও নির্দেশনা',
+    gradient: 'from-rose-400 to-pink-600'
   },
   { 
     id: 'lift', 
