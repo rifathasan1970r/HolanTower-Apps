@@ -24,6 +24,7 @@ import { PrayerTimeView } from './components/PrayerTimeView';
 import { RechargeRulesView } from './components/RechargeRulesView';
 import { PullToRefresh } from './components/PullToRefresh';
 import { PolicyView } from './components/PolicyView';
+import { MaintenancePopup } from './components/MaintenancePopup';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
@@ -486,6 +487,9 @@ const App: React.FC = () => {
 
     {/* Gemini Assistant - Only visible on HOME view */}
     <Assistant isVisible={currentView === 'HOME'} />
+
+    {/* Maintenance Popup */}
+    <MaintenancePopup />
 
     {/* Bottom Navigation */}
     <BottomNav currentView={currentView} setView={setCurrentView} />
