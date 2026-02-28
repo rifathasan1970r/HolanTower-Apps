@@ -16,7 +16,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
   
   // State for Maintenance Popup
   const [showMaintenancePopup, setShowMaintenancePopup] = useState(() => {
-    return localStorage.getItem('SHOW_MAINTENANCE_POPUP') === 'true';
+    // Default to TRUE if not set (null), or if explicitly 'true'
+    const storedValue = localStorage.getItem('SHOW_MAINTENANCE_POPUP');
+    return storedValue !== 'false';
   });
 
   const handleAdminLogin = () => {
