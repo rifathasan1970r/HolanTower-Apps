@@ -95,34 +95,46 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
       try {
         const ai = new GoogleGenAI({ apiKey });
         
+        // Filter messages to ensure history starts with a 'user' turn
+        // and only includes valid turns for the API
+        const history = messages
+          .filter((m, idx) => !(idx === 0 && m.role === 'model')) // Skip initial welcome message
+          .map(m => ({
+            role: m.role,
+            parts: [{ text: m.text }]
+          }));
+
         const response = await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
+          model: "gemini-flash-latest",
           contents: [
-            ...messages.map(m => ({
-              role: m.role,
-              parts: [{ text: m.text }]
-            })),
+            ...history,
             { role: 'user', parts: [{ text: userMessage }] }
           ],
           config: {
             systemInstruction: systemInstruction,
             temperature: 0.7,
+            topP: 0.95,
+            topK: 40
           }
         });
 
         const aiText = response.text || "দুঃখিত, আমি এখন উত্তর দিতে পারছি না।";
         setMessages(prev => [...prev, { role: 'model', text: aiText }]);
         setIsLoading(false);
-        return; // Success!
+        return; 
       } catch (error: any) {
-        console.error(`AI Error (Attempt ${attempt + 1}):`, error);
+        console.error(`AI Error (Attempt ${attempt + 1}):`, error.message || error);
         
         if (attempt < MAX_RETRIES - 1) {
           await sleep(BASE_DELAY * Math.pow(2, attempt));
           continue;
         }
         
-        setMessages(prev => [...prev, { role: 'model', text: "দুঃখিত, এআই সার্ভারে সমস্যা হচ্ছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।" }]);
+        const errorMsg = error.message?.includes('API key') 
+          ? "এপিআই কী (API Key) সঠিক নয়। অনুগ্রহ করে চেক করুন।" 
+          : "এআই সার্ভারে সাময়িক সমস্যা হচ্ছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
+          
+        setMessages(prev => [...prev, { role: 'model', text: `দুঃখিত, ${errorMsg}` }]);
       }
     }
     
