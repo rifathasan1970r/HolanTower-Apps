@@ -16,7 +16,7 @@ const MONTHS_LOGIC = [
   'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
 ];
 
-type Status = 'PAID' | 'DUE' | 'UPCOMING';
+type Status = 'PAID' | 'DUE' | 'UPCOMING' | 'PARTIAL';
 
 interface MonthlyRecord {
   month: string;
@@ -78,6 +78,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 }) => {
   const [showMonthlySummary, setShowMonthlySummary] = useState<boolean>(false);
   const [showParkingView, setShowParkingView] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<'SERVICE' | 'PARKING'>('SERVICE');
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,7 +113,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     monthName: 'জানুয়ারি',
     yearVal: '2026',
     isDateEnabled: true,
-    status: 'PAID' as 'PAID' | 'DUE' | 'UPCOMING',
+    status: 'PAID' as 'PAID' | 'DUE' | 'UPCOMING' | 'PARTIAL',
     isOccupied: true // Local occupancy for this specific entry
   });
 
@@ -295,7 +296,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   const startEditing = (unit: string, month: string) => {
     if (!isAdmin) return;
-    const existing = dbData.find(d => d.unit_text === unit && d.month_name === month && d.year_num === selectedYear);
+    
+    // Determine DB Unit Text
+    const dbUnitText = viewMode === 'PARKING' ? `${unit}_P` : unit;
+
+    const existing = dbData.find(d => d.unit_text === dbUnitText && d.month_name === month && d.year_num === selectedYear);
     
     const monthIndex = MONTHS_LOGIC.indexOf(month);
     let nextMonthIndex = monthIndex + 1;
@@ -322,7 +327,13 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     }
 
     const isOccupiedDefault = unit.slice(-1) !== 'B';
-    const defaultAmount = isOccupiedDefault ? 2000 : 500;
+    let defaultAmount = 0;
+    if (viewMode === 'SERVICE') {
+        defaultAmount = isOccupiedDefault ? 2000 : 500;
+    } else {
+        // Parking default
+        defaultAmount = 500;
+    }
 
     let initialStatus: 'PAID' | 'DUE' | 'UPCOMING' = 'PAID';
     let initialAmount = defaultAmount;
@@ -401,12 +412,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     const finalAmount = status === 'UPCOMING' ? 0 : amount;
     const finalDue = status === 'UPCOMING' ? 0 : due;
 
+    // Determine DB Unit Text
+    const dbUnitText = viewMode === 'PARKING' ? `${unit}_P` : unit;
+
     try {
       // ১. প্রথমে চেক করি এই মাস ও ইউনিটের ডাটা সার্ভারে আগে থেকেই আছে কিনা
       const { data: existingData, error: fetchError } = await supabase
         .from('payments')
         .select('id')
-        .eq('unit_text', unit)
+        .eq('unit_text', dbUnitText)
         .eq('month_name', month)
         .eq('year_num', year)
         .maybeSingle();
@@ -429,7 +443,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       } else {
         // INSERT (যদি ডাটা না থাকে)
         const newRecord = {
-          unit_text: unit,
+          unit_text: dbUnitText,
           month_name: month,
           year_num: year,
           amount: finalAmount,
@@ -496,12 +510,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     const now = new Date();
     const currentRealYear = now.getFullYear();
     const currentRealMonthIdx = now.getMonth();
+    
+    // Determine the actual unit text to search in DB (e.g., '2A' or '2A_P')
+    const dbUnitText = viewMode === 'PARKING' ? `${unit}_P` : unit;
 
     return MONTHS_LOGIC.map((month, index) => {
       let paymentRecord: PaymentData | undefined;
       
       paymentRecord = dbData.find(
-        d => d.unit_text === unit && d.month_name === month && d.year_num === selectedYear
+        d => d.unit_text === dbUnitText && d.month_name === month && d.year_num === selectedYear
       );
 
       // UI display month string
@@ -509,7 +526,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
       if (paymentRecord) {
         let recStatus: Status = 'DUE';
-        if (paymentRecord.amount > 0) recStatus = 'PAID';
+        if (paymentRecord.amount > 0 && paymentRecord.due > 0) recStatus = 'PARTIAL';
+        else if (paymentRecord.amount > 0) recStatus = 'PAID';
         else if (paymentRecord.amount === 0 && paymentRecord.due === 0) recStatus = 'UPCOMING';
 
         return {
@@ -522,7 +540,18 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         };
       }
 
-      const defaultAmount = (unit.slice(-1) !== 'B') ? 2000 : 500;
+      // Default Amounts Logic
+      let defaultAmount = 0;
+      if (viewMode === 'SERVICE') {
+          defaultAmount = (unit.slice(-1) !== 'B') ? 2000 : 500;
+      } else {
+          // Parking Charge Default: Let's assume 0 for now, or maybe 500? 
+          // User didn't specify, so let's default to 0 due (meaning not applicable unless set)
+          // Or maybe 500 if they have a car? 
+          // Let's stick to 0 for now to be safe, or 500 if occupied?
+          // Actually, let's make it 0 and let admin set it.
+          defaultAmount = 0; 
+      }
 
       const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && index > currentRealMonthIdx);
       if (isFuture) {
@@ -598,9 +627,12 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         const currentRealYear = now.getFullYear();
         const currentRealMonthIdx = now.getMonth();
 
+        // Determine the actual unit text to search in DB (e.g., '2A' or '2A_P')
+        const dbUnitText = viewMode === 'PARKING' ? `${unit}_P` : unit;
+
         const records = MONTHS_LOGIC.map((month, index) => {
             const paymentRecord = dbData.find(
-                d => d.unit_text === unit && d.month_name === month && d.year_num === selectedYear
+                d => d.unit_text === dbUnitText && d.month_name === month && d.year_num === selectedYear
             );
             
             // Display month string
@@ -608,7 +640,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
             if (paymentRecord) {
                 let recStatus = 'DUE';
-                if (paymentRecord.amount > 0) recStatus = 'PAID';
+                if (paymentRecord.amount > 0 && paymentRecord.due > 0) recStatus = 'PARTIAL';
+                else if (paymentRecord.amount > 0) recStatus = 'PAID';
                 else if (paymentRecord.amount === 0 && paymentRecord.due === 0) recStatus = 'UPCOMING';
 
                 return {
@@ -619,7 +652,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 };
             }
 
-            const defaultAmount = (unit.slice(-1) !== 'B') ? 2000 : 500;
+            // Default Amount Logic for Summary
+            let defaultAmount = 0;
+            if (viewMode === 'SERVICE') {
+                defaultAmount = (unit.slice(-1) !== 'B') ? 2000 : 500;
+            } else {
+                defaultAmount = 500;
+            }
+
             const isFuture = selectedYear > currentRealYear || (selectedYear === currentRealYear && index > currentRealMonthIdx);
             
             if (isFuture) {
@@ -629,8 +669,16 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             }
         });
         
-        // Monthly Charge: 2000 for A/C, 500 for B
-        const monthlyCharge = (unit.slice(-1) !== 'B') ? 2000 : 500;
+        // Monthly Charge: 2000 for A/C, 500 for B (Service Charge)
+        // For Parking, it's 0 by default unless we have a way to know.
+        let monthlyCharge = 0;
+        if (viewMode === 'SERVICE') {
+            monthlyCharge = (unit.slice(-1) !== 'B') ? 2000 : 500;
+        } else {
+            // Parking Charge: Maybe calculate average paid amount? Or just 0.
+            // Let's use 0 for now as it varies.
+            monthlyCharge = 0;
+        }
         
         // Total Due for the year
         const totalDue = records.reduce((sum, r) => sum + r.due, 0);
@@ -851,6 +899,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 <span className="text-[9px] font-bold text-red-700">{t.due}</span>
             </div>
         );
+      case 'PARTIAL':
+        return (
+            <div className="flex flex-col items-center justify-center">
+                <div className="bg-yellow-100 text-yellow-600 p-1 rounded-full mb-0.5">
+                    <PieChart size={14} />
+                </div>
+                <span className="text-[9px] font-bold text-yellow-700">আংশিক</span>
+            </div>
+        );
       default:
         return (
             <div className="flex flex-col items-center justify-center">
@@ -893,20 +950,39 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     </div>
   );
 
-  const handleStatusChange = (newStatus: 'PAID' | 'DUE' | 'UPCOMING') => {
-      const defaultAmount = editModalData.isOccupied ? 2000 : 500;
+  const handleStatusChange = (newStatus: 'PAID' | 'DUE' | 'UPCOMING' | 'PARTIAL') => {
+      let defaultAmount = 0;
+      if (viewMode === 'SERVICE') {
+          defaultAmount = editModalData.isOccupied ? 2000 : 500;
+      } else {
+          // Parking default: Use 500 so that Partial split (250/250) works and doesn't result in 0/0 (Upcoming)
+          defaultAmount = 500;
+      }
+
+      // If user has manually entered amounts, use that total as base for splitting/switching
+      const currentTotal = (editModalData.amount || 0) + (editModalData.due || 0);
+      const baseAmount = currentTotal > 0 ? currentTotal : defaultAmount;
 
       if (newStatus === 'PAID') {
-          setEditModalData(prev => ({ ...prev, status: newStatus, amount: defaultAmount, due: 0, isDateEnabled: true }));
+          setEditModalData(prev => ({ ...prev, status: newStatus, amount: baseAmount, due: 0, isDateEnabled: true }));
       } else if (newStatus === 'DUE') {
-          setEditModalData(prev => ({ ...prev, status: newStatus, amount: 0, due: defaultAmount, isDateEnabled: false }));
+          setEditModalData(prev => ({ ...prev, status: newStatus, amount: 0, due: baseAmount, isDateEnabled: false }));
       } else if (newStatus === 'UPCOMING') {
           setEditModalData(prev => ({ ...prev, status: newStatus, amount: 0, due: 0, isDateEnabled: false }));
+      } else if (newStatus === 'PARTIAL') {
+          const halfAmount = baseAmount / 2;
+          setEditModalData(prev => ({ ...prev, status: newStatus, amount: halfAmount, due: halfAmount, isDateEnabled: true }));
       }
   };
 
   const handleModalOccupancyChange = (val: boolean) => {
-      const defaultAmount = val ? 2000 : 500;
+      let defaultAmount = 0;
+      if (viewMode === 'SERVICE') {
+          defaultAmount = val ? 2000 : 500;
+      } else {
+          defaultAmount = 0;
+      }
+
       setEditModalData(prev => {
           const updates: any = { isOccupied: val };
           if (prev.status === 'PAID') {
@@ -975,6 +1051,12 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'UPCOMING' ? 'bg-white dark:bg-slate-600 text-slate-700 dark:text-slate-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                 >
                     আসন্ন
+                </button>
+                <button 
+                    onClick={() => handleStatusChange('PARTIAL')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editModalData.status === 'PARTIAL' ? 'bg-white dark:bg-slate-600 text-yellow-600 dark:text-yellow-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                >
+                    আংশিক
                 </button>
             </div>
 
@@ -1112,21 +1194,27 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
               </div>
               <div className="text-left">
                 <h3 className="text-base font-bold text-slate-800 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">সার্ভিস চার্জ সহ পার্কিং চার্জ</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">একসাথে পেমেন্ট করুন</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">এক সাথে দেখুন</p>
               </div>
             </div>
             <ChevronRight size={20} className="text-slate-400 group-hover:text-primary-500 transition-colors" />
           </button>
 
           {/* Option 2 */}
-          <button className="w-full bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between group active:scale-[0.98] transition-all hover:border-orange-500 dark:hover:border-orange-400">
+          <button 
+            onClick={() => {
+                setViewMode('PARKING');
+                setShowParkingView(false);
+            }}
+            className="w-full bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between group active:scale-[0.98] transition-all hover:border-orange-500 dark:hover:border-orange-400"
+          >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Car size={24} />
               </div>
               <div className="text-left">
                 <h3 className="text-base font-bold text-slate-800 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">শুধু পার্কিং চার্জ</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">আলাদাভাবে পেমেন্ট করুন</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">আলাদাভাবে দেখুন</p>
               </div>
             </div>
             <ChevronRight size={20} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
@@ -1382,26 +1470,28 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         {/* Summary Box */}
         <div className="px-4 pt-4">
             <div 
-                className="rounded-2xl p-4 shadow-lg border border-white/10 dark:border-white/5 grid grid-cols-3 gap-2 divide-x divide-white/20 text-white transition-all duration-500"
+                className={`rounded-2xl p-4 shadow-lg border border-white/10 dark:border-white/5 grid ${viewMode === 'SERVICE' ? 'grid-cols-3' : 'grid-cols-2'} gap-2 divide-x divide-white/20 text-white transition-all duration-500`}
                 style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
             >
-                <button 
-                    onClick={() => handleToggleOccupancy(selectedUnit)}
-                    disabled={!isAdmin || processingUpdate}
-                    className={`text-center px-1 flex flex-col items-center justify-center transition-all ${isAdmin && !processingUpdate ? 'active:scale-95 cursor-pointer' : 'opacity-80 cursor-not-allowed'}`}
-                >
-                    <p className="text-[10px] text-white/80 font-medium uppercase mb-1">{t.occupancy}</p>
-                    <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${occupancyStatus === t.occupied ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400' : 'bg-white/90 dark:bg-slate-800/90 text-orange-600 dark:text-orange-400'}`}>
-                        {processingUpdate ? (
-                            <RefreshCw size={12} className="animate-spin" />
-                        ) : (
-                            <>
-                                {occupancyStatus === t.occupied ? <Users size={12} /> : <Home size={12} />}
-                                {occupancyStatus}
-                            </>
-                        )}
-                    </div>
-                </button>
+                {viewMode === 'SERVICE' && (
+                    <button 
+                        onClick={() => handleToggleOccupancy(selectedUnit)}
+                        disabled={!isAdmin || processingUpdate}
+                        className={`text-center px-1 flex flex-col items-center justify-center transition-all ${isAdmin && !processingUpdate ? 'active:scale-95 cursor-pointer' : 'opacity-80 cursor-not-allowed'}`}
+                    >
+                        <p className="text-[10px] text-white/80 font-medium uppercase mb-1">{t.occupancy}</p>
+                        <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${occupancyStatus === t.occupied ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400' : 'bg-white/90 dark:bg-slate-800/90 text-orange-600 dark:text-orange-400'}`}>
+                            {processingUpdate ? (
+                                <RefreshCw size={12} className="animate-spin" />
+                            ) : (
+                                <>
+                                    {occupancyStatus === t.occupied ? <Users size={12} /> : <Home size={12} />}
+                                    {occupancyStatus}
+                                </>
+                            )}
+                        </div>
+                    </button>
+                )}
                 <div className="text-center px-1 flex flex-col items-center justify-center">
                     <p className="text-[10px] text-white/80 font-medium uppercase mb-1">{t.totalAmount}</p>
                     <p className="font-bold text-white text-base">৳ {totalAmount.toLocaleString()}</p>
@@ -2794,27 +2884,41 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 </p>
             </div>
 
-            {/* Parking Charge Section */}
-            <div className="mb-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-xl text-orange-600 dark:text-orange-400">
-                        <Car size={20} />
+            {/* Parking Charge Button */}
+            {viewMode === 'SERVICE' ? (
+                <button 
+                    onClick={() => setShowParkingView(true)}
+                    className="mb-4 w-full relative overflow-hidden rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-800 flex items-center justify-between group active:scale-[0.98] transition-all"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="bg-orange-100 dark:bg-orange-900/30 p-2.5 rounded-xl text-orange-600 dark:text-orange-400">
+                            <Car size={20} />
+                        </div>
+                        <div className="text-left">
+                            <h3 className="text-base font-bold text-slate-800 dark:text-white">পার্কিং চার্জ</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">বিস্তারিত দেখুন</p>
+                        </div>
                     </div>
-                    <h3 className="text-base font-bold text-slate-800 dark:text-white">পার্কিং চার্জ</h3>
-                </div>
-                
-                <div className="space-y-2">
-                    <button className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group active:scale-[0.98]">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">সার্ভিস চার্জ সহ পার্কিং চার্জ</span>
-                        <ChevronRight size={16} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
-                    </button>
-                    
-                    <button className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group active:scale-[0.98]">
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">শুধু পার্কিং চার্জ</span>
-                        <ChevronRight size={16} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
-                    </button>
-                </div>
-            </div>
+                    <div className="bg-slate-50 dark:bg-slate-700 p-2 rounded-full text-slate-400 dark:text-slate-500 group-hover:bg-orange-50 dark:group-hover:bg-orange-900/30 group-hover:text-orange-500 transition-colors">
+                        <ChevronRight size={20} />
+                    </div>
+                </button>
+            ) : (
+                <button 
+                    onClick={() => setViewMode('SERVICE')}
+                    className="mb-4 w-full relative overflow-hidden rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 p-4 bg-orange-50 dark:bg-orange-900/20 flex items-center justify-between group active:scale-[0.98] transition-all"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white dark:bg-slate-800 p-2.5 rounded-xl text-orange-600 dark:text-orange-400 shadow-sm">
+                            <ArrowLeft size={20} />
+                        </div>
+                        <div className="text-left">
+                            <h3 className="text-base font-bold text-slate-800 dark:text-white">সার্ভিস চার্জে ফিরে যান</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">বর্তমানে পার্কিং চার্জ দেখছেন</p>
+                        </div>
+                    </div>
+                </button>
+            )}
 
             {/* Monthly Summary Button - New Separate Box */}
             <button 
