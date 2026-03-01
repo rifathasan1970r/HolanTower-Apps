@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { AIAssistant } from './AIAssistant';
 import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car, Bot } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
@@ -2137,13 +2138,22 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       />
 
       {/* Floating AI Assistant Button */}
-      <button 
+      <motion.button 
+        animate={{ 
+          y: [0, -8, 0],
+          scale: [1, 1.05, 1]
+        }}
+        transition={{ 
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
         onClick={() => setShowAIAssistant(true)}
         className="fixed bottom-24 right-4 z-50 bg-indigo-600 text-white p-4 rounded-full shadow-2xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center group"
       >
         <Bot size={24} />
         <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 transition-all duration-300 font-bold text-sm whitespace-nowrap">এআই অ্যাসিস্ট্যান্ট</span>
-      </button>
+      </motion.button>
       
       {/* Loading State */}
       {loading && (
