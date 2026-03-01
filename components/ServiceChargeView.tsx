@@ -1550,12 +1550,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                             <div className={`px-2 py-1.5 rounded-lg text-[9px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
                                             record.status === 'PAID' 
                                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800 shadow-sm' 
+                                                : record.status === 'PARTIAL'
+                                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800 shadow-sm'
                                                 : record.status === 'DUE'
                                                 ? 'bg-white dark:bg-slate-800 text-red-500 dark:text-red-400 border-red-200 dark:border-red-800 shadow-sm'
                                                 : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600 shadow-sm'
                                             }`}>
-                                            {record.status === 'PAID' ? <CheckCircle2 size={10} /> : record.status === 'DUE' ? <XCircle size={10} /> : <Clock size={10} />}
-                                            {record.status === 'PAID' ? t.paid : record.status === 'DUE' ? t.due : t.upcoming}
+                                            {record.status === 'PAID' ? <CheckCircle2 size={10} /> : record.status === 'PARTIAL' ? <PieChart size={10} /> : record.status === 'DUE' ? <XCircle size={10} /> : <Clock size={10} />}
+                                            {record.status === 'PAID' ? t.paid : record.status === 'PARTIAL' ? 'আংশিক' : record.status === 'DUE' ? t.due : t.upcoming}
                                             </div>
                                         ) : (
                                             getStatusElement(record.status)
