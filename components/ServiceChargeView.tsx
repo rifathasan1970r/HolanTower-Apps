@@ -126,6 +126,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     return new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }).replace(/,/g, '');
   };
 
+  const [parkingUnits, setParkingUnits] = useState<string[]>([]);
+  const [externalUnits, setExternalUnits] = useState<{id: string, name: string, owner: string}[]>([]);
+  const [showParkingManager, setShowParkingManager] = useState(false);
+  const [newExternalOwner, setNewExternalOwner] = useState('');
+
   // Fetch data from Supabase
   const fetchData = async (showLoading = true, fetchUnitsInfo = true) => {
     if (showLoading) setLoading(true);
@@ -166,7 +171,28 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             }
         } else if (uData) {
             const mapping: Record<string, UnitInfo> = {};
+            let parkingConfig: string[] = [];
+            let extUnits: {id: string, name: string, owner: string}[] = [];
+
             uData.forEach((u: any) => {
+                // Check for Parking Config
+                if (u.unit_text === '_PARKING_CONFIG_' && u.year_num === selectedYear) {
+                    try {
+                        if (u.note) {
+                            const parsed = JSON.parse(u.note);
+                            if (Array.isArray(parsed)) {
+                                parkingConfig = parsed;
+                            } else if (typeof parsed === 'object') {
+                                parkingConfig = parsed.selectedStandardUnits || [];
+                                extUnits = parsed.externalUnits || [];
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Error parsing parking config", e);
+                    }
+                    return;
+                }
+
                 // Use year-specific key if available, otherwise fallback to unit_text
                 const key = u.year_num ? `${u.unit_text}-${u.year_num}` : u.unit_text;
                 
@@ -194,6 +220,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 };
             });
             setUnitsInfo(mapping);
+            setParkingUnits(parkingConfig);
+            setExternalUnits(extUnits);
             // Sync to local storage for offline/fallback
             localStorage.setItem('units_info_fallback', JSON.stringify(mapping));
         }
@@ -221,6 +249,34 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   useEffect(() => {
     fetchData();
   }, [selectedYear]);
+
+  const handleSaveParkingConfig = async (newParkingUnits: string[], newExternalUnits: {id: string, name: string, owner: string}[]) => {
+    setParkingUnits(newParkingUnits);
+    setExternalUnits(newExternalUnits);
+    setShowParkingManager(false);
+    
+    try {
+        const config = {
+            selectedStandardUnits: newParkingUnits,
+            externalUnits: newExternalUnits
+        };
+
+        const { error } = await supabase
+            .from('units_info')
+            .upsert({ 
+                unit_text: '_PARKING_CONFIG_', 
+                year_num: selectedYear, 
+                note: JSON.stringify(config),
+                is_occupied: true // Dummy value
+            }, { onConflict: 'unit_text,year_num' });
+            
+        if (error) {
+            console.error("Error saving parking config:", error);
+        }
+    } catch (e) {
+        console.error("Exception saving parking config:", e);
+    }
+  };
 
   // Admin Logic
   const handleLogin = () => {
@@ -562,14 +618,24 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     });
   };
 
+  // Filter visible units based on view mode
+  const visibleUnits = useMemo(() => {
+    if (viewMode === 'PARKING') {
+        const standard = ALL_UNITS.filter(u => parkingUnits.includes(u));
+        const external = externalUnits.map(u => u.name);
+        return [...standard, ...external];
+    }
+    return ALL_UNITS;
+  }, [viewMode, parkingUnits, externalUnits]);
+
   const allUnitsSummary = useMemo(() => {
-    return ALL_UNITS.map(unit => {
+    return visibleUnits.map(unit => {
         const records = getUnitData(unit);
         const collected = records.reduce((sum, r) => sum + (r.status === 'PAID' ? r.amount : 0), 0);
         const due = records.reduce((sum, r) => sum + r.due, 0);
         return { unit, collected, due };
     });
-  }, [selectedYear, dbData, unitsInfo, lang, viewMode]); // Added viewMode dependency
+  }, [selectedYear, dbData, unitsInfo, lang, viewMode, visibleUnits]); // Added visibleUnits dependency
 
   // New: 12-Month Aggregate Stats
   const monthlyStats = useMemo(() => {
@@ -583,7 +649,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         totalUnits: 0
     }));
 
-    ALL_UNITS.forEach(unit => {
+    visibleUnits.forEach(unit => {
         const unitRecords = getUnitData(unit); // Returns 12 records
         unitRecords.forEach((record, idx) => {
             if (stats[idx]) {
@@ -602,12 +668,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     });
 
     return stats;
-  }, [selectedYear, dbData, unitsInfo, lang, viewMode]); // Added viewMode dependency
+  }, [selectedYear, dbData, unitsInfo, lang, viewMode, visibleUnits]); // Added visibleUnits dependency
 
   // New: Unit Wise Summary for Monthly Summary View
   const unitWiseSummary = useMemo(() => {
-    return ALL_UNITS.map(unit => {
+    return visibleUnits.map(unit => {
         const owner = FLAT_OWNERS.find(f => f.flat === unit);
+        const externalOwner = externalUnits.find(u => u.name === unit)?.owner;
+        const ownerName = owner?.name || externalOwner || 'Unknown';
+        
         // We need to call getUnitData inside here, but getUnitData depends on state.
         // Since getUnitData is defined in the component scope, we can use it.
         // However, getUnitData is not memoized, so it might be re-created on every render.
@@ -687,14 +756,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         
         return {
             unit,
-            ownerName: owner?.name || 'Unknown',
+            ownerName: ownerName,
             monthlyCharge,
             totalDue,
             lastPaymentDate,
             paymentMethod: 'Cash' // Hardcoded as per request
         };
     });
-  }, [selectedYear, dbData, unitsInfo, lang, viewMode]);
+  }, [selectedYear, dbData, unitsInfo, lang, viewMode, visibleUnits, externalUnits]);
 
   const [selectedMonthStat, setSelectedMonthStat] = useState<any>(null);
   const [detailViewType, setDetailViewType] = useState<'SUMMARY' | 'PAID_LIST' | 'DUE_LIST'>('SUMMARY');
@@ -717,7 +786,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     let threePlusMonths = 0;
     let totalAccumulatedDue = 0;
 
-    ALL_UNITS.forEach(unit => {
+    visibleUnits.forEach(unit => {
         // We need to get unit data. Since getUnitData is not memoized but available in scope, 
         // we'll duplicate the logic slightly to ensure correctness inside this useMemo 
         // or rely on the fact that we can call it.
@@ -736,7 +805,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     });
 
     return { oneMonth, twoMonths, threePlusMonths, totalAccumulatedDue };
-  }, [selectedYear, dbData, unitsInfo, lang, viewMode]);
+  }, [selectedYear, dbData, unitsInfo, lang, viewMode, visibleUnits]);
 
   const filteredUnitsData = allUnitsSummary.filter(data => 
     data.unit.toLowerCase().includes(searchTerm.toLowerCase())
@@ -1223,9 +1292,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   // VIEW 1: SINGLE UNIT DETAILED VIEW
   if (selectedUnit) {
-    const currentIndex = ALL_UNITS.indexOf(selectedUnit);
-    const prevUnit = currentIndex > 0 ? ALL_UNITS[currentIndex - 1] : null;
-    const nextUnit = currentIndex < ALL_UNITS.length - 1 ? ALL_UNITS[currentIndex + 1] : null;
+    const currentIndex = visibleUnits.indexOf(selectedUnit);
+    const prevUnit = currentIndex > 0 ? visibleUnits[currentIndex - 1] : null;
+    const nextUnit = currentIndex < visibleUnits.length - 1 ? visibleUnits[currentIndex + 1] : null;
 
     const records = getUnitData(selectedUnit);
     const totalAmount = records.reduce((sum, r) => sum + r.amount, 0);
@@ -1346,8 +1415,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             সকল ইউনিট
           </button>
           
-          <div className="grid grid-cols-3 gap-1.5 pb-2">
-            {ALL_UNITS.map((unit) => (
+          <div className="grid grid-cols-3 gap-1.5 pb-2 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            {visibleUnits.map((unit) => (
               <button
                 key={unit}
                 onClick={() => {
@@ -1425,7 +1494,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                   >
                     <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{selectedUnit}</h2>
                     <p className="text-sm font-bold text-primary-600 dark:text-primary-400 mt-1">
-                      {FLAT_OWNERS.find(f => f.flat === selectedUnit)?.name || 'Unknown'}
+                      {(() => {
+                          const owner = FLAT_OWNERS.find(f => f.flat === selectedUnit);
+                          const externalOwner = externalUnits.find(u => u.name === selectedUnit)?.owner;
+                          return owner?.name || externalOwner || 'Unknown';
+                      })()}
                     </p>
                  </div>
  
@@ -1986,7 +2059,136 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                    <MessageCircle size={16} />
                  </div>
              </button>
+
+             {/* Parking Manager Button - Only in Parking Mode */}
+             {viewMode === 'PARKING' && (
+                 <button 
+                    onClick={() => setShowParkingManager(true)}
+                    className="bg-orange-600 dark:bg-orange-700 border border-orange-700 dark:border-orange-600 rounded-xl p-3 flex items-center justify-end gap-3 hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors text-right shadow-sm"
+                 >
+                     <div>
+                       <p className="text-sm font-bold text-white">পার্কিং ইউনিট ম্যানেজ</p>
+                       <p className="text-[10px] text-orange-200 mt-0.5">গাড়ি বা পার্কিং যুক্ত করুন</p>
+                     </div>
+                     <div className="bg-orange-500 dark:bg-orange-600 p-2 rounded-full text-white">
+                       <Car size={16} />
+                     </div>
+                 </button>
+             )}
          </div>
+      )}
+
+      {/* Parking Manager Modal */}
+      {showParkingManager && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowParkingManager(false)}>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-4 shrink-0">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                        <Car size={20} className="text-orange-500" />
+                        পার্কিং ইউনিট নির্বাচন
+                    </h3>
+                    <button onClick={() => setShowParkingManager(false)} className="bg-slate-100 dark:bg-slate-700 p-1.5 rounded-full text-slate-500">
+                        <X size={18} />
+                    </button>
+                </div>
+                
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 shrink-0">
+                    যেসব ইউনিটের পার্কিং বা গাড়ি আছে, সেগুলো টিক চিহ্ন দিন।
+                </p>
+
+                <div className="overflow-y-auto flex-1 custom-scrollbar pr-1 mb-4">
+                    <div className="mb-4">
+                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">বিল্ডিং ইউনিট</h4>
+                        <div className="grid grid-cols-3 gap-2">
+                            {ALL_UNITS.map(unit => {
+                                const isSelected = parkingUnits.includes(unit);
+                                return (
+                                    <button
+                                        key={unit}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                setParkingUnits(prev => prev.filter(u => u !== unit));
+                                            } else {
+                                                setParkingUnits(prev => [...prev, unit]);
+                                            }
+                                        }}
+                                        className={`py-2 rounded-lg text-xs font-bold border transition-all ${
+                                            isSelected 
+                                            ? 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-700 text-orange-700 dark:text-orange-400' 
+                                            : 'bg-slate-50 dark:bg-slate-700 border-slate-100 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600'
+                                        }`}
+                                    >
+                                        {unit}
+                                        {isSelected && <CheckCircle2 size={10} className="inline ml-1" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">বাহিরস্থ পার্কিং</h4>
+                        <div className="space-y-2">
+                            {externalUnits.map((ext, idx) => (
+                                <div key={idx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-700/50 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{ext.name}</p>
+                                        <p className="text-[10px] text-slate-500 dark:text-slate-400">{ext.owner}</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setExternalUnits(prev => prev.filter((_, i) => i !== idx))}
+                                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-1 rounded"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ))}
+                            
+                            <div className="flex gap-2 mt-2">
+                                <input 
+                                    type="text" 
+                                    placeholder="মালিকের নাম"
+                                    value={newExternalOwner}
+                                    onChange={(e) => setNewExternalOwner(e.target.value)}
+                                    className="flex-1 text-xs border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-2 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                                />
+                                <button 
+                                    onClick={() => {
+                                        if (!newExternalOwner.trim()) return;
+                                        const nextNum = externalUnits.length + 1;
+                                        const newUnit = {
+                                            id: `EXT-${Date.now()}`,
+                                            name: `বাহিরস্থ পার্কিং ${nextNum}`,
+                                            owner: newExternalOwner
+                                        };
+                                        setExternalUnits(prev => [...prev, newUnit]);
+                                        setNewExternalOwner('');
+                                    }}
+                                    className="bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-orange-700"
+                                >
+                                    যোগ করুন
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex gap-3 shrink-0">
+                    <button 
+                        onClick={() => setShowParkingManager(false)}
+                        className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold"
+                    >
+                        বাতিল
+                    </button>
+                    <button 
+                        onClick={() => handleSaveParkingConfig(parkingUnits, externalUnits)}
+                        className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 dark:shadow-none hover:bg-orange-700"
+                    >
+                        সেভ করুন
+                    </button>
+                </div>
+            </div>
+        </div>
       )}
 
       {/* VIEW: WHATSAPP ADMIN */}
@@ -2968,27 +3170,35 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             </div>
 
             <div className="flex justify-between items-center mb-4 px-1">
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">{t.all} {t.unit} ({ALL_UNITS.length})</p>
+                <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                    {viewMode === 'PARKING' ? 'পার্কিং ইউনিট সমূহ' : `${t.all} ${t.unit}`} ({visibleUnits.length})
+                </p>
                 <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">{selectedYear}</span>
             </div>
 
             {/* Grid View */}
             <div className="grid grid-cols-3 gap-3">
-                {filteredUnitsData.map((data) => (
-                <button
-                    key={data.unit}
-                    onClick={() => onUnitSelect(data.unit)}
-                    className="group relative bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-primary-500 dark:hover:border-primary-400 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
-                >
-                    <span className="text-lg font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400">{data.unit}</span>
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1">
-                      {FLAT_OWNERS.find(f => f.flat === data.unit)?.name || '-'}
-                    </span>
-                    
-                    {/* Real-time Status Indicator */}
-                    <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${data.due > 0 ? 'bg-red-500' : 'bg-green-500'}`}></span>
-                </button>
-                ))}
+                {filteredUnitsData.map((data) => {
+                    const owner = FLAT_OWNERS.find(f => f.flat === data.unit);
+                    const externalOwner = externalUnits.find(u => u.name === data.unit)?.owner;
+                    const ownerName = owner?.name || externalOwner || '-';
+
+                    return (
+                    <button
+                        key={data.unit}
+                        onClick={() => onUnitSelect(data.unit)}
+                        className="group relative bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-primary-500 dark:hover:border-primary-400 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
+                    >
+                        <span className="text-lg font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 text-center leading-tight">{data.unit}</span>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1 text-center line-clamp-1">
+                          {ownerName}
+                        </span>
+                        
+                        {/* Real-time Status Indicator */}
+                        <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ${data.due > 0 ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                    </button>
+                    );
+                })}
                 {filteredUnitsData.length === 0 && (
                     <div className="col-span-3 py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                         কোনো ইউনিট পাওয়া যায়নি
