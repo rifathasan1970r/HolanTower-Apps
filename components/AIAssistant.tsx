@@ -51,57 +51,82 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
 
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-      
-      const systemInstruction = `
-        You are a helpful AI Assistant for "Hollan Tower", a smart building management app.
-        Your goal is to provide information about service charges, parking, and payment status.
-        
-        CONTEXT DATA (Year ${contextData.selectedYear}):
-        - Total Payments Records: ${contextData.payments.length}
-        - Parking Units: ${contextData.parkingUnits.join(', ')}
-        - External Parking: ${contextData.externalUnits.map(u => u.name + ' (' + u.owner + ')').join(', ')}
-        
-        MONTHLY SUMMARY:
-        ${JSON.stringify(contextData.summary.monthly.map((m: any) => ({ month: m.month, collected: m.collected, due: m.due, paidCount: m.paidUnits.length, dueCount: m.dueUnits.length })))}
-        
-        UNIT-WISE SUMMARY (Detailed):
-        ${JSON.stringify(contextData.summary.unitWise.slice(0, 50))} (Showing first 50 units)
-        
-        UNITS INFO (Occupancy, Phone, Notes):
-        ${JSON.stringify(contextData.unitsInfo)}
-
-        RULES:
-        1. Always respond in Bangla (Bengali) unless asked otherwise.
-        2. Be polite and professional.
-        3. If a user asks about a specific unit (e.g., "5A"), look through the UNIT-WISE SUMMARY and UNITS INFO to give details about their due, paid status, owner name, etc.
-        4. If asked about parking, mention which units have parking and details about external parking.
-        5. Use the MONTHLY SUMMARY for general building status or specific month stats.
-        6. If you don't have specific data, say so politely.
-        7. Keep responses concise and easy to read. Use bullet points for lists.
-      `;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [
-          { role: 'user', parts: [{ text: systemInstruction }] },
-          ...messages.map(m => ({
-            role: m.role,
-            parts: [{ text: m.text }]
-          })),
-          { role: 'user', parts: [{ text: userMessage }] }
-        ],
-      });
-
-      const aiText = response.text || "দুঃখিত, আমি এই মুহূর্তে উত্তর দিতে পারছি না।";
-      setMessages(prev => [...prev, { role: 'model', text: aiText }]);
-    } catch (error) {
-      console.error("AI Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "দুঃখিত, এআই সার্ভারে সমস্যা হচ্ছে। অনুগ্রহ করে পরে চেষ্টা করুন।" }]);
-    } finally {
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    
+    if (!apiKey) {
+      setMessages(prev => [...prev, { role: 'model', text: "দুঃখিত, এআই সিস্টেমের এপিআই কী (API Key) পাওয়া যায়নি। অনুগ্রহ করে ডেভেলপারকে জানান।" }]);
       setIsLoading(false);
+      return;
     }
+
+    const MAX_RETRIES = 3;
+    const BASE_DELAY = 1000;
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const systemInstruction = `
+      You are a helpful AI Assistant for "Hollan Tower", a smart building management app.
+      Your goal is to provide information about service charges, parking, and payment status.
+      
+      CONTEXT DATA (Year ${contextData.selectedYear}):
+      - Total Payments Records: ${contextData.payments.length}
+      - Parking Units: ${contextData.parkingUnits.join(', ')}
+      - External Parking: ${contextData.externalUnits.map(u => u.name + ' (' + u.owner + ')').join(', ')}
+      
+      MONTHLY SUMMARY:
+      ${JSON.stringify(contextData.summary.monthly.map((m: any) => ({ month: m.month, collected: m.collected, due: m.due, paidCount: m.paidUnits.length, dueCount: m.dueUnits.length })))}
+      
+      UNIT-WISE SUMMARY (Detailed):
+      ${JSON.stringify(contextData.summary.unitWise.slice(0, 50))} (Showing first 50 units)
+      
+      UNITS INFO (Occupancy, Phone, Notes):
+      ${JSON.stringify(contextData.unitsInfo)}
+
+      RULES:
+      1. Always respond in Bangla (Bengali) unless asked otherwise.
+      2. Be polite and professional.
+      3. If a user asks about a specific unit (e.g., "5A"), look through the UNIT-WISE SUMMARY and UNITS INFO to give details about their due, paid status, owner name, etc.
+      4. If asked about parking, mention which units have parking and details about external parking.
+      5. Use the MONTHLY SUMMARY for general building status or specific month stats.
+      6. If you don't have specific data, say so politely.
+      7. Keep responses concise and easy to read. Use bullet points for lists.
+    `;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const ai = new GoogleGenAI({ apiKey });
+        
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: [
+            ...messages.map(m => ({
+              role: m.role,
+              parts: [{ text: m.text }]
+            })),
+            { role: 'user', parts: [{ text: userMessage }] }
+          ],
+          config: {
+            systemInstruction: systemInstruction,
+            temperature: 0.7,
+          }
+        });
+
+        const aiText = response.text || "দুঃখিত, আমি এখন উত্তর দিতে পারছি না।";
+        setMessages(prev => [...prev, { role: 'model', text: aiText }]);
+        setIsLoading(false);
+        return; // Success!
+      } catch (error: any) {
+        console.error(`AI Error (Attempt ${attempt + 1}):`, error);
+        
+        if (attempt < MAX_RETRIES - 1) {
+          await sleep(BASE_DELAY * Math.pow(2, attempt));
+          continue;
+        }
+        
+        setMessages(prev => [...prev, { role: 'model', text: "দুঃখিত, এআই সার্ভারে সমস্যা হচ্ছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।" }]);
+      }
+    }
+    
+    setIsLoading(false);
   };
 
   return (
