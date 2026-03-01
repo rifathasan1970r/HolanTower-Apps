@@ -114,7 +114,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     yearVal: '2026',
     isDateEnabled: true,
     status: 'PAID' as 'PAID' | 'DUE' | 'UPCOMING' | 'PARTIAL',
-    isOccupied: true // Local occupancy for this specific entry
+    isOccupied: true, // Local occupancy for this specific entry
+    parkingType: 'MOTORCYCLE' as 'MOTORCYCLE' | 'CAR',
+    ownershipType: 'OWNER' as 'OWNER' | 'TENANT' | 'EXTERNAL'
   });
 
   const t = TRANSLATIONS[lang];
@@ -130,6 +132,13 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [externalUnits, setExternalUnits] = useState<{id: string, name: string, owner: string}[]>([]);
   const [showParkingManager, setShowParkingManager] = useState(false);
   const [newExternalOwner, setNewExternalOwner] = useState('');
+
+  // Refresh data when switching to Parking mode or becoming Admin to ensure latest configuration is loaded
+  useEffect(() => {
+    if (viewMode === 'PARKING' || isAdmin) {
+        fetchData(false);
+    }
+  }, [viewMode, isAdmin]);
 
   // Fetch data from Supabase
   const fetchData = async (showLoading = true, fetchUnitsInfo = true) => {
@@ -176,7 +185,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
             uData.forEach((u: any) => {
                 // Check for Parking Config
-                if (u.unit_text === '_PARKING_CONFIG_' && u.year_num === selectedYear) {
+                const isParkingConfig = u.unit_text === '_PARKING_CONFIG_' && u.year_num === selectedYear;
+                const isCompositeParkingConfig = u.unit_text === `_PARKING_CONFIG_${selectedYear}`;
+
+                if (isParkingConfig || isCompositeParkingConfig) {
                     try {
                         if (u.note) {
                             const parsed = JSON.parse(u.note);
@@ -260,19 +272,31 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             selectedStandardUnits: newParkingUnits,
             externalUnits: newExternalUnits
         };
+        const configStr = JSON.stringify(config);
 
+        // Try with year_num first
         const { error } = await supabase
             .from('units_info')
             .upsert({ 
                 unit_text: '_PARKING_CONFIG_', 
                 year_num: selectedYear, 
-                note: JSON.stringify(config),
+                note: configStr,
                 is_occupied: true // Dummy value
             }, { onConflict: 'unit_text,year_num' });
             
         if (error) {
-            console.error("Error saving parking config:", error);
+            console.warn("Error saving parking config with year_num, trying composite key:", error);
+            // Fallback: use composite key in unit_text
+            const compositeKey = `_PARKING_CONFIG_${selectedYear}`;
+            await supabase.from('units_info').upsert({ 
+                unit_text: compositeKey, 
+                note: configStr,
+                is_occupied: true 
+            }, { onConflict: 'unit_text' });
         }
+        
+        // Refresh data to be sure all users see it
+        fetchData(false);
     } catch (e) {
         console.error("Exception saving parking config:", e);
     }
@@ -1016,13 +1040,20 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     </div>
   );
 
+  const getParkingAmount = (pType: 'MOTORCYCLE' | 'CAR', oType: 'OWNER' | 'TENANT' | 'EXTERNAL') => {
+      if (pType === 'MOTORCYCLE') {
+          return oType === 'OWNER' ? 300 : 500;
+      } else {
+          return oType === 'OWNER' ? 1000 : 2000;
+      }
+  };
+
   const handleStatusChange = (newStatus: 'PAID' | 'DUE' | 'UPCOMING' | 'PARTIAL') => {
       let defaultAmount = 0;
       if (viewMode === 'SERVICE') {
           defaultAmount = editModalData.isOccupied ? 2000 : 500;
       } else {
-          // Parking default: Use 500 so that Partial split (250/250) works and doesn't result in 0/0 (Upcoming)
-          defaultAmount = 500;
+          defaultAmount = getParkingAmount(editModalData.parkingType, editModalData.ownershipType);
       }
 
       // If user has manually entered amounts, use that total as base for splitting/switching
@@ -1046,7 +1077,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       if (viewMode === 'SERVICE') {
           defaultAmount = val ? 2000 : 500;
       } else {
-          defaultAmount = 0;
+          defaultAmount = getParkingAmount(editModalData.parkingType, editModalData.ownershipType);
       }
 
       setEditModalData(prev => {
@@ -1057,6 +1088,42 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
           } else if (prev.status === 'DUE') {
               updates.amount = 0;
               updates.due = defaultAmount;
+          }
+          return { ...prev, ...updates };
+      });
+  };
+
+  const handleParkingTypeChange = (type: 'MOTORCYCLE' | 'CAR') => {
+      const defaultAmount = getParkingAmount(type, editModalData.ownershipType);
+      setEditModalData(prev => {
+          const updates: any = { parkingType: type };
+          if (prev.status === 'PAID') {
+              updates.amount = defaultAmount;
+              updates.due = 0;
+          } else if (prev.status === 'DUE') {
+              updates.amount = 0;
+              updates.due = defaultAmount;
+          } else if (prev.status === 'PARTIAL') {
+              updates.amount = defaultAmount / 2;
+              updates.due = defaultAmount / 2;
+          }
+          return { ...prev, ...updates };
+      });
+  };
+
+  const handleOwnershipTypeChange = (type: 'OWNER' | 'TENANT' | 'EXTERNAL') => {
+      const defaultAmount = getParkingAmount(editModalData.parkingType, type);
+      setEditModalData(prev => {
+          const updates: any = { ownershipType: type };
+          if (prev.status === 'PAID') {
+              updates.amount = defaultAmount;
+              updates.due = 0;
+          } else if (prev.status === 'DUE') {
+              updates.amount = 0;
+              updates.due = defaultAmount;
+          } else if (prev.status === 'PARTIAL') {
+              updates.amount = defaultAmount / 2;
+              updates.due = defaultAmount / 2;
           }
           return { ...prev, ...updates };
       });
@@ -1079,24 +1146,72 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         </div>
 
         <div className="space-y-4">
-            {/* Occupancy Type Selection */}
+            {/* Occupancy/Parking Type Selection */}
             <div>
-                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">বসবাসের ধরন (এই মাসের জন্য)</label>
+                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    {viewMode === 'SERVICE' ? 'বসবাসের ধরন (এই মাসের জন্য)' : 'পার্কিং ধরন'}
+                </label>
                 <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
-                    <button 
-                        onClick={() => handleModalOccupancyChange(true)}
-                        className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${editModalData.isOccupied ? 'bg-white dark:bg-slate-600 text-green-600 dark:text-green-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                    >
-                        <Users size={12} /> বসবাসরত
-                    </button>
-                    <button 
-                        onClick={() => handleModalOccupancyChange(false)}
-                        className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${!editModalData.isOccupied ? 'bg-white dark:bg-slate-600 text-orange-600 dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                    >
-                        <Home size={12} /> খালি
-                    </button>
+                    {viewMode === 'SERVICE' ? (
+                        <>
+                            <button 
+                                onClick={() => handleModalOccupancyChange(true)}
+                                className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${editModalData.isOccupied ? 'bg-white dark:bg-slate-600 text-green-600 dark:text-green-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                            >
+                                <Users size={12} /> বসবাসরত
+                            </button>
+                            <button 
+                                onClick={() => handleModalOccupancyChange(false)}
+                                className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${!editModalData.isOccupied ? 'bg-white dark:bg-slate-600 text-orange-600 dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                            >
+                                <Home size={12} /> খালি
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button 
+                                onClick={() => handleParkingTypeChange('MOTORCYCLE')}
+                                className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${editModalData.parkingType === 'MOTORCYCLE' ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                            >
+                                মোটরসাইকেল
+                            </button>
+                            <button 
+                                onClick={() => handleParkingTypeChange('CAR')}
+                                className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${editModalData.parkingType === 'CAR' ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                            >
+                                গাড়ি
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
+
+            {/* Ownership Type (Only for Parking) */}
+            {viewMode === 'PARKING' && (
+                <div>
+                    <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">মালিকানার ধরন</label>
+                    <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
+                        <button 
+                            onClick={() => handleOwnershipTypeChange('OWNER')}
+                            className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${editModalData.ownershipType === 'OWNER' ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                        >
+                            ফ্ল্যাট মালিক
+                        </button>
+                        <button 
+                            onClick={() => handleOwnershipTypeChange('TENANT')}
+                            className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${editModalData.ownershipType === 'TENANT' ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                        >
+                            ভাড়াটিয়া
+                        </button>
+                        <button 
+                            onClick={() => handleOwnershipTypeChange('EXTERNAL')}
+                            className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${editModalData.ownershipType === 'EXTERNAL' ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                        >
+                            বাহিরস্থ
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Status Selection */}
             <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
@@ -1423,7 +1538,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                   onUnitSelect(unit);
                   setShowUnitSelector(false);
                 }}
-                className={`py-1.5 rounded-lg font-bold text-xs transition-all shadow-sm border ${
+                className={`py-1.5 rounded-lg font-bold transition-all shadow-sm border ${unit.length > 6 ? 'text-[10px]' : 'text-xs'} ${
                   selectedUnit === unit 
                     ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700' 
                     : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600'
@@ -1492,7 +1607,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     onClick={() => setShowUnitSelector(true)}
                     className="text-center animate-in zoom-in duration-300 cursor-pointer hover:scale-105 transition-transform active:scale-95"
                   >
-                    <h2 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{selectedUnit}</h2>
+                    <h2 className={`font-black text-slate-800 dark:text-white tracking-tight ${selectedUnit.length > 6 ? 'text-lg leading-tight' : 'text-4xl'}`}>{selectedUnit}</h2>
                     <p className="text-sm font-bold text-primary-600 dark:text-primary-400 mt-1">
                       {(() => {
                           const owner = FLAT_OWNERS.find(f => f.flat === selectedUnit);
@@ -2062,18 +2177,27 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
              {/* Parking Manager Button - Only in Parking Mode */}
              {viewMode === 'PARKING' && (
-                 <button 
-                    onClick={() => setShowParkingManager(true)}
-                    className="bg-orange-600 dark:bg-orange-700 border border-orange-700 dark:border-orange-600 rounded-xl p-3 flex items-center justify-end gap-3 hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors text-right shadow-sm"
-                 >
-                     <div>
-                       <p className="text-sm font-bold text-white">পার্কিং ইউনিট ম্যানেজ</p>
-                       <p className="text-[10px] text-orange-200 mt-0.5">গাড়ি বা পার্কিং যুক্ত করুন</p>
-                     </div>
-                     <div className="bg-orange-500 dark:bg-orange-600 p-2 rounded-full text-white">
-                       <Car size={16} />
-                     </div>
-                 </button>
+                 <div className="flex flex-col gap-2">
+                     <button 
+                        onClick={() => setShowParkingManager(true)}
+                        className="bg-orange-600 dark:bg-orange-700 border border-orange-700 dark:border-orange-600 rounded-xl p-3 flex items-center justify-end gap-3 hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors text-right shadow-sm w-full"
+                     >
+                         <div>
+                           <p className="text-sm font-bold text-white">পার্কিং ইউনিট ম্যানেজ</p>
+                           <p className="text-[10px] text-orange-200 mt-0.5">গাড়ি বা পার্কিং যুক্ত করুন</p>
+                         </div>
+                         <div className="bg-orange-500 dark:bg-orange-600 p-2 rounded-full text-white">
+                           <Car size={16} />
+                         </div>
+                     </button>
+                     <button 
+                        onClick={() => fetchData(true)}
+                        className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2 flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-slate-600 dark:text-slate-300 shadow-sm text-xs font-bold w-full"
+                     >
+                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                         ডাটা রিফ্রেশ করুন
+                     </button>
+                 </div>
              )}
          </div>
       )}
@@ -3189,7 +3313,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                         onClick={() => onUnitSelect(data.unit)}
                         className="group relative bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-primary-500 dark:hover:border-primary-400 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
                     >
-                        <span className="text-lg font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 text-center leading-tight">{data.unit}</span>
+                        <span className={`font-bold text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 text-center leading-tight ${data.unit.length > 6 ? 'text-[10px]' : 'text-lg'}`}>{data.unit}</span>
                         <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1 text-center line-clamp-1">
                           {ownerName}
                         </span>
