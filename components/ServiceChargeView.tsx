@@ -569,7 +569,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         const due = records.reduce((sum, r) => sum + r.due, 0);
         return { unit, collected, due };
     });
-  }, [selectedYear, dbData, unitsInfo, lang]); // Added lang dependency to re-calculate month names
+  }, [selectedYear, dbData, unitsInfo, lang, viewMode]); // Added viewMode dependency
 
   // New: 12-Month Aggregate Stats
   const monthlyStats = useMemo(() => {
@@ -595,17 +595,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     stats[idx].due += record.due;
                     stats[idx].dueUnits.push(unit);
                 } else {
-                    // UPCOMING or other status, still counts as unit but maybe not in due/paid lists for this specific logic?
-                    // Request says "Paid" and "Due". Upcoming might be considered "Due" or ignored.
-                    // Usually upcoming means not yet due.
-                    // Let's stick to strict PAID vs DUE for the lists.
+                    // UPCOMING or other status
                 }
             }
         });
     });
 
     return stats;
-  }, [selectedYear, dbData, unitsInfo, lang]);
+  }, [selectedYear, dbData, unitsInfo, lang, viewMode]); // Added viewMode dependency
 
   // New: Unit Wise Summary for Monthly Summary View
   const unitWiseSummary = useMemo(() => {
@@ -697,7 +694,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             paymentMethod: 'Cash' // Hardcoded as per request
         };
     });
-  }, [selectedYear, dbData, unitsInfo, lang]);
+  }, [selectedYear, dbData, unitsInfo, lang, viewMode]);
 
   const [selectedMonthStat, setSelectedMonthStat] = useState<any>(null);
   const [detailViewType, setDetailViewType] = useState<'SUMMARY' | 'PAID_LIST' | 'DUE_LIST'>('SUMMARY');
@@ -739,7 +736,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     });
 
     return { oneMonth, twoMonths, threePlusMonths, totalAccumulatedDue };
-  }, [selectedYear, dbData, unitsInfo, lang]);
+  }, [selectedYear, dbData, unitsInfo, lang, viewMode]);
 
   const filteredUnitsData = allUnitsSummary.filter(data => 
     data.unit.toLowerCase().includes(searchTerm.toLowerCase())
@@ -1933,18 +1930,35 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       )}
 
       {/* Main Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t.serviceCharge}</h2>
-        <div className="flex items-center gap-2">
-           {useMock && (
-             <span className="text-[9px] bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-200 dark:border-yellow-800">{t.demo}</span>
-           )}
-           <button 
-             onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)}
-             className={`p-2 rounded-full transition-colors ${isAdmin ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'}`}
-           >
-             {isAdmin ? <Unlock size={18} /> : <Lock size={18} />}
-           </button>
+      <div className="mb-6">
+        {viewMode === 'PARKING' && (
+            <button 
+                onClick={() => {
+                    setViewMode('SERVICE');
+                    setShowParkingView(true);
+                }}
+                className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors py-1 mb-2 group"
+            >
+                <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+                <span className="text-base font-bold">{t.back}</span>
+            </button>
+        )}
+
+        <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
+                {viewMode === 'PARKING' ? 'পার্কিং চার্জ' : t.serviceCharge}
+            </h2>
+            <div className="flex items-center gap-2">
+            {useMock && (
+                <span className="text-[9px] bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-200 dark:border-yellow-800">{t.demo}</span>
+            )}
+            <button 
+                onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)}
+                className={`p-2 rounded-full transition-colors ${isAdmin ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'}`}
+            >
+                {isAdmin ? <Unlock size={18} /> : <Lock size={18} />}
+            </button>
+            </div>
         </div>
       </div>
 
