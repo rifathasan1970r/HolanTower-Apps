@@ -98,6 +98,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [whatsAppTarget, setWhatsAppTarget] = useState<'tenant' | 'owner'>('tenant');
   const [pinInput, setPinInput] = useState<string>('');
   const [processingUpdate, setProcessingUpdate] = useState<boolean>(false);
+  const [isSavingParking, setIsSavingParking] = useState<boolean>(false);
   const [editingNote, setEditingNote] = useState<boolean>(false);
   const [noteInput, setNoteInput] = useState<string>('');
 
@@ -178,10 +179,19 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     console.error("Error parsing localStorage fallback", e);
                 }
             }
+            // Also try to restore parking config from local storage if Supabase fails
+            const localParking = localStorage.getItem(`parking_config_fallback_${selectedYear}`);
+            if (localParking) {
+                try {
+                    const parsed = JSON.parse(localParking);
+                    setParkingUnits(parsed.selectedStandardUnits || []);
+                    setExternalUnits(parsed.externalUnits || []);
+                } catch (e) {}
+            }
         } else if (uData) {
             const mapping: Record<string, UnitInfo> = {};
-            let parkingConfig: string[] = [];
-            let extUnits: {id: string, name: string, owner: string}[] = [];
+            let parkingConfig: string[] | null = null;
+            let extUnits: {id: string, name: string, owner: string}[] | null = null;
 
             uData.forEach((u: any) => {
                 // Check for Parking Config
@@ -198,6 +208,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 parkingConfig = parsed.selectedStandardUnits || [];
                                 extUnits = parsed.externalUnits || [];
                             }
+                            // Save to local storage as backup
+                            localStorage.setItem(`parking_config_fallback_${selectedYear}`, u.note);
                         }
                     } catch (e) {
                         console.error("Error parsing parking config", e);
@@ -232,8 +244,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 };
             });
             setUnitsInfo(mapping);
-            setParkingUnits(parkingConfig);
-            setExternalUnits(extUnits);
+            if (parkingConfig !== null) setParkingUnits(parkingConfig);
+            if (extUnits !== null) setExternalUnits(extUnits);
             // Sync to local storage for offline/fallback
             localStorage.setItem('units_info_fallback', JSON.stringify(mapping));
         }
@@ -263,9 +275,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   }, [selectedYear]);
 
   const handleSaveParkingConfig = async (newParkingUnits: string[], newExternalUnits: {id: string, name: string, owner: string}[]) => {
-    setParkingUnits(newParkingUnits);
-    setExternalUnits(newExternalUnits);
-    setShowParkingManager(false);
+    setIsSavingParking(true);
     
     try {
         const config = {
@@ -273,32 +283,73 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             externalUnits: newExternalUnits
         };
         const configStr = JSON.stringify(config);
+        const compositeKey = `_PARKING_CONFIG_${selectedYear}`;
 
-        // Try with year_num first
-        const { error } = await supabase
+        console.log(`Saving parking config for ${selectedYear}...`);
+
+        // Strategy 1: Try upsert with unit_text as conflict target
+        let { error } = await supabase
             .from('units_info')
             .upsert({ 
-                unit_text: '_PARKING_CONFIG_', 
-                year_num: selectedYear, 
-                note: configStr,
-                is_occupied: true // Dummy value
-            }, { onConflict: 'unit_text,year_num' });
-            
-        if (error) {
-            console.warn("Error saving parking config with year_num, trying composite key:", error);
-            // Fallback: use composite key in unit_text
-            const compositeKey = `_PARKING_CONFIG_${selectedYear}`;
-            await supabase.from('units_info').upsert({ 
                 unit_text: compositeKey, 
+                year_num: selectedYear, 
                 note: configStr,
                 is_occupied: true 
             }, { onConflict: 'unit_text' });
+            
+        // Strategy 2: If Strategy 1 fails, try with unit_text and year_num as conflict target
+        if (error) {
+            console.warn("Upsert with unit_text failed, trying with unit_text,year_num:", error);
+            const { error: error2 } = await supabase
+                .from('units_info')
+                .upsert({ 
+                    unit_text: compositeKey, 
+                    year_num: selectedYear, 
+                    note: configStr,
+                    is_occupied: true 
+                }, { onConflict: 'unit_text,year_num' });
+            error = error2;
         }
-        
-        // Refresh data to be sure all users see it
-        fetchData(false);
-    } catch (e) {
+
+        // Strategy 3: If still fails, try a simple insert (might fail if exists, but worth a shot)
+        if (error) {
+            console.warn("Upsert failed again, trying simple insert:", error);
+            const { error: error3 } = await supabase
+                .from('units_info')
+                .insert({ 
+                    unit_text: compositeKey, 
+                    year_num: selectedYear, 
+                    note: configStr,
+                    is_occupied: true 
+                });
+            // If insert fails because it exists, try update
+            if (error3 && error3.code === '23505') {
+                 const { error: error4 } = await supabase
+                    .from('units_info')
+                    .update({ note: configStr })
+                    .eq('unit_text', compositeKey);
+                 error = error4;
+            } else {
+                error = error3;
+            }
+        }
+            
+        if (error) {
+            console.error("All saving strategies failed:", error);
+            alert(`সেভ করতে সমস্যা হয়েছে: ${error.message || 'Unknown error'}`);
+        } else {
+            console.log("Parking config saved successfully");
+            setParkingUnits(newParkingUnits);
+            setExternalUnits(newExternalUnits);
+            setShowParkingManager(false);
+            // Refresh data to be sure all users see it
+            fetchData(false);
+        }
+    } catch (e: any) {
         console.error("Exception saving parking config:", e);
+        alert(`একটি ত্রুটি ঘটেছে: ${e.message || 'Unknown error'}`);
+    } finally {
+        setIsSavingParking(false);
     }
   };
 
@@ -2306,9 +2357,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     </button>
                     <button 
                         onClick={() => handleSaveParkingConfig(parkingUnits, externalUnits)}
-                        className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 dark:shadow-none hover:bg-orange-700"
+                        disabled={isSavingParking}
+                        className={`flex-1 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 dark:shadow-none hover:bg-orange-700 flex items-center justify-center gap-2 ${isSavingParking ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                        সেভ করুন
+                        {isSavingParking ? (
+                            <>
+                                <RefreshCw size={16} className="animate-spin" />
+                                সেভ হচ্ছে...
+                            </>
+                        ) : 'সেভ করুন'}
                     </button>
                 </div>
             </div>
