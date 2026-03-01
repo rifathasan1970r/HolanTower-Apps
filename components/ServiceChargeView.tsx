@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car } from 'lucide-react';
+import { AIAssistant } from './AIAssistant';
+import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car, Bot } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabaseClient';
 import { TRANSLATIONS, FLAT_OWNERS } from '../constants';
@@ -133,6 +134,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [externalUnits, setExternalUnits] = useState<{id: string, name: string, owner: string}[]>([]);
   const [showParkingManager, setShowParkingManager] = useState(false);
   const [newExternalOwner, setNewExternalOwner] = useState('');
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
 
   // Refresh data when switching to Parking mode or becoming Admin to ensure latest configuration is loaded
   useEffect(() => {
@@ -2117,6 +2119,31 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       {monthDetailModal}
       {unitSummaryModal}
       {yearlySummaryModal}
+      
+      <AIAssistant 
+        isOpen={showAIAssistant} 
+        onClose={() => setShowAIAssistant(false)} 
+        contextData={{
+          payments: dbData,
+          unitsInfo: unitsInfo,
+          parkingUnits: parkingUnits,
+          externalUnits: externalUnits,
+          selectedYear: selectedYear,
+          summary: {
+            monthly: monthlyStats,
+            unitWise: unitWiseSummary
+          }
+        }}
+      />
+
+      {/* Floating AI Assistant Button */}
+      <button 
+        onClick={() => setShowAIAssistant(true)}
+        className="fixed bottom-24 right-4 z-50 bg-indigo-600 text-white p-4 rounded-full shadow-2xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center group"
+      >
+        <Bot size={24} />
+        <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 transition-all duration-300 font-bold text-sm whitespace-nowrap">এআই অ্যাসিস্ট্যান্ট</span>
+      </button>
       
       {/* Loading State */}
       {loading && (
