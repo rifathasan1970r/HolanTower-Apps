@@ -99,80 +99,106 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div 
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 100 }}
-          className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+        <motion.div
+          initial={{ opacity: 0, y: 50, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 50, scale: 0.95 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm md:items-end md:justify-end md:p-6 md:bottom-20 md:right-4 md:inset-auto"
         >
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg h-[90vh] sm:h-[600px] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+          <div className="w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[500px] max-h-[70vh] border border-gray-100 dark:border-slate-700 ring-1 ring-black/5">
+            
             {/* Header */}
-            <div className="bg-indigo-600 p-4 flex items-center justify-between text-white shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-2 rounded-xl">
-                  <Bot size={24} />
+            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-3.5 flex justify-between items-center text-white shadow-md relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Bot size={60} />
+              </div>
+
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="bg-white/20 p-1.5 rounded-lg border border-white/10 backdrop-blur-md">
+                  <Sparkles size={18} className="text-yellow-300 fill-yellow-300" />
                 </div>
                 <div>
-                  <h3 className="font-bold">স্মার্ট এআই অ্যাসিস্ট্যান্ট</h3>
-                  <p className="text-[10px] text-indigo-100 uppercase tracking-widest font-bold">Hollan Tower Assistant</p>
+                  <span className="font-bold text-base block leading-tight tracking-wide">
+                      স্মার্ট এআই
+                  </span>
+                  <span className="text-[10px] text-indigo-100 flex items-center gap-1 opacity-90">
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_5px_rgba(74,222,128,0.8)]"></span>
+                    সক্রিয় আছে
+                  </span>
                 </div>
               </div>
-              <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button 
+                onClick={onClose} 
+                className="hover:bg-white/20 p-1.5 rounded-full transition-colors active:scale-90 relative z-10"
+              >
                 <X size={20} />
               </button>
             </div>
 
-            {/* Chat Area */}
+            {/* Messages Area */}
             <div 
               ref={scrollRef}
-              className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-slate-950 custom-scrollbar"
+              className="flex-1 overflow-y-auto p-3 bg-slate-50 dark:bg-slate-900 space-y-3 custom-scrollbar"
             >
-              {messages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm ${
-                    msg.role === 'user' 
-                    ? 'bg-indigo-600 text-white rounded-tr-none' 
-                    : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-100 dark:border-slate-700'
-                  }`}>
-                    <div className="flex items-center gap-2 mb-1 opacity-50 text-[10px] font-bold uppercase">
-                      {msg.role === 'user' ? <User size={10} /> : <Bot size={10} />}
-                      {msg.role === 'user' ? 'আপনি' : 'এআই অ্যাসিস্ট্যান্ট'}
-                    </div>
-                    <div className="whitespace-pre-wrap leading-relaxed">{msg.text}</div>
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}
+                >
+                  {msg.role === 'model' && (
+                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 shadow-sm border border-white dark:border-slate-600">
+                        <Bot size={14} className="text-white" />
+                     </div>
+                  )}
+                  
+                  <div
+                    className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm ${
+                      msg.role === 'user'
+                        ? 'bg-indigo-600 text-white rounded-br-none'
+                        : 'bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200 rounded-bl-none'
+                    }`}
+                  >
+                    {msg.text}
                   </div>
                 </div>
               ))}
+              
               {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-slate-700 shadow-sm">
-                    <RefreshCw size={16} className="animate-spin text-indigo-500" />
+                <div className="flex justify-start items-end gap-2">
+                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+                      <Bot size={14} className="text-white" />
+                   </div>
+                  <div className="bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 px-4 py-3 rounded-2xl rounded-bl-none shadow-sm">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
+                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-75"></span>
+                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce delay-150"></span>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'ENTER' && handleSend()}
-                  placeholder="আপনার প্রশ্নটি লিখুন..."
-                  className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 transition-all dark:text-white"
-                />
-                <button 
-                  onClick={handleSend}
-                  disabled={!input.trim() || isLoading}
-                  className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-200 dark:shadow-none"
-                >
-                  <Send size={20} />
-                </button>
-              </div>
-              <p className="text-[9px] text-center text-slate-400 mt-2 font-medium">
-                এআই অ্যাসিস্ট্যান্ট ভুল তথ্য দিতে পারে। গুরুত্বপূর্ণ তথ্যের জন্য এডমিনের সাথে যোগাযোগ করুন।
-              </p>
+            <div className="p-3 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 flex gap-2 items-center">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                placeholder="এখানে লিখুন..."
+                className="flex-1 bg-gray-100 dark:bg-slate-700 border border-transparent focus:bg-white dark:focus:bg-slate-600 focus:border-indigo-200 dark:focus:border-slate-500 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-slate-400 text-gray-700 dark:text-slate-200"
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={isLoading || !input.trim()}
+                className="bg-indigo-600 text-white p-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 flex items-center justify-center"
+              >
+                <Send size={18} className={isLoading ? 'hidden' : 'block'} />
+                {isLoading && (
+                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin block"></span>
+                )}
+              </button>
             </div>
           </div>
         </motion.div>
