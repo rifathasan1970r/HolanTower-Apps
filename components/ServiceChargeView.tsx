@@ -160,34 +160,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
           .from('units_info')
           .select('*');
         
-        // Load local WhatsApp data backup
-        let localWhatsApp: Record<string, any> = {};
-        try {
-            const localStr = localStorage.getItem('whatsapp_data_local');
-            if (localStr) localWhatsApp = JSON.parse(localStr);
-        } catch (e) {
-            console.error("Error parsing local WhatsApp data", e);
-        }
-
         if (uError) {
-            console.warn("units_info table not found or error, using localStorage fallback.");
-            const localData = localStorage.getItem('units_info_fallback');
-            if (localData) {
-                try {
-                    setUnitsInfo(JSON.parse(localData));
-                } catch (e) {
-                    console.error("Error parsing localStorage fallback", e);
-                }
-            }
-            // Also try to restore parking config from local storage if Supabase fails
-            const localParking = localStorage.getItem(`parking_config_fallback_${selectedYear}`);
-            if (localParking) {
-                try {
-                    const parsed = JSON.parse(localParking);
-                    setParkingUnits(parsed.selectedStandardUnits || []);
-                    setExternalUnits(parsed.externalUnits || []);
-                } catch (e) {}
-            }
+            console.error("Error fetching units_info:", uError);
         } else if (uData) {
             const mapping: Record<string, UnitInfo> = {};
             let parkingConfig: string[] | null = null;
@@ -208,8 +182,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 parkingConfig = parsed.selectedStandardUnits || [];
                                 extUnits = parsed.externalUnits || [];
                             }
-                            // Save to local storage as backup
-                            localStorage.setItem(`parking_config_fallback_${selectedYear}`, u.note);
                         }
                     } catch (e) {
                         console.error("Error parsing parking config", e);
@@ -220,34 +192,22 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 // Use year-specific key if available, otherwise fallback to unit_text
                 const key = u.year_num ? `${u.unit_text}-${u.year_num}` : u.unit_text;
                 
-                // Hybrid Merge: DB takes precedence if value exists, otherwise fallback to local backup
-                // This handles the case where DB columns (phone, templates) might be missing
-                const phone = u.phone || localWhatsApp[key]?.phone || '';
-                const confirm_template = u.confirm_template || localWhatsApp[key]?.confirm_template || '';
-                const due_template = u.due_template || localWhatsApp[key]?.due_template || '';
-                
-                const owner_phone = u.owner_phone || localWhatsApp[key]?.owner_phone || '';
-                const owner_confirm_template = u.owner_confirm_template || localWhatsApp[key]?.owner_confirm_template || '';
-                const owner_due_template = u.owner_due_template || localWhatsApp[key]?.owner_due_template || '';
-
                 mapping[key] = { 
                     unit_text: u.unit_text,
                     is_occupied: u.is_occupied, 
                     note: u.note || '',
-                    phone: phone,
-                    confirm_template: confirm_template,
-                    due_template: due_template,
-                    owner_phone: owner_phone,
-                    owner_confirm_template: owner_confirm_template,
-                    owner_due_template: owner_due_template,
+                    phone: u.phone || '',
+                    confirm_template: u.confirm_template || '',
+                    due_template: u.due_template || '',
+                    owner_phone: u.owner_phone || '',
+                    owner_confirm_template: u.owner_confirm_template || '',
+                    owner_due_template: u.owner_due_template || '',
                     year_num: u.year_num
                 };
             });
             setUnitsInfo(mapping);
             if (parkingConfig !== null) setParkingUnits(parkingConfig);
             if (extUnits !== null) setExternalUnits(extUnits);
-            // Sync to local storage for offline/fallback
-            localStorage.setItem('units_info_fallback', JSON.stringify(mapping));
         }
       }
 
@@ -377,9 +337,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     const newUnitsInfo = { ...unitsInfo, [yearKey]: { ...currentInfo, is_occupied: newVal } };
     setUnitsInfo(newUnitsInfo);
     
-    // Always save to localStorage as a fallback
-    localStorage.setItem('units_info_fallback', JSON.stringify(newUnitsInfo));
-
     try {
         // Use a more robust check-then-act pattern to ensure persistence with year_num
         const { data: existing, error: fetchError } = await supabase
