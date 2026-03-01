@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabaseClient';
 import { TRANSLATIONS, FLAT_OWNERS } from '../constants';
@@ -77,6 +77,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   onSummaryToggle
 }) => {
   const [showMonthlySummary, setShowMonthlySummary] = useState<boolean>(false);
+  const [showParkingView, setShowParkingView] = useState<boolean>(false);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1086,6 +1087,54 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       </div>
     </div>
   );
+
+  // Parking Charge View
+  if (showParkingView) {
+    return (
+      <div className="pb-24 animate-in slide-in-from-right duration-300">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <button 
+            onClick={() => setShowParkingView(false)}
+            className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white">পার্কিং চার্জ</h2>
+        </div>
+
+        <div className="space-y-4">
+          {/* Option 1 */}
+          <button className="w-full bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between group active:scale-[0.98] transition-all hover:border-primary-500 dark:hover:border-primary-400">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Wallet size={24} />
+              </div>
+              <div className="text-left">
+                <h3 className="text-base font-bold text-slate-800 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">সার্ভিস চার্জ সহ পার্কিং চার্জ</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">একসাথে পেমেন্ট করুন</p>
+              </div>
+            </div>
+            <ChevronRight size={20} className="text-slate-400 group-hover:text-primary-500 transition-colors" />
+          </button>
+
+          {/* Option 2 */}
+          <button className="w-full bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between group active:scale-[0.98] transition-all hover:border-orange-500 dark:hover:border-orange-400">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Car size={24} />
+              </div>
+              <div className="text-left">
+                <h3 className="text-base font-bold text-slate-800 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">শুধু পার্কিং চার্জ</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">আলাদাভাবে পেমেন্ট করুন</p>
+              </div>
+            </div>
+            <ChevronRight size={20} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // VIEW 1: SINGLE UNIT DETAILED VIEW
   if (selectedUnit) {
@@ -2743,6 +2792,28 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 <p className="text-[10px] text-indigo-200 mt-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
                     {t.details}
                 </p>
+            </div>
+
+            {/* Parking Charge Section */}
+            <div className="mb-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-xl text-orange-600 dark:text-orange-400">
+                        <Car size={20} />
+                    </div>
+                    <h3 className="text-base font-bold text-slate-800 dark:text-white">পার্কিং চার্জ</h3>
+                </div>
+                
+                <div className="space-y-2">
+                    <button className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group active:scale-[0.98]">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">সার্ভিস চার্জ সহ পার্কিং চার্জ</span>
+                        <ChevronRight size={16} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
+                    </button>
+                    
+                    <button className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group active:scale-[0.98]">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">শুধু পার্কিং চার্জ</span>
+                        <ChevronRight size={16} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
+                    </button>
+                </div>
             </div>
 
             {/* Monthly Summary Button - New Separate Box */}
