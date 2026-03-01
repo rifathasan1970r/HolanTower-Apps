@@ -21,6 +21,14 @@ interface AIAssistantProps {
   };
 }
 
+const SUGGESTIONS = [
+  "এই মাসের মোট কালেকশন কত?",
+  "বকেয়া ইউনিটের তালিকা দাও",
+  "পার্কিং চার্জ কত?",
+  "৫এ ইউনিটের তথ্য দাও",
+  "সবচেয়ে বেশি বকেয়া কার?"
+];
+
 export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, contextData }) => {
   const [messages, setMessages] = useState<Message[]>([
     { role: 'model', text: 'আসসালামু আলাইকুম! আমি হলান টাওয়ারের স্মার্ট এআই অ্যাসিস্ট্যান্ট। সার্ভিস চার্জ, পার্কিং বা পেমেন্ট সংক্রান্ত যেকোনো তথ্য জানতে আমাকে জিজ্ঞাসা করুন।' }
@@ -35,10 +43,10 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleSend = async (text: string = input) => {
+    if (!text.trim() || isLoading) return;
 
-    const userMessage = input.trim();
+    const userMessage = text.trim();
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
@@ -178,6 +186,21 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
                 </div>
               )}
             </div>
+
+            {/* Suggestions Chips */}
+            {!isLoading && (
+              <div className="px-3 py-2 bg-slate-50 dark:bg-slate-900 flex gap-2 overflow-x-auto no-scrollbar border-t border-gray-100 dark:border-slate-700">
+                {SUGGESTIONS.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSend(suggestion)}
+                    className="whitespace-nowrap px-3 py-1 bg-white dark:bg-slate-800 border border-indigo-100 dark:border-slate-600 rounded-full text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 hover:border-indigo-200 transition-colors shadow-sm flex-shrink-0 active:scale-95"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Input Area */}
             <div className="p-3 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 flex gap-2 items-center">
