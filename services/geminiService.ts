@@ -11,12 +11,15 @@ const BASE_DELAY = 1000;
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getGeminiResponse = async (prompt: string, lang: 'bn' | 'en' = 'bn'): Promise<string> => {
-  if (!ai) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "AIzaSyCVOw58Tk8OuX5cvxLmBsaJYIjxEQ_k3mw";
+  
+  if (!apiKey) {
     return lang === 'bn' 
       ? "দুঃখিত, এআই সিস্টেম বর্তমানে উপলব্ধ নয়। দয়া করে পরে আবার চেষ্টা করুন। (API Key Missing)"
       : "Sorry, AI system is currently unavailable. Please try again later. (API Key Missing)";
   }
 
+  const ai = new GoogleGenAI({ apiKey });
   const model = ai.models;
   
   const systemInstruction = `
