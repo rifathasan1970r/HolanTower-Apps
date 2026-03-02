@@ -17,6 +17,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
   const [isReloadEnabled, setIsReloadEnabled] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   
+  // State for Maintenance Popup
+  const [showMaintenancePopup, setShowMaintenancePopup] = useState(() => {
+    const storedValue = localStorage.getItem('SHOW_MAINTENANCE_POPUP');
+    return storedValue !== 'false';
+  });
+  
   // Fetch global settings
   useEffect(() => {
     const fetchSettings = async () => {
