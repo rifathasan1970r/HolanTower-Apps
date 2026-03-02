@@ -103,19 +103,23 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
       try {
         const ai = new GoogleGenAI({ apiKey });
         
-        // Filter messages to ensure history starts with a 'user' turn
-        // and only includes valid turns for the API. 
-        // Note: The latest user message is already in 'messages' state.
-        const allTurns = messages
+        // Construct history including the current message
+        const currentHistory = messages
           .filter((m, idx) => !(idx === 0 && m.role === 'model')) // Skip initial welcome message
           .map(m => ({
             role: m.role,
             parts: [{ text: m.text }]
           }));
+        
+        // Add the current user message which was just sent
+        currentHistory.push({
+          role: 'user',
+          parts: [{ text: userMessage }]
+        });
 
         const response = await ai.models.generateContent({
-          model: "gemini-flash-latest",
-          contents: allTurns,
+          model: "gemini-3-flash-preview",
+          contents: currentHistory,
           config: {
             systemInstruction: systemInstruction,
             temperature: 0.7,
