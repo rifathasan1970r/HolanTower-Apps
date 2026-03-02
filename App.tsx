@@ -119,7 +119,8 @@ const App: React.FC = () => {
           .single();
         
         if (data) {
-          setIsReloadEnabled(data.value === 'true');
+          const enabled = data.value === 'true';
+          setIsReloadEnabled(enabled);
         }
       } catch (err) {
         console.error('Error fetching settings:', err);
@@ -132,13 +133,15 @@ const App: React.FC = () => {
     const channel = supabase
       .channel('app_settings_changes')
       .on('postgres_changes', { 
-        event: 'UPDATE', 
+        event: '*', 
         schema: 'public', 
         table: 'app_settings',
         filter: 'key=eq.is_reload_enabled'
       }, (payload) => {
-        if (payload.new && payload.new.key === 'is_reload_enabled') {
-          setIsReloadEnabled(payload.new.value === 'true');
+        const newData = payload.new as any;
+        if (newData && newData.key === 'is_reload_enabled') {
+          const enabled = newData.value === 'true';
+          setIsReloadEnabled(enabled);
         }
       })
       .subscribe();
@@ -147,6 +150,15 @@ const App: React.FC = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Handle native overscroll behavior
+  useEffect(() => {
+    if (isReloadEnabled) {
+      document.body.style.overscrollBehaviorY = 'auto';
+    } else {
+      document.body.style.overscrollBehaviorY = 'contain';
+    }
+  }, [isReloadEnabled]);
 
   // Advanced Back Navigation Support
   useEffect(() => {

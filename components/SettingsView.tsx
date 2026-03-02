@@ -34,7 +34,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
           .single();
         
         if (data) {
-          setIsReloadEnabled(data.value === 'true');
+          const enabled = data.value === 'true';
+          setIsReloadEnabled(enabled);
         } else if (error && error.code === 'PGRST116') {
           // Setting doesn't exist, create it
           await supabase.from('app_settings').insert({ key: 'is_reload_enabled', value: 'true' });

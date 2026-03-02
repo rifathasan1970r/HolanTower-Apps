@@ -65,7 +65,7 @@ export const PullToRefresh: React.FC<{ children: React.ReactNode; isEnabled?: bo
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, []);
+  }, [isEnabled]);
 
   // Timer logic for 1.50 seconds hold
   useEffect(() => {
