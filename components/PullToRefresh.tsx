@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
-export const PullToRefresh: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const PullToRefresh: React.FC<{ children: React.ReactNode; isEnabled?: boolean }> = ({ children, isEnabled = true }) => {
   const [pullY, setPullY] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -14,6 +14,7 @@ export const PullToRefresh: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
+      if (!isEnabled) return;
       // Only allow pull to refresh if we are at the very top of the page
       if (window.scrollY <= 0) {
         startYRef.current = e.touches[0].clientY;
@@ -23,18 +24,12 @@ export const PullToRefresh: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (startYRef.current === 0) return;
+      if (!isEnabled || startYRef.current === 0) return;
       const currentY = e.touches[0].clientY;
       const diff = currentY - startYRef.current;
 
       // Only handle pull down at the top
       if (diff > 0 && window.scrollY <= 0) {
-        // Prevent default to avoid browser's default pull-to-refresh if possible
-        // and to handle our custom logic
-        if (diff > 10 && e.cancelable) {
-            // e.preventDefault(); // Removed to allow natural feel, but can be added if needed
-        }
-
         const newPullY = Math.min(diff * 0.4, 100); // Resistance and max pull
         pullYRef.current = newPullY;
         setPullY(newPullY);
@@ -52,6 +47,7 @@ export const PullToRefresh: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     const handleTouchEnd = () => {
+      if (!isEnabled) return;
       startYRef.current = 0;
       pullYRef.current = 0;
       isHoldingRef.current = false;

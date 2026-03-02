@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Moon, Sun, Settings, ChevronRight, ShieldCheck, Lock, X, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Moon, Sun, Settings, ChevronRight, ShieldCheck, Lock, X, Check, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../lib/supabaseClient';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -13,13 +14,32 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminPin, setAdminPin] = useState('');
   const [pinError, setPinError] = useState(false);
+  const [isReloadEnabled, setIsReloadEnabled] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   
-  // State for Maintenance Popup
-  const [showMaintenancePopup, setShowMaintenancePopup] = useState(() => {
-    // Default to TRUE if not set (null), or if explicitly 'true'
-    const storedValue = localStorage.getItem('SHOW_MAINTENANCE_POPUP');
-    return storedValue !== 'false';
-  });
+  // Fetch global settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'is_reload_enabled')
+          .single();
+        
+        if (data) {
+          setIsReloadEnabled(data.value === 'true');
+        } else if (error && error.code === 'PGRST116') {
+          // Setting doesn't exist, create it
+          await supabase.from('app_settings').insert({ key: 'is_reload_enabled', value: 'true' });
+        }
+      } catch (err) {
+        console.error('Error fetching settings:', err);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   const handleAdminLogin = () => {
     if (adminPin === '1966') {
@@ -37,6 +57,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
     const newValue = !showMaintenancePopup;
     setShowMaintenancePopup(newValue);
     localStorage.setItem('SHOW_MAINTENANCE_POPUP', String(newValue));
+  };
+
+  const toggleReload = async () => {
+    if (isUpdating) return;
+    setIsUpdating(true);
+    const newValue = !isReloadEnabled;
+    
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'is_reload_enabled', value: String(newValue) }, { onConflict: 'key' });
+      
+      if (!error) {
+        setIsReloadEnabled(newValue);
+      }
+    } catch (err) {
+      console.error('Error updating reload setting:', err);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -131,6 +171,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
                       animate={{ x: showMaintenancePopup ? 16 : 0 }}
                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     />
+                  </button>
+                </div>
+
+                {/* Page Reload Toggle */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">পেজ রিলোড (সকল ইউজার)</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">টেনে রিলোড করার অপশনটি চালু/বন্ধ করুন</p>
+                  </div>
+                  <button
+                    onClick={toggleReload}
+                    disabled={isUpdating}
+                    className={`relative w-10 h-6 rounded-full transition-colors duration-300 focus:outline-none ${
+                      isReloadEnabled ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'
+                    } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <motion.div
+                      layout
+                      className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm flex items-center justify-center"
+                      animate={{ x: isReloadEnabled ? 16 : 0 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    >
+                      {isUpdating && <RefreshCw size={8} className="animate-spin text-slate-400" />}
+                    </motion.div>
                   </button>
                 </div>
               </div>

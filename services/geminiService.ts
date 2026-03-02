@@ -11,7 +11,7 @@ const BASE_DELAY = 1000;
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getGeminiResponse = async (prompt: string, lang: 'bn' | 'en' = 'bn'): Promise<string> => {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "AIzaSyCVOw58Tk8OuX5cvxLmBsaJYIjxEQ_k3mw";
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "AIzaSyB6qSEIfouJnqdm2HLuAYu2fV6QFwJsusI";
   
   if (!apiKey) {
     return lang === 'bn' 

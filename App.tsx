@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset, Wrench, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from './lib/supabaseClient';
 
 import { APP_NAME, MENU_ITEMS, TRANSLATIONS, MENU_NOTICE_TEXT, DESCO_NOTICE_TEXT, SERVICE_CHARGE_NOTICE_TEXT, EMERGENCY_NOTICE_TEXT } from './constants';
 import { ViewState } from './types';
@@ -37,6 +38,7 @@ const App: React.FC = () => {
   const [currentSeconds, setCurrentSeconds] = useState('');
   const [amPm, setAmPm] = useState('');
   const [timeIcon, setTimeIcon] = useState<React.ReactNode>(<CloudSun size={24} className="text-yellow-300" />);
+  const [isReloadEnabled, setIsReloadEnabled] = useState(true);
   
   // Dark Mode State
   const [darkMode, setDarkMode] = useState(() => {
@@ -104,6 +106,46 @@ const App: React.FC = () => {
     updateTime();
     const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Fetch Global Settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'is_reload_enabled')
+          .single();
+        
+        if (data) {
+          setIsReloadEnabled(data.value === 'true');
+        }
+      } catch (err) {
+        console.error('Error fetching settings:', err);
+      }
+    };
+
+    fetchSettings();
+
+    // Subscribe to changes for real-time updates
+    const channel = supabase
+      .channel('app_settings_changes')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'app_settings',
+        filter: 'key=eq.is_reload_enabled'
+      }, (payload) => {
+        if (payload.new && payload.new.key === 'is_reload_enabled') {
+          setIsReloadEnabled(payload.new.value === 'true');
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Advanced Back Navigation Support
@@ -433,7 +475,7 @@ const App: React.FC = () => {
         className="px-5 relative z-10"
         style={{ paddingTop: 'var(--header-height)' }}
       >
-        <PullToRefresh>
+        <PullToRefresh isEnabled={isReloadEnabled}>
           {renderContent()}
           {currentView !== 'HOME' && (
             <div className="mt-12 mb-8 text-center">

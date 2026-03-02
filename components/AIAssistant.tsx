@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { X, Send, Bot, User, Sparkles, RefreshCw, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Markdown from 'react-markdown';
 
 interface Message {
   role: 'user' | 'model';
@@ -31,7 +32,7 @@ const SUGGESTIONS = [
 
 export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, contextData }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: 'আসসালামু আলাইকুম! আমি হলান টাওয়ারের স্মার্ট এআই অ্যাসিস্ট্যান্ট। সার্ভিস চার্জ, পার্কিং বা পেমেন্ট সংক্রান্ত যেকোনো তথ্য জানতে আমাকে জিজ্ঞাসা করুন।' }
+    { role: 'model', text: 'আসসালামু আলাইকুম! আমি হলান টাওয়ারের সার্ভিস মিয়া। সার্ভিস চার্জ, পার্কিং বা পেমেন্ট সংক্রান্ত যেকোনো তথ্য জানতে আমাকে জিজ্ঞাসা করুন।' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -51,7 +52,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "AIzaSyCVOw58Tk8OuX5cvxLmBsaJYIjxEQ_k3mw";
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "AIzaSyB6qSEIfouJnqdm2HLuAYu2fV6QFwJsusI";
     
     if (!apiKey) {
       setMessages(prev => [...prev, { role: 'model', text: "দুঃখিত, এআই সিস্টেমের এপিআই কী (API Key) পাওয়া যায়নি। অনুগ্রহ করে ডেভেলপারকে জানান।" }]);
@@ -64,9 +65,17 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
     const systemInstruction = `
-      You are a helpful AI Assistant for "Hollan Tower", a smart building management app.
-      Your goal is to provide information about service charges, parking, and payment status.
-      
+      You are an advanced AI Assistant named "Service Mia" (সার্ভিস মিয়া) for "Hollan Tower", a premium smart building management app.
+      Your goal is to provide detailed, well-formatted, and easy-to-read information about service charges, parking, and building status.
+
+      FORMATTING RULES (CRITICAL):
+      1. Use Markdown for all responses.
+      2. Use **bold text** for emphasis (e.g., unit names, amounts, dates).
+      3. Use line breaks and double line breaks to separate different points. NEVER send a single block of text.
+      4. Use bullet points (•) or numbered lists for multiple items.
+      5. Use emojis (🏢, 💰, 🚗, 📅, ✅) to make the response friendly and scannable.
+      6. If listing multiple units or months, use a structured list format.
+
       CONTEXT DATA (Year ${contextData.selectedYear}):
       - Total Payments Records: ${contextData.payments.length}
       - Parking Units: ${contextData.parkingUnits.join(', ')}
@@ -81,14 +90,13 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
       UNITS INFO (Occupancy, Phone, Notes):
       ${JSON.stringify(contextData.unitsInfo)}
 
-      RULES:
-      1. Always respond in Bangla (Bengali) unless asked otherwise.
-      2. Be polite and professional.
-      3. If a user asks about a specific unit (e.g., "5A"), look through the UNIT-WISE SUMMARY and UNITS INFO to give details about their due, paid status, owner name, etc.
-      4. If asked about parking, mention which units have parking and details about external parking.
-      5. Use the MONTHLY SUMMARY for general building status or specific month stats.
-      6. If you don't have specific data, say so politely.
-      7. Keep responses concise and easy to read. Use bullet points for lists.
+      ADVANCED RULES:
+      1. Always respond in Bangla (Bengali).
+      2. Be polite, professional, and helpful.
+      3. If a user asks about a specific unit (e.g., "5A"), provide a complete breakdown: Owner, Status, Paid Amount, and Due Amount.
+      4. For parking queries, clearly distinguish between internal and external parking.
+      5. If asked for a summary, provide a "Quick Stats" section followed by details.
+      6. If data is missing, suggest who to contact (e.g., Building Manager).
     `;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -164,7 +172,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
                 </div>
                 <div>
                   <span className="font-bold text-base block leading-tight tracking-wide">
-                      স্মার্ট এআই
+                      সার্ভিস মিয়া
                   </span>
                   <span className="text-[10px] text-indigo-100 flex items-center gap-1 opacity-90">
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_5px_rgba(74,222,128,0.8)]"></span>
@@ -203,7 +211,19 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
                         : 'bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200 rounded-bl-none'
                     }`}
                   >
-                    {msg.text}
+                    <div className="markdown-content text-inherit">
+                      <Markdown
+                        components={{
+                          p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+                          ul: ({ children }) => <ul className="list-disc ml-4 mb-2 space-y-1">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal ml-4 mb-2 space-y-1">{children}</ol>,
+                          li: ({ children }) => <li className="mb-0.5">{children}</li>,
+                          strong: ({ children }) => <strong className="font-bold text-indigo-700 dark:text-indigo-300">{children}</strong>,
+                        }}
+                      >
+                        {msg.text}
+                      </Markdown>
+                    </div>
                   </div>
                 </div>
               ))}
