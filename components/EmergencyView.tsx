@@ -220,6 +220,8 @@ export const EmergencyView = () => {
       id: `cat-${Date.now()}`,
       category: categoryName,
       icon: 'Wrench', // Default icon
+      colorClass: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300',
+      iconColor: 'text-slate-500 dark:text-slate-400',
       people: []
     };
     setContacts([...contacts, newCategory]);

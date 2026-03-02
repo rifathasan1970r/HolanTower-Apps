@@ -94,6 +94,17 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   // Admin State
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const DEFAULT_UNIT_INFO: UnitInfo = {
+    unit_text: '',
+    is_occupied: true,
+    note: '',
+    phone: '',
+    confirm_template: "Dear Owner, Payment received for Unit {unit}. Month: {month}. Amount: {amount}.",
+    due_template: "Dear Owner, Payment DUE for Unit {unit}. Month: {month}. Amount: {amount}. Total Due: {due_amount}.",
+    owner_phone: '',
+    owner_confirm_template: "Dear Owner, Payment received for Unit {unit}. Month: {month}. Amount: {amount}.",
+    owner_due_template: "Dear Owner, Payment DUE for Unit {unit}. Month: {month}. Amount: {amount}. Total Due: {due_amount}."
+};
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showWhatsAppView, setShowWhatsAppView] = useState<boolean>(false);
   const [whatsAppMonth, setWhatsAppMonth] = useState<string>(MONTHS_LOGIC[new Date().getMonth()]);
@@ -488,7 +499,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       yearVal,
       isDateEnabled,
       status: initialStatus,
-      isOccupied: modalOccupancy
+      isOccupied: modalOccupancy,
+      parkingType: 'CAR',
+      ownershipType: 'OWNER'
     });
     setIsEditModalOpen(true);
   };
@@ -1560,10 +1573,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             ))}
           </div>
           
-          <div className="mt-4 border-t border-slate-100 dark:border-slate-700 pt-3">
-             <marquee className="text-red-600 dark:text-red-400 text-xs font-bold">
+          <div className="mt-4 border-t border-slate-100 dark:border-slate-700 pt-3 overflow-hidden">
+             <div className="text-red-600 dark:text-red-400 text-xs font-bold animate-marquee whitespace-nowrap">
                । কোনো ইউনিট এর হিসাব দেখতে উপরের ইউনিট এ ক্লিক করুন। সকল ইউনিট এর হিসাব ডিটেইস এ দেওয়া আছে।
-             </marquee>
+             </div>
           </div>
           
           <div className="flex justify-center mt-3">
@@ -2427,10 +2440,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     // Get Unit Info (Phone & Templates)
                     // Try specific year key first, then generic unit key
                     const uInfoKey = `${unit}-${selectedYear}`;
-                    const uInfo = unitsInfo[uInfoKey] || unitsInfo[unit] || {};
+                    const uInfo = (unitsInfo[uInfoKey] || unitsInfo[unit] || DEFAULT_UNIT_INFO) as UnitInfo;
                     const phone = uInfo.phone || '';
-                    const confirmTemplate = uInfo.confirm_template || "Dear Owner, Payment received for Unit {unit}. Month: {month}. Amount: {amount}.";
-                    const dueTemplate = uInfo.due_template || "Dear Owner, Payment DUE for Unit {unit}. Month: {month}. Amount: {amount}. Total Due: {due_amount}.";
+                    const confirmTemplate = uInfo.confirm_template || DEFAULT_UNIT_INFO.confirm_template;
+                    const dueTemplate = uInfo.due_template || DEFAULT_UNIT_INFO.due_template;
 
                     // Get Logs
                     const log = whatsAppLogs.find(l => l.unit_text === unit && l.month_name === whatsAppMonth && l.year_num === selectedYear);
@@ -2481,16 +2494,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                 const key = `${unit}-${selectedYear}`;
                                                 if (!newInfo[key]) {
                                                     newInfo[key] = { 
+                                                        ...DEFAULT_UNIT_INFO,
                                                         unit_text: unit, 
-                                                        year_num: selectedYear, 
-                                                        is_occupied: true, 
-                                                        note: '',
-                                                        phone: '',
-                                                        confirm_template: '',
-                                                        due_template: '',
-                                                        owner_phone: '',
-                                                        owner_confirm_template: '',
-                                                        owner_due_template: ''
+                                                        year_num: selectedYear
                                                     };
                                                 }
                                                 
@@ -2645,7 +2651,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                         onClick={async () => {
                                             // Save Logic
                                             const key = `${unit}-${selectedYear}`;
-                                            const info = unitsInfo[key] || {};
+                                            const info = (unitsInfo[key] || unitsInfo[unit] || DEFAULT_UNIT_INFO) as UnitInfo;
                                             
                                             // 1. Save to LocalStorage Backup immediately
                                             try {
@@ -2765,7 +2771,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                             // Send Logic
                                             const key = `${unit}-${selectedYear}`;
                                             // Use same fallback logic as render to ensure we get the phone number if it exists in generic key
-                                            const info = unitsInfo[key] || unitsInfo[unit] || {};
+                                            const info = (unitsInfo[key] || unitsInfo[unit] || DEFAULT_UNIT_INFO) as UnitInfo;
                                             const ph = whatsAppTarget === 'tenant' ? info.phone : info.owner_phone;
                                             
                                             if (!ph) {
