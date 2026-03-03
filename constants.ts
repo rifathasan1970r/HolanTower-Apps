@@ -19,7 +19,8 @@ import {
   FireExtinguisher,
   Clock,
   Smartphone,
-  FileText
+  FileText,
+  Download
 } from 'lucide-react';
 import { MenuItem, Notice } from './types';
 
@@ -147,6 +148,15 @@ export const MENU_ITEMS: MenuItem[] = [
     description: 'লিফট ব্যবহারের নিয়মাবলী',
     gradient: 'from-slate-400 to-gray-600'
   },
+  { 
+    id: 'download', 
+    label: 'ডাউনলোড অ্যাপ', 
+    icon: Download,
+    view: 'DOWNLOAD_APP',
+    color: 'bg-purple-500',
+    description: 'অ্যাপটি ডাউনলোড করুন',
+    gradient: 'from-purple-400 to-violet-600'
+  }
 ];
 
 export const FLAT_OWNERS = [

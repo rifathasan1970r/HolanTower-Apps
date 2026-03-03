@@ -371,7 +371,13 @@ const App: React.FC = () => {
                     transition={{ delay: index * 0.05 }}
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setCurrentView(item.view)}
+                    onClick={() => {
+                      if (item.view === 'DOWNLOAD_APP') {
+                        window.open('https://holan-tower-apps-download.vercel.app/#download', '_blank');
+                      } else {
+                        setCurrentView(item.view);
+                      }
+                    }}
                     className="relative bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-white dark:border-slate-700 overflow-hidden group text-left h-32 flex flex-col justify-between"
                   >
                     {/* Background Gradient Blob */}
