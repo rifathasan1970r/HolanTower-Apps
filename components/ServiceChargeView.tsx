@@ -1858,18 +1858,18 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         <div className="px-4 pt-4">
             <button 
                 onClick={() => generatePDF(selectedUnit, selectedYear)}
-                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all hover:border-indigo-500 dark:hover:border-indigo-400"
+                className="w-full bg-yellow-400 hover:bg-yellow-500 border border-yellow-600/20 py-2 px-4 rounded-xl shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all"
             >
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <FileDown size={20} />
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-yellow-500/20 text-yellow-900 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <FileDown size={18} />
                     </div>
                     <div className="text-left">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">হিসাব পিডিএফ ডাউনলোড</h3>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400">ইউনিট {selectedUnit} এর {selectedYear} সালের রিপোর্ট</p>
+                        <h3 className="text-xs font-bold text-yellow-950 transition-colors">হিসাব পিডিএফ ডাউনলোড</h3>
+                        <p className="text-[9px] text-yellow-900/70 font-medium">ইউনিট {selectedUnit} এর {selectedYear} সালের রিপোর্ট</p>
                     </div>
                 </div>
-                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                <ArrowUpRight size={16} className="text-yellow-900/50 group-hover:text-yellow-900 transition-colors" />
             </button>
         </div>
 
