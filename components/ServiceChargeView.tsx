@@ -1205,7 +1205,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
           <!-- Header Section -->
           <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px; padding-bottom: 10px; gap: 20px;">
             <div>
-              <img src="https://i.imghippo.com/files/xPV6164w.png" style="width: 100px; height: 100px; object-fit: contain;" />
+              <img src="https://i.imghippo.com/files/xPV6164w.png" crossorigin="anonymous" style="width: 100px; height: 100px; object-fit: contain;" />
             </div>
             <div style="text-align: left;">
               <h1 style="color: #9333ea; margin: 0; font-size: 42px; font-weight: 900; font-family: 'Inter', sans-serif;">হলান টাওয়ার</h1>
@@ -1220,7 +1220,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
           <!-- Watermark -->
           <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); opacity: 0.06; z-index: 0; width: 70%; pointer-events: none;">
-            <img src="https://i.imghippo.com/files/xPV6164w.png" style="width: 100%;" />
+            <img src="https://i.imghippo.com/files/xPV6164w.png" crossorigin="anonymous" style="width: 100%;" />
           </div>
 
           <!-- Content Section -->
@@ -1286,16 +1286,23 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     }
 
     try {
-      // Wait for images to load
+      // Wait for images to load with timeout
       const images = element.getElementsByTagName('img');
-      await Promise.all(Array.from(images).map(img => {
+      const imagePromises = Array.from(images).map(img => {
         if (img.complete) return Promise.resolve();
-        return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
-      }));
+        return new Promise(resolve => { 
+          img.onload = resolve; 
+          img.onerror = resolve; // Continue even if image fails
+          setTimeout(resolve, 3000); // Timeout after 3 seconds
+        });
+      });
+      
+      await Promise.all(imagePromises);
 
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         logging: false,
         backgroundColor: '#ffffff',
         windowWidth: 800
@@ -1308,26 +1315,18 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
-      // FIX FOR WEBVIEW: Use Blob URL and window.open to force external browser (Chrome)
-      const blob = pdf.output('blob');
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // 1. Try to open in new tab directly (best for WebViews to trigger system browser)
-      const newWindow = window.open(blobUrl, '_blank');
-
-      // 2. Fallback: Create a temporary link and click it
-      if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.download = fileName;
-          link.target = '_blank';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+      // FIX FOR WEBVIEW: Use standard save which works in most modern WebViews
+      // If that fails, try opening in new window
+      try {
+        pdf.save(fileName);
+      } catch (e) {
+        console.warn("Standard save failed, trying window.open fallback", e);
+        const blob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
       }
       
-      // Clean up blob URL after a delay
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     } catch (error) {
       console.error('PDF Generation Error:', error);
       alert('পিডিএফ তৈরি করতে সমস্যা হয়েছে।');
