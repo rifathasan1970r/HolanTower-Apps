@@ -26,8 +26,22 @@ import { RechargeRulesView } from './components/RechargeRulesView';
 import { PullToRefresh } from './components/PullToRefresh';
 import { PolicyView } from './components/PolicyView';
 import { MaintenancePopup } from './components/MaintenancePopup';
+import { PDFDownloadPage } from './components/PDFDownloadPage';
 
 const App: React.FC = () => {
+  // Check for PDF Download Mode
+  const [isPdfMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('mode') === 'pdf_download';
+    }
+    return false;
+  });
+
+  if (isPdfMode) {
+    return <PDFDownloadPage />;
+  }
+
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [showSummaryList, setShowSummaryList] = useState(false);
