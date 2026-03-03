@@ -1157,7 +1157,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   };
 
   const generatePDF = async (unit: string, year: number) => {
-    const elementId = `pdf-content-${unit}-${year}`;
+    const isParking = viewMode === 'PARKING';
+    const title = isParking ? 'হলান টাওয়ার - পার্কিং চার্জ স্টেটমেন্ট' : 'হলান টাওয়ার - সার্ভিস চার্জ স্টেটমেন্ট';
+    const fileName = isParking ? `Parking_Charge_${unit}_${year}.pdf` : `Service_Charge_${unit}_${year}.pdf`;
+    
+    const elementId = `pdf-content-${unit}-${year}-${viewMode}`;
     let element = document.getElementById(elementId);
     
     // If element doesn't exist, we'll create a temporary one
@@ -1206,6 +1210,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
           <!-- Content Section -->
           <div style="position: relative; z-index: 1;">
+            <h3 style="text-align: center; color: #4f46e5; margin-bottom: 20px; font-size: 24px;">${title}</h3>
+            
             <div style="display: flex; justify-content: space-between; margin-bottom: 30px; background-color: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0;">
               <div>
                 <p style="margin: 5px 0; font-size: 16px;"><strong>ইউনিট:</strong> <span style="color: #4f46e5;">${unit}</span></p>
@@ -1284,7 +1290,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Service_Charge_${unit}_${year}.pdf`);
+      pdf.save(fileName);
     } catch (error) {
       console.error('PDF Generation Error:', error);
       alert('পিডিএফ তৈরি করতে সমস্যা হয়েছে।');
@@ -1865,7 +1871,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                         <FileDown size={18} />
                     </div>
                     <div className="text-left">
-                        <h3 className="text-xs font-bold text-yellow-950 transition-colors">হিসাব পিডিএফ ডাউনলোড</h3>
+                        <h3 className="text-xs font-bold text-yellow-950 transition-colors">
+                            {viewMode === 'PARKING' ? 'পার্কিং চার্জ পিডিএফ ডাউনলোড' : 'সার্ভিস চার্জ পিডিএফ ডাউনলোড'}
+                        </h3>
                         <p className="text-[9px] text-yellow-900/70 font-medium">ইউনিট {selectedUnit} এর {selectedYear} সালের রিপোর্ট</p>
                     </div>
                 </div>
