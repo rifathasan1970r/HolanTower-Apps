@@ -1158,6 +1158,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   };
 
   const generatePDF = async (unit: string, year: number) => {
+    // 1. Confirmation Dialog
+    const confirmDownload = window.confirm("আপনি কি পিডিএফ রিপোর্টটি ডাউনলোড করতে চান?");
+    if (!confirmDownload) return;
+
     if (isGeneratingPDF) return;
     setIsGeneratingPDF(true);
 
@@ -1308,23 +1312,27 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
-      // FIX FOR WEBVIEW: Open in new window to trigger Chrome download
-      const blob = pdf.output('blob');
-      const blobUrl = URL.createObjectURL(blob);
+      // FIX FOR WEBVIEW: Use Data URI instead of Blob
+      // This is more robust for Android WebViews to trigger download or open in Chrome
+      const dataUri = pdf.output('datauristring');
       
-      // Create a temporary link to trigger download
+      // Create a temporary link
       const link = document.createElement('a');
-      link.href = blobUrl;
+      link.href = dataUri;
       link.download = fileName;
+      link.target = '_blank'; // Try to open in new tab (Chrome)
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      // Also try to open in new tab which often forces external browser in WebViews
-      window.open(blobUrl, '_blank');
-      
-      // Clean up blob URL after a delay
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      // Also try standard save for Desktop browsers
+      if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+          try {
+            pdf.save(fileName);
+          } catch (e) {
+            console.error("Standard save failed", e);
+          }
+      }
     } catch (error) {
       console.error('PDF Generation Error:', error);
       alert('পিডিএফ তৈরি করতে সমস্যা হয়েছে।');
