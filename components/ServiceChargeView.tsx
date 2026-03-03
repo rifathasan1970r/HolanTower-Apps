@@ -1286,20 +1286,33 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     }
 
     try {
-      // Wait for images to load with timeout
-      const images = element.getElementsByTagName('img');
+      // 1. Clone the element to manipulate it without affecting the view
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      document.body.appendChild(clone);
+
+      // 2. Handle Images: Wait for load or timeout, remove if failed
+      const images = clone.getElementsByTagName('img');
       const imagePromises = Array.from(images).map(img => {
         if (img.complete) return Promise.resolve();
-        return new Promise(resolve => { 
-          img.onload = resolve; 
-          img.onerror = resolve; // Continue even if image fails
-          setTimeout(resolve, 3000); // Timeout after 3 seconds
+        return new Promise<void>(resolve => { 
+          const timer = setTimeout(() => {
+            img.src = ''; // Clear source to stop loading
+            img.style.display = 'none'; // Hide failed image
+            resolve(); 
+          }, 2000); // 2 second timeout
+
+          img.onload = () => { clearTimeout(timer); resolve(); };
+          img.onerror = () => { clearTimeout(timer); img.style.display = 'none'; resolve(); };
         });
       });
       
       await Promise.all(imagePromises);
 
-      const canvas = await html2canvas(element, {
+      // 3. Generate Canvas from Clone
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
@@ -1308,6 +1321,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         windowWidth: 800
       });
       
+      // Clean up clone
+      document.body.removeChild(clone);
+      
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -1315,16 +1331,22 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
-      // FIX FOR WEBVIEW: Use standard save which works in most modern WebViews
-      // If that fails, try opening in new window
-      try {
-        pdf.save(fileName);
-      } catch (e) {
-        console.warn("Standard save failed, trying window.open fallback", e);
-        const blob = pdf.output('blob');
-        const blobUrl = URL.createObjectURL(blob);
-        window.open(blobUrl, '_blank');
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+      // 4. Download Logic
+      // Strategy: Use Data URI for window.open (better for Chrome/WebView handoff than Blob URL)
+      const dataUri = pdf.output('datauristring');
+      
+      // Attempt 1: Open in new tab (User request: "Open Chrome")
+      const newWindow = window.open(dataUri, '_blank');
+
+      // Attempt 2: Direct Download Link (Backup)
+      if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+          const link = document.createElement('a');
+          link.href = dataUri;
+          link.download = fileName;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
       }
       
     } catch (error) {
