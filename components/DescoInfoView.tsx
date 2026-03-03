@@ -33,32 +33,24 @@ export const DescoInfoView: React.FC<DescoInfoViewProps> = ({ onBack }) => {
         </button>
         <h2 className="text-lg font-bold text-slate-800 dark:text-white">ডেসকো মিটারের তথ্য</h2>
       </div>
-      
-      <div className="flex-1 w-full overflow-hidden relative z-10">
-        <iframe 
-          src="https://prepaid.desco.org.bd/customer/#/customer-info" 
-          className="absolute inset-0 w-full h-full border-none"
-          title="Desco Customer Info"
-        />
-      </div>
 
-      {/* Top Fixed Popup Card */}
-      <div className="absolute top-[60px] left-4 right-4 z-50">
+      {/* Top Fixed Popup Card - Now in flow */}
+      <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 relative z-30">
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-50 dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+          className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden"
         >
           {/* Header / Trigger */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center gap-2">
-             <h3 className="font-bold text-sm text-slate-800 dark:text-white leading-tight text-center">আপনার ডেসকো একাউন্ট নম্বর কপি করুন</h3>
+          <div className="py-1.5 px-3 bg-white dark:bg-slate-800 flex flex-col items-center justify-center gap-1">
+             <h3 className="font-bold text-[12px] text-slate-800 dark:text-white leading-tight text-center">আপনার ডেসকো একাউন্ট নম্বর কপি করুন</h3>
              
              <button 
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center gap-1.5 bg-purple-900 hover:bg-purple-800 px-4 py-1.5 rounded-full transition-colors group active:scale-95 shadow-sm"
+                className="flex items-center gap-1.5 bg-purple-900 hover:bg-purple-800 px-3 py-0.5 rounded-full transition-colors group active:scale-95 shadow-sm"
              >
-                <span className="text-[10px] font-bold text-white">লিস্ট দেখুন (২৭ টি ইউনিট)</span>
-                <ChevronDown size={12} className={`text-white transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                <span className="text-[9px] font-bold text-white">লিস্ট দেখুন (২৭ টি ইউনিট)</span>
+                <ChevronDown size={10} className={`text-white transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
              </button>
           </div>
 
@@ -112,6 +104,14 @@ export const DescoInfoView: React.FC<DescoInfoViewProps> = ({ onBack }) => {
             )}
           </AnimatePresence>
         </motion.div>
+      </div>
+      
+      <div className="flex-1 w-full overflow-hidden">
+        <iframe 
+          src="https://prepaid.desco.org.bd/customer/#/customer-info" 
+          className="w-full h-full border-none"
+          title="Desco Customer Info"
+        />
       </div>
 
       {/* Toast Notification */}
