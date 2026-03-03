@@ -1188,15 +1188,26 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       const owner = FLAT_OWNERS.find(f => f.flat === unit)?.name || 'Unknown';
       const totalAmount = records.reduce((sum, r) => sum + r.amount, 0);
       const totalDue = records.reduce((sum, r) => sum + r.due, 0);
+      
+      const now = new Date();
+      const timestamp = now.toLocaleString('bn-BD', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric', 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          second: '2-digit', 
+          hour12: true 
+      });
 
       element.innerHTML = `
         <div style="padding: 40px; position: relative; min-height: 1131px; display: flex; flex-direction: column;">
           <!-- Header Section -->
-          <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; padding-bottom: 10px;">
-            <div style="position: absolute; left: 0; top: 0;">
-              <img src="https://i.imghippo.com/files/doWD3644bN.jpg" style="width: 100px; height: 100px; object-fit: contain; border-radius: 50%;" />
+          <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px; padding-bottom: 10px; gap: 20px;">
+            <div>
+              <img src="https://i.imghippo.com/files/xPV6164w.png" style="width: 100px; height: 100px; object-fit: contain;" />
             </div>
-            <div style="text-align: center;">
+            <div style="text-align: left;">
               <h1 style="color: #9333ea; margin: 0; font-size: 42px; font-weight: 900; font-family: 'Inter', sans-serif;">হলান টাওয়ার</h1>
               <h2 style="color: #000; margin: 0; font-size: 36px; font-weight: 900; letter-spacing: 4px; font-family: 'Inter', sans-serif;">HOLAN TOWER</h2>
               <p style="margin: 8px 0 0 0; font-size: 14px; font-weight: 800; color: #000;">HOUSE #755 | HOLAN | WARD NO : 48 | DAKSHINKHAN | DHAKA 1230</p>
@@ -1209,7 +1220,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
           <!-- Watermark -->
           <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); opacity: 0.06; z-index: 0; width: 70%; pointer-events: none;">
-            <img src="https://i.imghippo.com/files/doWD3644bN.jpg" style="width: 100%;" />
+            <img src="https://i.imghippo.com/files/xPV6164w.png" style="width: 100%;" />
           </div>
 
           <!-- Content Section -->
@@ -1266,6 +1277,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
           <div style="margin-top: auto; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 20px; padding-bottom: 20px;">
             <p style="margin: 0; font-weight: bold;">হলান টাওয়ার ম্যানেজমেন্ট সিস্টেম কর্তৃক স্বয়ংক্রিয়ভাবে জেনারেট করা রিপোর্ট।</p>
             <p style="margin: 5px 0 0 0;">House #755, Holan, Dakshinkhan, Dhaka-1230</p>
+            <p style="margin: 5px 0 0 0; font-size: 10px; color: #94a3b8;">ডাউনলোডের সময়: ${timestamp}</p>
+            <p style="margin: 5px 0 0 0; font-size: 12px; font-weight: bold; color: #9333ea;">Design By A.H.M RIFAT HASAN</p>
           </div>
         </div>
       `;
@@ -1295,25 +1308,23 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
-      // FIX FOR WEBVIEW: Use navigator.share if available
+      // FIX FOR WEBVIEW: Open in new window to trigger Chrome download
       const blob = pdf.output('blob');
-      const file = new File([blob], fileName, { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
       
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: title,
-            text: `${unit} - ${year} Report`
-          });
-        } catch (shareError: any) {
-          if (shareError.name !== 'AbortError') {
-            pdf.save(fileName);
-          }
-        }
-      } else {
-        pdf.save(fileName);
-      }
+      // Create a temporary link to trigger download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Also try to open in new tab which often forces external browser in WebViews
+      window.open(blobUrl, '_blank');
+      
+      // Clean up blob URL after a delay
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
     } catch (error) {
       console.error('PDF Generation Error:', error);
       alert('পিডিএফ তৈরি করতে সমস্যা হয়েছে।');
@@ -1848,6 +1859,28 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             </div>
         </div>
 
+        {/* PDF Download Button */}
+        <div className="px-4 pt-4">
+            <button 
+                onClick={() => generatePDF(selectedUnit, selectedYear)}
+                disabled={isGeneratingPDF}
+                className={`w-full bg-yellow-400 hover:bg-yellow-500 border border-yellow-600/20 py-2 px-4 rounded-xl shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all ${isGeneratingPDF ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-yellow-500/20 text-yellow-900 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        {isGeneratingPDF ? <RefreshCw size={18} className="animate-spin" /> : <FileDown size={18} />}
+                    </div>
+                    <div className="text-left">
+                        <h3 className="text-xs font-bold text-yellow-950 transition-colors">
+                            {viewMode === 'PARKING' ? 'পার্কিং চার্জ পিডিএফ ডাউনলোড' : 'সার্ভিস চার্জ পিডিএফ ডাউনলোড'}
+                        </h3>
+                        <p className="text-[9px] text-yellow-900/70 font-medium">ইউনিট {selectedUnit} এর {selectedYear} সালের রিপোর্ট</p>
+                    </div>
+                </div>
+                <ArrowUpRight size={16} className="text-yellow-900/50 group-hover:text-yellow-900 transition-colors" />
+            </button>
+        </div>
+
         {/* Summary Box */}
         <div className="px-4 pt-4">
             <div 
@@ -1884,27 +1917,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             </div>
         </div>
 
-        {/* PDF Download Button */}
-        <div className="px-4 pt-4">
-            <button 
-                onClick={() => generatePDF(selectedUnit, selectedYear)}
-                disabled={isGeneratingPDF}
-                className={`w-full bg-yellow-400 hover:bg-yellow-500 border border-yellow-600/20 py-2 px-4 rounded-xl shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all ${isGeneratingPDF ? 'opacity-70 cursor-not-allowed' : ''}`}
-            >
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-yellow-500/20 text-yellow-900 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        {isGeneratingPDF ? <RefreshCw size={18} className="animate-spin" /> : <FileDown size={18} />}
-                    </div>
-                    <div className="text-left">
-                        <h3 className="text-xs font-bold text-yellow-950 transition-colors">
-                            {viewMode === 'PARKING' ? 'পার্কিং চার্জ পিডিএফ ডাউনলোড' : 'সার্ভিস চার্জ পিডিএফ ডাউনলোড'}
-                        </h3>
-                        <p className="text-[9px] text-yellow-900/70 font-medium">ইউনিট {selectedUnit} এর {selectedYear} সালের রিপোর্ট</p>
-                    </div>
-                </div>
-                <ArrowUpRight size={16} className="text-yellow-900/50 group-hover:text-yellow-900 transition-colors" />
-            </button>
-        </div>
+
 
         {/* Ledger Table Section */}
         <div className="p-4">
