@@ -1,10 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { AIAssistant } from './AIAssistant';
-import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car, Bot } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car, Bot, FileDown } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabaseClient';
 import { TRANSLATIONS, FLAT_OWNERS } from '../constants';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 
 // কনফিগারেশন: ২৭টি ইউনিট (ফ্লোর ২ থেকে ১০)
 const FLOORS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -1153,6 +1156,145 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       });
   };
 
+  const generatePDF = async (unit: string, year: number) => {
+    const elementId = `pdf-content-${unit}-${year}`;
+    let element = document.getElementById(elementId);
+    
+    // If element doesn't exist, we'll create a temporary one
+    const isTemp = !element;
+    if (isTemp) {
+      element = document.createElement('div');
+      element.id = elementId;
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      element.style.top = '-9999px';
+      element.style.width = '800px';
+      element.style.minHeight = '1131px'; // A4 Aspect Ratio
+      element.style.padding = '0';
+      element.style.backgroundColor = 'white';
+      element.style.color = 'black';
+      element.style.fontFamily = '"Inter", sans-serif';
+      element.style.boxSizing = 'border-box';
+      
+      const records = getUnitData(unit);
+      const owner = FLAT_OWNERS.find(f => f.flat === unit)?.name || 'Unknown';
+      const totalAmount = records.reduce((sum, r) => sum + r.amount, 0);
+      const totalDue = records.reduce((sum, r) => sum + r.due, 0);
+
+      element.innerHTML = `
+        <div style="padding: 40px; position: relative; min-height: 1131px; display: flex; flex-direction: column;">
+          <!-- Header Section -->
+          <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; padding-bottom: 10px;">
+            <div style="position: absolute; left: 0; top: 0;">
+              <img src="https://i.imghippo.com/files/doWD3644bN.jpg" style="width: 100px; height: 100px; object-fit: contain; border-radius: 50%;" />
+            </div>
+            <div style="text-align: center;">
+              <h1 style="color: #9333ea; margin: 0; font-size: 42px; font-weight: 900; font-family: 'Inter', sans-serif;">হলান টাওয়ার</h1>
+              <h2 style="color: #000; margin: 0; font-size: 36px; font-weight: 900; letter-spacing: 4px; font-family: 'Inter', sans-serif;">HOLAN TOWER</h2>
+              <p style="margin: 8px 0 0 0; font-size: 14px; font-weight: 800; color: #000;">HOUSE #755 | HOLAN | WARD NO : 48 | DAKSHINKHAN | DHAKA 1230</p>
+              <p style="margin: 4px 0 0 0; font-size: 12px; font-weight: 700; color: #000;">holantower@gmail.com | www.holantower.blogspot.com | www.facebook.com/holantower</p>
+            </div>
+          </div>
+          
+          <!-- Header Line -->
+          <div style="height: 4px; background-color: #000; margin-bottom: 40px; width: 100%;"></div>
+
+          <!-- Watermark -->
+          <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); opacity: 0.06; z-index: 0; width: 70%; pointer-events: none;">
+            <img src="https://i.imghippo.com/files/doWD3644bN.jpg" style="width: 100%;" />
+          </div>
+
+          <!-- Content Section -->
+          <div style="position: relative; z-index: 1;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 30px; background-color: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0;">
+              <div>
+                <p style="margin: 5px 0; font-size: 16px;"><strong>ইউনিট:</strong> <span style="color: #4f46e5;">${unit}</span></p>
+                <p style="margin: 5px 0; font-size: 16px;"><strong>মালিক:</strong> ${owner}</p>
+                <p style="margin: 5px 0; font-size: 16px;"><strong>বছর:</strong> ${year}</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="margin: 5px 0; color: #16a34a; font-size: 16px;"><strong>মোট পরিশোধ:</strong> ৳${totalAmount.toLocaleString()}</p>
+                <p style="margin: 5px 0; color: #dc2626; font-size: 16px;"><strong>মোট বকেয়া:</strong> ৳${totalDue.toLocaleString()}</p>
+              </div>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px;">
+              <thead>
+                <tr style="background-color: #4f46e5; color: white;">
+                  <th style="padding: 15px; border: 1px solid #e2e8f0; text-align: left;">মাস</th>
+                  <th style="padding: 15px; border: 1px solid #e2e8f0; text-align: left;">তারিখ</th>
+                  <th style="padding: 15px; border: 1px solid #e2e8f0; text-align: right;">পরিমাণ</th>
+                  <th style="padding: 15px; border: 1px solid #e2e8f0; text-align: right;">বকেয়া</th>
+                  <th style="padding: 15px; border: 1px solid #e2e8f0; text-align: center;">অবস্থা</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${records.map(r => `
+                  <tr style="background-color: ${r.status === 'DUE' ? '#fff1f2' : 'transparent'}">
+                    <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">${r.month}</td>
+                    <td style="padding: 12px; border: 1px solid #e2e8f0;">${r.date || '-'}</td>
+                    <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: right; font-weight: 600;">৳${r.amount}</td>
+                    <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: right; font-weight: 600; color: ${r.due > 0 ? '#dc2626' : 'inherit'}">৳${r.due}</td>
+                    <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: ${r.status === 'PAID' ? '#16a34a' : (r.status === 'DUE' ? '#dc2626' : '#854d0e')}">
+                      ${r.status === 'PAID' ? 'পরিশোধিত' : (r.status === 'DUE' ? 'বকেয়া' : (r.status === 'PARTIAL' ? 'আংশিক' : 'আসন্ন'))}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+              <tfoot>
+                <tr style="background-color: #f1f5f9; font-weight: 900; font-size: 16px;">
+                  <td colspan="2" style="padding: 15px; border: 1px solid #e2e8f0; text-align: center;">সর্বমোট হিসাব</td>
+                  <td style="padding: 15px; border: 1px solid #e2e8f0; text-align: right; color: #16a34a;">৳${totalAmount.toLocaleString()}</td>
+                  <td style="padding: 15px; border: 1px solid #e2e8f0; text-align: right; color: #dc2626;">৳${totalDue.toLocaleString()}</td>
+                  <td style="padding: 15px; border: 1px solid #e2e8f0;"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Footer -->
+          <div style="margin-top: auto; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 20px; padding-bottom: 20px;">
+            <p style="margin: 0; font-weight: bold;">হলান টাওয়ার ম্যানেজমেন্ট সিস্টেম কর্তৃক স্বয়ংক্রিয়ভাবে জেনারেট করা রিপোর্ট।</p>
+            <p style="margin: 5px 0 0 0;">House #755, Holan, Dakshinkhan, Dhaka-1230</p>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(element);
+    }
+
+    try {
+      // Wait for images to load
+      const images = element.getElementsByTagName('img');
+      await Promise.all(Array.from(images).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+      }));
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: 800
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Service_Charge_${unit}_${year}.pdf`);
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      alert('পিডিএফ তৈরি করতে সমস্যা হয়েছে।');
+    } finally {
+      if (isTemp && element) {
+        document.body.removeChild(element);
+      }
+    }
+  };
+
   // Payment Edit Modal
   const paymentEditModalContent = isEditModalOpen && (
     <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1710,6 +1852,25 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     <p className="font-bold text-base text-white">৳ {totalDue.toLocaleString()}</p>
                 </div>
             </div>
+        </div>
+
+        {/* PDF Download Button */}
+        <div className="px-4 pt-4">
+            <button 
+                onClick={() => generatePDF(selectedUnit, selectedYear)}
+                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all hover:border-indigo-500 dark:hover:border-indigo-400"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <FileDown size={20} />
+                    </div>
+                    <div className="text-left">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">হিসাব পিডিএফ ডাউনলোড</h3>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">ইউনিট {selectedUnit} এর {selectedYear} সালের রিপোর্ট</p>
+                    </div>
+                </div>
+                <ArrowUpRight size={18} className="text-slate-400 group-hover:text-indigo-500 transition-colors" />
+            </button>
         </div>
 
         {/* Ledger Table Section */}
