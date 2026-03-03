@@ -450,7 +450,7 @@ const App: React.FC = () => {
 
       {/* Top Header - Fixed */}
       <header className="fixed top-0 left-0 right-0 max-w-md mx-auto z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-slate-800/50 transition-all duration-300">
-        <div className="px-5 py-1 flex items-center justify-start">
+        <div className="px-5 py-[2px] flex items-center justify-start">
           <div className="flex items-center gap-3 text-left">
             <img 
               src="https://i.imghippo.com/files/xPV6164w.png" 
