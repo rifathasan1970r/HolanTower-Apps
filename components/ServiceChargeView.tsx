@@ -1158,10 +1158,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   };
 
   const generatePDF = async (unit: string, year: number) => {
-    // 1. Confirmation Dialog
-    const confirmDownload = window.confirm("আপনি কি পিডিএফ রিপোর্টটি ডাউনলোড করতে চান?");
-    if (!confirmDownload) return;
-
     if (isGeneratingPDF) return;
     setIsGeneratingPDF(true);
 
@@ -1312,27 +1308,26 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
-      // FIX FOR WEBVIEW: Use Data URI instead of Blob
-      // This is more robust for Android WebViews to trigger download or open in Chrome
-      const dataUri = pdf.output('datauristring');
+      // FIX FOR WEBVIEW: Use Blob URL and window.open to force external browser (Chrome)
+      const blob = pdf.output('blob');
+      const blobUrl = URL.createObjectURL(blob);
       
-      // Create a temporary link
-      const link = document.createElement('a');
-      link.href = dataUri;
-      link.download = fileName;
-      link.target = '_blank'; // Try to open in new tab (Chrome)
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // 1. Try to open in new tab directly (best for WebViews to trigger system browser)
+      const newWindow = window.open(blobUrl, '_blank');
 
-      // Also try standard save for Desktop browsers
-      if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-          try {
-            pdf.save(fileName);
-          } catch (e) {
-            console.error("Standard save failed", e);
-          }
+      // 2. Fallback: Create a temporary link and click it
+      if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = fileName;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
       }
+      
+      // Clean up blob URL after a delay
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     } catch (error) {
       console.error('PDF Generation Error:', error);
       alert('পিডিএফ তৈরি করতে সমস্যা হয়েছে।');
