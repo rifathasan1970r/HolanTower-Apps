@@ -820,6 +820,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [detailViewType, setDetailViewType] = useState<'SUMMARY' | 'PAID_LIST' | 'DUE_LIST'>('SUMMARY');
   const [selectedUnitSummary, setSelectedUnitSummary] = useState<any>(null);
   const [showYearlySummary, setShowYearlySummary] = useState<boolean>(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
 
 
   const grandTotalCollected = allUnitsSummary.reduce((acc, curr) => acc + curr.collected, 0);
@@ -1157,6 +1158,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   };
 
   const generatePDF = async (unit: string, year: number) => {
+    if (isGeneratingPDF) return;
+    setIsGeneratingPDF(true);
+
     const isParking = viewMode === 'PARKING';
     const title = isParking ? 'হলান টাওয়ার - পার্কিং চার্জ স্টেটমেন্ট' : 'হলান টাওয়ার - সার্ভিস চার্জ স্টেটমেন্ট';
     const fileName = isParking ? `Parking_Charge_${unit}_${year}.pdf` : `Service_Charge_${unit}_${year}.pdf`;
@@ -1290,7 +1294,26 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(fileName);
+      
+      // FIX FOR WEBVIEW: Use navigator.share if available
+      const blob = pdf.output('blob');
+      const file = new File([blob], fileName, { type: 'application/pdf' });
+      
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: title,
+            text: `${unit} - ${year} Report`
+          });
+        } catch (shareError: any) {
+          if (shareError.name !== 'AbortError') {
+            pdf.save(fileName);
+          }
+        }
+      } else {
+        pdf.save(fileName);
+      }
     } catch (error) {
       console.error('PDF Generation Error:', error);
       alert('পিডিএফ তৈরি করতে সমস্যা হয়েছে।');
@@ -1298,6 +1321,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       if (isTemp && element) {
         document.body.removeChild(element);
       }
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -1864,11 +1888,12 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         <div className="px-4 pt-4">
             <button 
                 onClick={() => generatePDF(selectedUnit, selectedYear)}
-                className="w-full bg-yellow-400 hover:bg-yellow-500 border border-yellow-600/20 py-2 px-4 rounded-xl shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all"
+                disabled={isGeneratingPDF}
+                className={`w-full bg-yellow-400 hover:bg-yellow-500 border border-yellow-600/20 py-2 px-4 rounded-xl shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all ${isGeneratingPDF ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-yellow-500/20 text-yellow-900 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <FileDown size={18} />
+                        {isGeneratingPDF ? <RefreshCw size={18} className="animate-spin" /> : <FileDown size={18} />}
                     </div>
                     <div className="text-left">
                         <h3 className="text-xs font-bold text-yellow-950 transition-colors">
