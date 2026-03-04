@@ -253,6 +253,44 @@ export const PDFDownloadPage: React.FC = () => {
         </button>
       </div>
 
+      {/* External Link Option */}
+      <div className="w-full max-w-[800px] mb-6 bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3">
+        <p className="text-sm font-bold text-slate-700">পিডিএফ প্রিভিউ লিংক:</p>
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex-1 w-full bg-slate-50 border border-slate-200 rounded p-2 text-xs text-slate-500 font-mono break-all select-all">
+            {typeof window !== 'undefined' ? window.location.href : ''}
+          </div>
+          
+          <button 
+            onClick={handleCopyLink}
+            className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
+            title="কপি করুন"
+          >
+            {copied ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
+          </button>
+
+          <a 
+            href={typeof window !== 'undefined' ? window.location.href : '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                navigator.clipboard.writeText(window.location.href);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }
+            }}
+            className="w-full sm:w-auto bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors text-center shadow-sm active:scale-95"
+          >
+            দেখো
+          </a>
+        </div>
+        <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-800">
+          <p className="font-bold mb-1">! ডাউনলোড হচ্ছে না?</p>
+          <p>যদি "ডাউনলোড করুন" বাটন কাজ না করে, তবে উপরের "দেখো" বাটনে ক্লিক করুন। এতে পিডিএফটি ওয়েব লিংক কপি হয়ে ব্রাউজারে ওপেন হবে, যদি ব্রাউজারে ওপেন না হয় তাহলে কপি হওয়া লিংক ক্রোম (Chrome) ব্রাউজারে যেয়ে ওপেন করুন। সেখান থেকে প্রিন্ট বা ডাউনলোড করতে পারবেন।</p>
+        </div>
+      </div>
+
       {/* PDF Content (Visible Preview - Scaled Down) */}
       <div className="w-full flex justify-center pb-10 overflow-hidden">
         {/* Scaled Wrapper to fit screen better */}
