@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { FLAT_OWNERS } from '../constants';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { FileDown, RefreshCw } from 'lucide-react';
+import { FileDown, RefreshCw, ArrowLeft } from 'lucide-react';
 
 // English months array to map logic consistently
 const MONTHS_LOGIC = [
@@ -193,6 +193,17 @@ export const PDFDownloadPage: React.FC = () => {
     }
   };
 
+  const handleGoBack = () => {
+    // Try to close the window first (since it was opened in new tab)
+    window.close();
+    // Fallback if window.close() is blocked (e.g. if not opened by script)
+    // But since we know it's opened by script, close should work.
+    // If user navigated here directly, history.back() might work.
+    if (!window.closed) {
+        window.history.back();
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -214,9 +225,18 @@ export const PDFDownloadPage: React.FC = () => {
     <div className="min-h-screen bg-slate-100 p-4 md:p-8 flex flex-col items-center">
       {/* Action Bar - Sticky */}
       <div className="sticky top-2 sm:top-4 z-50 w-full max-w-[800px] mb-6 flex flex-col sm:flex-row justify-between items-center bg-white/95 backdrop-blur shadow-lg p-4 rounded-xl border border-slate-200/60 gap-4 transition-all duration-300">
-        <div className="text-center sm:text-left">
-           <h1 className="text-lg font-bold text-slate-800">পিডিএফ প্রিভিউ</h1>
-           <p className="text-xs text-slate-500">ইউনিট: {unit} | বছর: {year}</p>
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+            <button 
+                onClick={handleGoBack}
+                className="p-2 rounded-full hover:bg-slate-100 text-slate-600 transition-colors"
+                title="ফিরে যান"
+            >
+                <ArrowLeft size={24} />
+            </button>
+            <div className="text-center sm:text-left">
+                <h1 className="text-lg font-bold text-slate-800">পিডিএফ প্রিভিউ</h1>
+                <p className="text-xs text-slate-500">ইউনিট: {unit} | বছর: {year}</p>
+            </div>
         </div>
         <button 
           onClick={handleDownload}
