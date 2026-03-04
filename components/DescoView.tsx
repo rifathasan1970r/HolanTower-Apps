@@ -9,7 +9,7 @@ const EKPAY_LINK = "https://ekpay.gov.bd/#/payment/electricity-bill";
 const BLOG_LINK = "https://holantower.blogspot.com/p/holantower-electricity-desco-bill.html";
 
 // Quick Recharge Modal Component
-const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: typeof DESCO_DATA }) => {
+const QuickRechargeModal = ({ onClose, data, onProceed }: { onClose: () => void, data: typeof DESCO_DATA, onProceed: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<typeof DESCO_DATA[0] | null>(null);
@@ -28,7 +28,7 @@ const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: type
      
      setTimeout(() => {
         setToastMsg('');
-        window.location.href = EKPAY_LINK;
+        onProceed();
      }, 1500);
   };
 
@@ -157,6 +157,8 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
   
   // NEW: Quick Recharge Modal State
   const [showQuickRecharge, setShowQuickRecharge] = useState(false);
+  // NEW: EkPay Iframe State
+  const [showEkPay, setShowEkPay] = useState(false);
 
   // Translations
   const t = {
@@ -233,8 +235,8 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
       
-    // Open EkPay in new tab immediately
-    window.location.href = EKPAY_LINK;
+    // Open EkPay in Iframe
+    setShowEkPay(true);
     
     // Close modal after a short delay
     setTimeout(() => {
@@ -251,6 +253,37 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
     }
     return `${key}${lang === 'bn' ? 'ম তলা' : 'th Floor'}`;
   };
+
+  if (showEkPay) {
+    return (
+      <div className="fixed inset-0 z-[200] bg-white flex flex-col">
+        <div className="bg-indigo-600 text-white p-3 flex items-center justify-between shadow-md shrink-0">
+           <div className="flex items-center gap-2">
+             <button onClick={() => setShowEkPay(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
+               <X size={24} />
+             </button>
+             <span className="font-bold text-lg">EkPay Payment</span>
+           </div>
+           <button 
+             onClick={() => window.open(EKPAY_LINK, '_blank')}
+             className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1"
+           >
+             <ExternalLink size={14} />
+             Open in Browser
+           </button>
+        </div>
+        <div className="flex-1 w-full h-full relative bg-slate-100">
+           <iframe 
+             src={EKPAY_LINK}
+             className="w-full h-full border-0"
+             title="EkPay Payment Gateway"
+             allow="payment"
+             sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation"
+           />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-28 bg-slate-50 dark:bg-slate-900 min-h-screen relative overflow-hidden font-sans transition-colors duration-300">
@@ -552,6 +585,10 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
          <QuickRechargeModal 
            onClose={() => setShowQuickRecharge(false)} 
            data={DESCO_DATA} 
+           onProceed={() => {
+             setShowQuickRecharge(false);
+             setShowEkPay(true);
+           }}
          />
       )}
 
