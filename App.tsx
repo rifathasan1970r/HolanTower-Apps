@@ -42,8 +42,24 @@ const App: React.FC = () => {
     return <PDFDownloadPage />;
   }
 
-  const [currentView, setCurrentView] = useState<ViewState>('HOME');
-  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<ViewState>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get('view');
+      // Basic validation to ensure it's a valid view string if needed, 
+      // but casting is usually fine if we trust the source or handle invalid views gracefully in renderContent
+      if (viewParam) return viewParam as ViewState;
+    }
+    return 'HOME';
+  });
+
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('unit') || null;
+    }
+    return null;
+  });
   const [showSummaryList, setShowSummaryList] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [greeting, setGreeting] = useState('');

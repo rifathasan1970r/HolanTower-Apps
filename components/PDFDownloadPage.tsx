@@ -195,14 +195,10 @@ export const PDFDownloadPage: React.FC = () => {
   };
 
   const handleGoBack = () => {
-    // Try to close the window first (since it was opened in new tab)
-    window.close();
-    // Fallback if window.close() is blocked (e.g. if not opened by script)
-    // But since we know it's opened by script, close should work.
-    // If user navigated here directly, history.back() might work.
-    if (!window.closed) {
-        window.history.back();
-    }
+    // Navigate back to the main app view for this unit
+    const baseUrl = window.location.origin + window.location.pathname;
+    const targetUrl = `${baseUrl}?view=SERVICE_CHARGE&unit=${unit}`;
+    window.location.href = targetUrl;
   };
 
   if (loading) {
@@ -347,36 +343,6 @@ export const PDFDownloadPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* External Link Option */}
-      <div className="mt-8 w-full max-w-[800px] bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3">
-        <p className="text-sm font-bold text-slate-700">পিডিএফ প্রিভিউ লিংক:</p>
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="flex-1 w-full bg-slate-50 border border-slate-200 rounded p-2 text-xs text-slate-500 font-mono break-all select-all">
-            {typeof window !== 'undefined' ? window.location.href : ''}
-          </div>
-          
-          <button 
-            onClick={handleCopyLink}
-            className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
-            title="কপি করুন"
-          >
-            {copied ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
-          </button>
-
-          <a 
-            href={typeof window !== 'undefined' ? window.location.href : '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors text-center shadow-sm active:scale-95"
-          >
-            দেখো
-          </a>
-        </div>
-        <p className="text-xs text-slate-400 text-center sm:text-left">
-          "দেখো" ক্লিক করলে ক্রমে ওপেন হবে। কাজ না করলে লিংক কপি করে ক্রমে ওপেন করুন।
-        </p>
       </div>
 
     </div>
