@@ -1340,7 +1340,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   };
 
   const generatePDF = async (unit: string, year: number) => {
-    const url = `${window.location.origin}?mode=pdf_download&unit=${unit}&year=${year}&type=${viewMode}`;
+    // Use pdf.html to force external browser handling (since it lacks manifest)
+    const url = `${window.location.origin}/pdf.html?mode=pdf_download&unit=${unit}&year=${year}&type=${viewMode}`;
     
     // Create a temporary link and click it to attempt forcing external browser
     const link = document.createElement('a');
