@@ -1341,7 +1341,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   const generatePDF = async (unit: string, year: number) => {
     const url = `${window.location.origin}?mode=pdf_download&unit=${unit}&year=${year}&type=${viewMode}`;
-    window.open(url, '_blank');
+    
+    // Create a temporary link and click it to attempt forcing external browser
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Payment Edit Modal
