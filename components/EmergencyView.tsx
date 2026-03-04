@@ -231,6 +231,12 @@ export const EmergencyView = () => {
   const ActionButtons = ({ phone, wa = true }: { phone: string, wa?: boolean }) => {
     const cleanPhone = phone.replace(/[^0-9+]/g, '');
     
+    // Prepare WhatsApp number
+    let waNumber = phone.replace(/[^0-9]/g, '');
+    if (waNumber.startsWith('01')) {
+      waNumber = '88' + waNumber;
+    }
+    
     return (
       <div className="flex gap-2 mt-4">
         <a 
@@ -241,7 +247,7 @@ export const EmergencyView = () => {
         </a>
         {wa && (
           <a 
-            href={`https://wa.me/${cleanPhone.replace('+', '')}`} 
+            href={`https://wa.me/${waNumber}`} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="flex-1 px-3 py-2.5 bg-[#25D366] rounded-xl text-white text-xs font-bold hover:bg-[#20b85a] transition-colors shadow-sm flex items-center justify-center gap-1.5 active:scale-95"
