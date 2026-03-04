@@ -28,7 +28,7 @@ const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: type
      
      setTimeout(() => {
         setToastMsg('');
-        window.open(EKPAY_LINK, "_blank");
+        window.location.href = EKPAY_LINK;
      }, 1500);
   };
 
@@ -234,7 +234,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
     setTimeout(() => setShowToast(false), 2000);
       
     // Open EkPay in new tab immediately
-    window.open(EKPAY_LINK, '_blank');
+    window.location.href = EKPAY_LINK;
     
     // Close modal after a short delay
     setTimeout(() => {
