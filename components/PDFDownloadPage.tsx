@@ -221,6 +221,28 @@ export const PDFDownloadPage: React.FC = () => {
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
   });
 
+  const openInChrome = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const currentUrl = window.location.href;
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isAndroid) {
+        // Android Intent to force Chrome
+        // Format: intent://<host>/<path>#Intent;scheme=https;package=com.android.chrome;end
+        const urlParts = currentUrl.replace(/^https?:\/\//, '');
+        const intentUrl = `intent://${urlParts}#Intent;scheme=https;package=com.android.chrome;end`;
+        window.location.href = intentUrl;
+    } else if (isIOS) {
+        // iOS Chrome scheme
+        const chromeUrl = currentUrl.replace(/^https?:\/\//, 'googlechrome://');
+        window.location.href = chromeUrl;
+    } else {
+        // Desktop / Other fallback
+        window.open(currentUrl, '_blank');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 p-4 md:p-8 flex flex-col items-center">
       {/* Action Bar - Sticky */}
@@ -347,14 +369,12 @@ export const PDFDownloadPage: React.FC = () => {
           <div className="flex-1 w-full bg-slate-50 border border-slate-200 rounded p-2 text-xs text-slate-500 font-mono break-all select-all">
             {typeof window !== 'undefined' ? window.location.href : ''}
           </div>
-          <a 
-            href={typeof window !== 'undefined' ? window.location.href : '#'}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button 
+            onClick={openInChrome}
             className="w-full sm:w-auto bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors text-center shadow-sm active:scale-95"
           >
             দেখো
-          </a>
+          </button>
         </div>
         <p className="text-xs text-slate-400 text-center sm:text-left">
           "দেখো" ক্লিক করলে ক্রমে ওপেন হবে।
