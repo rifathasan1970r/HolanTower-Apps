@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { FLAT_OWNERS } from '../constants';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { FileDown, RefreshCw, ArrowLeft } from 'lucide-react';
+import { FileDown, RefreshCw, ArrowLeft, Copy, Check } from 'lucide-react';
 
 // English months array to map logic consistently
 const MONTHS_LOGIC = [
@@ -39,6 +39,7 @@ export const PDFDownloadPage: React.FC = () => {
   const [totalAmount, setTotalAmount] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -221,25 +222,11 @@ export const PDFDownloadPage: React.FC = () => {
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
   });
 
-  const openInChrome = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const currentUrl = window.location.href;
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    if (isAndroid) {
-        // Android Intent to force Chrome
-        // Format: intent://<host>/<path>#Intent;scheme=https;package=com.android.chrome;end
-        const urlParts = currentUrl.replace(/^https?:\/\//, '');
-        const intentUrl = `intent://${urlParts}#Intent;scheme=https;package=com.android.chrome;end`;
-        window.location.href = intentUrl;
-    } else if (isIOS) {
-        // iOS Chrome scheme
-        const chromeUrl = currentUrl.replace(/^https?:\/\//, 'googlechrome://');
-        window.location.href = chromeUrl;
-    } else {
-        // Desktop / Other fallback
-        window.open(currentUrl, '_blank');
+  const handleCopyLink = () => {
+    if (typeof window !== 'undefined') {
+        navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -369,15 +356,26 @@ export const PDFDownloadPage: React.FC = () => {
           <div className="flex-1 w-full bg-slate-50 border border-slate-200 rounded p-2 text-xs text-slate-500 font-mono break-all select-all">
             {typeof window !== 'undefined' ? window.location.href : ''}
           </div>
+          
           <button 
-            onClick={openInChrome}
+            onClick={handleCopyLink}
+            className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center"
+            title="কপি করুন"
+          >
+            {copied ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
+          </button>
+
+          <a 
+            href={typeof window !== 'undefined' ? window.location.href : '#'}
+            target="_blank"
+            rel="noopener noreferrer"
             className="w-full sm:w-auto bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors text-center shadow-sm active:scale-95"
           >
             দেখো
-          </button>
+          </a>
         </div>
         <p className="text-xs text-slate-400 text-center sm:text-left">
-          "দেখো" ক্লিক করলে ক্রমে ওপেন হবে।
+          "দেখো" ক্লিক করলে ক্রমে ওপেন হবে। কাজ না করলে লিংক কপি করে ক্রমে ওপেন করুন।
         </p>
       </div>
 
