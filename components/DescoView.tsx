@@ -157,8 +157,6 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
   
   // NEW: Quick Recharge Modal State
   const [showQuickRecharge, setShowQuickRecharge] = useState(false);
-  // NEW: EkPay Iframe State
-  const [showEkPay, setShowEkPay] = useState(false);
 
   // Translations
   const t = {
@@ -235,8 +233,8 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
       
-    // Open EkPay in Iframe
-    setShowEkPay(true);
+    // Open EkPay directly
+    window.open(EKPAY_LINK, '_blank');
     
     // Close modal after a short delay
     setTimeout(() => {
@@ -253,84 +251,6 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
     }
     return `${key}${lang === 'bn' ? 'ম তলা' : 'th Floor'}`;
   };
-
-  if (showEkPay) {
-    return (
-      <div className="fixed inset-0 z-[200] bg-white flex flex-col">
-        {/* Header */}
-        <div className="bg-indigo-600 text-white p-3 flex items-center justify-between shadow-md shrink-0 z-50">
-           <div className="flex items-center gap-2">
-             <button onClick={() => setShowEkPay(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-               <X size={24} />
-             </button>
-             <span className="font-bold text-lg">EkPay Payment</span>
-           </div>
-           <button 
-             onClick={() => window.open(EKPAY_LINK, '_blank')}
-             className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1"
-           >
-             <ExternalLink size={14} />
-             Open in Browser
-           </button>
-        </div>
-
-        {/* Recharge Steps Scrollbar - Placed at the top of the EkPay View */}
-        <div className="bg-slate-50 border-b border-slate-200 p-3 overflow-x-auto no-scrollbar shrink-0 z-40 shadow-sm">
-           <div className="flex gap-3 min-w-max">
-              {[
-                { step: '১', title: 'একপে (EkPay) তে যান', icon: <ExternalLink size={14} /> },
-                { step: '২', title: 'DESCO PREPAID সিলেক্ট করুন', icon: <Check size={14} /> },
-                { step: '৩', title: 'একাউন্ট ও টাকার পরিমাণ দিন', icon: <Hash size={14} /> },
-                { step: '৪', title: 'পেমেন্ট মেথড (বিকাশ/নগদ)', icon: <CreditCard size={14} /> },
-                { step: '৫', title: 'পেমেন্ট সম্পন্ন করুন', icon: <Zap size={14} /> }
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-2.5 pr-4 shadow-sm min-w-[140px]">
-                   <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
-                      {item.step}
-                   </div>
-                   <div className="flex flex-col">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">ধাপ</span>
-                      <span className="text-xs font-bold text-slate-700 whitespace-nowrap flex items-center gap-1">
-                        {item.title}
-                        {idx === 0 && item.icon}
-                      </span>
-                   </div>
-                </div>
-              ))}
-           </div>
-        </div>
-
-        {/* Iframe Container - REPLACED with Intermediate View */}
-        <div className="flex-1 w-full h-full relative bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-           <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-100 animate-in zoom-in-95 duration-300">
-              <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-600 ring-8 ring-indigo-50/50">
-                 <ExternalLink size={36} />
-              </div>
-              
-              <h3 className="text-2xl font-bold text-slate-800 mb-3">পেমেন্ট সম্পন্ন করুন</h3>
-              <p className="text-slate-500 text-sm mb-8 leading-relaxed">
-                 উপরের ধাপগুলো অনুসরণ করে একপে (EkPay) ওয়েবসাইটে যেয়ে আপনার পেমেন্ট সম্পন্ন করুন।
-              </p>
-              
-              <button 
-                onClick={() => window.open(EKPAY_LINK, '_blank')}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-lg shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
-              >
-                <span>একপে ওয়েবসাইট ওপেন করুন</span>
-                <ExternalLink size={20} className="group-hover:translate-x-1 transition-transform" />
-              </button>
-              
-              <button 
-                onClick={() => setShowEkPay(false)}
-                className="w-full mt-4 py-3.5 rounded-2xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 hover:text-slate-700 transition-colors"
-              >
-                ফিরে যান
-              </button>
-           </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="pb-28 bg-slate-50 dark:bg-slate-900 min-h-screen relative overflow-hidden font-sans transition-colors duration-300">
@@ -530,89 +450,86 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
         </div>
       </div>
 
-       {/* Confirmation Modal - Centered Style */}
+      {/* Confirmation Modal - Centered Style */}
       {confirmModalData && (
         <div 
             className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
         >
            <div 
-              className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-sm shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto no-scrollbar"
+              className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-[340px] shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-200"
            >
               {/* Header */}
-              <div className="px-6 pt-6 pb-4 flex justify-between items-center">
+              <div className="px-5 pt-5 pb-3 flex justify-between items-center">
                   <div>
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t.confirmTitle}</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.confirmDesc}</p>
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.confirmTitle}</h3>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{t.confirmDesc}</p>
                   </div>
                   <button 
                     onClick={() => setConfirmModalData(null)}
-                    className="p-2 bg-slate-50 dark:bg-slate-700 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 hover:text-red-500 transition-colors"
+                    className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 hover:text-red-500 transition-colors"
                   >
-                    <X size={20} />
+                    <X size={18} />
                   </button>
               </div>
 
-              <div className="p-6 pt-2 space-y-6">
+              <div className="p-5 pt-0 space-y-4">
                  
                  {/* Account Number Hero Card */}
-                 <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-6 text-white shadow-xl shadow-indigo-200 dark:shadow-none relative overflow-hidden group">
+                 <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-4 text-white shadow-lg shadow-indigo-200 dark:shadow-none relative overflow-hidden group">
                      {/* Background patterns */}
-                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
-                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full blur-xl -ml-8 -mb-8 pointer-events-none"></div>
+                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none"></div>
+                     <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-full blur-xl -ml-6 -mb-6 pointer-events-none"></div>
 
-                     <div className="relative z-10 text-center space-y-2">
-                         <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest">{t.account}</p>
+                     <div className="relative z-10 text-center space-y-1">
+                         <p className="text-indigo-200 text-[10px] font-bold uppercase tracking-widest">{t.account}</p>
                          <div 
                             onClick={() => handleCopy(confirmModalData.account)}
-                            className="flex items-center justify-center gap-3 cursor-pointer active:scale-95 transition-transform"
+                            className="flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-transform"
                          >
-                             <span className="text-3xl font-mono font-bold tracking-wider">{confirmModalData.account}</span>
-                             <Copy size={20} className="text-indigo-300" />
+                             <span className="text-2xl font-mono font-bold tracking-wider">{confirmModalData.account}</span>
+                             <Copy size={16} className="text-indigo-300" />
                          </div>
-                         <p className="text-[10px] text-indigo-300 pt-1">{t.tapToCopy}</p>
+                         <p className="text-[9px] text-indigo-300 pt-0.5">{t.tapToCopy}</p>
                      </div>
                  </div>
 
                  {/* Details Grid */}
-                 <div className="grid grid-cols-2 gap-4">
-                     <div className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-4 border border-slate-100 dark:border-slate-600 text-center">
-                         <span className="block text-[10px] text-slate-400 dark:text-slate-300 font-bold uppercase mb-1">{t.flat}</span>
-                         <span className="block text-2xl font-black text-slate-700 dark:text-white">{confirmModalData.flat}</span>
+                 <div className="grid grid-cols-2 gap-3">
+                     <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3 border border-slate-100 dark:border-slate-600 text-center">
+                         <span className="block text-[9px] text-slate-400 dark:text-slate-300 font-bold uppercase mb-0.5">{t.flat}</span>
+                         <span className="block text-xl font-black text-slate-700 dark:text-white">{confirmModalData.flat}</span>
                      </div>
-                     <div className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-4 border border-slate-100 dark:border-slate-600 text-center">
-                         <span className="block text-[10px] text-slate-400 dark:text-slate-300 font-bold uppercase mb-1">{t.owner}</span>
-                         <span className="block text-lg font-bold text-slate-700 dark:text-white truncate">{confirmModalData.name}</span>
+                     <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-3 border border-slate-100 dark:border-slate-600 text-center">
+                         <span className="block text-[9px] text-slate-400 dark:text-slate-300 font-bold uppercase mb-0.5">{t.owner}</span>
+                         <span className="block text-base font-bold text-slate-700 dark:text-white truncate">{confirmModalData.name}</span>
                      </div>
                  </div>
 
                  {/* Instructions */}
-                 <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 rounded-xl p-3 flex gap-3 items-start">
-                     <Info size={16} className="text-orange-500 shrink-0 mt-0.5" />
-                     <p className="text-xs text-orange-800 dark:text-orange-300 font-medium leading-relaxed">
+                 <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 rounded-lg p-2.5 flex gap-2 items-start">
+                     <Info size={14} className="text-orange-500 shrink-0 mt-0.5" />
+                     <p className="text-[10px] text-orange-800 dark:text-orange-300 font-medium leading-relaxed">
                         {t.paymentNote}
                      </p>
                  </div>
 
-                 {/* Recharge Steps Scrollbar */}
-                 {/* Removed from here to move to EkPay View */}
-
                  {/* Action Buttons */}
-                 <div className="flex flex-col gap-4">
+                 <div className="flex flex-col gap-3">
                     <button 
                         onClick={handleProceedToPayment}
-                        className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-200 dark:shadow-none hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-200 dark:shadow-none hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                     >
                         <span>{t.payNow}</span>
-                        <ExternalLink size={18} />
+                        <ExternalLink size={16} />
                     </button>
 
                     {/* Payment Methods Footer - visual cue */}
-                    <div className="flex items-center justify-center gap-3 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
-                        <span className="text-[10px] font-bold text-slate-400">Supported:</span>
-                        <div className="h-5 px-1.5 bg-pink-600 text-white text-[10px] font-bold rounded flex items-center">bKash</div>
-                        <div className="h-5 px-1.5 bg-orange-500 text-white text-[10px] font-bold rounded flex items-center">Nagad</div>
-                        <div className="h-5 px-1.5 bg-purple-600 text-white text-[10px] font-bold rounded flex items-center">Rocket</div>
-                        <div className="h-5 px-1.5 bg-blue-600 text-white text-[10px] font-bold rounded flex items-center">Visa</div>
+                    <div className="flex items-center justify-center gap-2 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
+                        <span className="text-[9px] font-bold text-slate-400">Supported:</span>
+                        <div className="h-4 px-1.5 bg-pink-600 text-white text-[9px] font-bold rounded flex items-center">bKash</div>
+                        <div className="h-4 px-1.5 bg-orange-500 text-white text-[9px] font-bold rounded flex items-center">Nagad</div>
+                        <div className="h-4 px-1.5 bg-purple-600 text-white text-[9px] font-bold rounded flex items-center">Rocket</div>
+                        <div className="h-4 px-1.5 bg-blue-600 text-white text-[9px] font-bold rounded flex items-center">Visa</div>
                     </div>
                  </div>
               </div>
