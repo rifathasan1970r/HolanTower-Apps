@@ -233,8 +233,8 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
       
-    // Open EkPay directly
-    window.open(EKPAY_LINK, '_blank');
+    // Open EkPay directly in the same window
+    window.location.href = EKPAY_LINK;
     
     // Close modal after a short delay
     setTimeout(() => {
