@@ -42,7 +42,7 @@ export const ContactView: React.FC<ContactViewProps> = ({ onBack }) => {
   const handleWhatsApp = (phone: string) => {
     // Remove '+' and spaces for WhatsApp link
     const formattedPhone = phone.replace(/\+/g, '').replace(/\s/g, '').replace(/-/g, '');
-    window.open(`https://wa.me/${formattedPhone}`, '_blank');
+    window.open(`https://api.whatsapp.com/send?phone=${formattedPhone}`, '_blank');
   };
 
   return (
