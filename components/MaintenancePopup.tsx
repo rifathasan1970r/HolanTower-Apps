@@ -2,16 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wrench, Settings, Hammer } from 'lucide-react';
 
-export const MaintenancePopup: React.FC = () => {
+interface MaintenancePopupProps {
+  enabled?: boolean;
+}
+
+export const MaintenancePopup: React.FC<MaintenancePopupProps> = ({ enabled = false }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Check if the popup is enabled in localStorage
-    // Default to TRUE if not set (null), or if explicitly 'true'
-    const storedValue = localStorage.getItem('SHOW_MAINTENANCE_POPUP');
-    const isEnabled = storedValue !== 'false';
-    
-    if (isEnabled) {
+    if (enabled) {
       setIsVisible(true);
       
       // Auto close after 3 seconds
@@ -20,8 +19,10 @@ export const MaintenancePopup: React.FC = () => {
       }, 3000);
       
       return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
     }
-  }, []);
+  }, [enabled]);
 
   return (
     <AnimatePresence>

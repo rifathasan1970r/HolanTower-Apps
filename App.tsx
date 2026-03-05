@@ -69,6 +69,7 @@ const App: React.FC = () => {
   const [amPm, setAmPm] = useState('');
   const [timeIcon, setTimeIcon] = useState<React.ReactNode>(<CloudSun size={24} className="text-yellow-300" />);
   const [isReloadEnabled, setIsReloadEnabled] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
   
   // Dark Mode State
   const [darkMode, setDarkMode] = useState(() => {
@@ -144,13 +145,16 @@ const App: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('app_settings')
-          .select('value')
-          .eq('key', 'is_reload_enabled')
-          .single();
+          .select('key, value');
         
         if (data) {
-          const enabled = data.value === 'true';
-          setIsReloadEnabled(enabled);
+          data.forEach(setting => {
+            if (setting.key === 'is_reload_enabled') {
+              setIsReloadEnabled(setting.value === 'true');
+            } else if (setting.key === 'show_maintenance_popup') {
+              setMaintenanceMode(setting.value === 'true');
+            }
+          });
         }
       } catch (err) {
         console.error('Error fetching settings:', err);
@@ -165,13 +169,15 @@ const App: React.FC = () => {
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'app_settings',
-        filter: 'key=eq.is_reload_enabled'
+        table: 'app_settings'
       }, (payload) => {
         const newData = payload.new as any;
-        if (newData && newData.key === 'is_reload_enabled') {
-          const enabled = newData.value === 'true';
-          setIsReloadEnabled(enabled);
+        if (newData) {
+          if (newData.key === 'is_reload_enabled') {
+            setIsReloadEnabled(newData.value === 'true');
+          } else if (newData.key === 'show_maintenance_popup') {
+            setMaintenanceMode(newData.value === 'true');
+          }
         }
       })
       .subscribe();
@@ -317,7 +323,7 @@ const App: React.FC = () => {
         return <MaintenanceView onBack={() => window.history.back()} />;
 
       case 'SETTINGS':
-        return <SettingsView onBack={() => window.history.back()} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
+        return <SettingsView onBack={() => window.history.back()} darkMode={darkMode} toggleDarkMode={toggleDarkMode} maintenanceMode={maintenanceMode} />;
       
       case 'PRAYER_TIME':
         return <PrayerTimeView onBack={() => window.history.back()} />;
@@ -582,7 +588,7 @@ const App: React.FC = () => {
     <Assistant isVisible={currentView === 'HOME'} />
 
     {/* Maintenance Popup */}
-    <MaintenancePopup />
+    <MaintenancePopup enabled={maintenanceMode} />
 
     {/* Bottom Navigation */}
     <BottomNav currentView={currentView} setView={setCurrentView} />

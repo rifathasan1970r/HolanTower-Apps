@@ -7,21 +7,17 @@ interface SettingsViewProps {
   onBack: () => void;
   darkMode: boolean;
   toggleDarkMode: () => void;
+  maintenanceMode: boolean;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, toggleDarkMode }) => {
+export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, toggleDarkMode, maintenanceMode }) => {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminPin, setAdminPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [isReloadEnabled, setIsReloadEnabled] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  
-  // State for Maintenance Popup
-  const [showMaintenancePopup, setShowMaintenancePopup] = useState(() => {
-    const storedValue = localStorage.getItem('SHOW_MAINTENANCE_POPUP');
-    return storedValue !== 'false';
-  });
+  const [isMaintenanceUpdating, setIsMaintenanceUpdating] = useState(false);
   
   // Fetch global settings
   useEffect(() => {
@@ -60,10 +56,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
     }
   };
 
-  const toggleMaintenancePopup = () => {
-    const newValue = !showMaintenancePopup;
-    setShowMaintenancePopup(newValue);
-    localStorage.setItem('SHOW_MAINTENANCE_POPUP', String(newValue));
+  const toggleMaintenancePopup = async () => {
+    if (isMaintenanceUpdating) return;
+    setIsMaintenanceUpdating(true);
+    const newValue = !maintenanceMode;
+    
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'show_maintenance_popup', value: String(newValue) }, { onConflict: 'key' });
+      
+      if (error) {
+        console.error('Error updating maintenance setting:', error);
+      }
+    } catch (err) {
+      console.error('Error updating maintenance setting:', err);
+    } finally {
+      setIsMaintenanceUpdating(false);
+    }
   };
 
   const toggleReload = async () => {
@@ -168,16 +178,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
                   </div>
                   <button
                     onClick={toggleMaintenancePopup}
+                    disabled={isMaintenanceUpdating}
                     className={`relative w-10 h-6 rounded-full transition-colors duration-300 focus:outline-none ${
-                      showMaintenancePopup ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'
-                    }`}
+                      maintenanceMode ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'
+                    } ${isMaintenanceUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <motion.div
                       layout
-                      className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm"
-                      animate={{ x: showMaintenancePopup ? 16 : 0 }}
+                      className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm flex items-center justify-center"
+                      animate={{ x: maintenanceMode ? 16 : 0 }}
                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
+                    >
+                       {isMaintenanceUpdating && <RefreshCw size={8} className="animate-spin text-slate-400" />}
+                    </motion.div>
                   </button>
                 </div>
 
