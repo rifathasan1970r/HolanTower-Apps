@@ -157,8 +157,6 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
   
   // NEW: Quick Recharge Modal State
   const [showQuickRecharge, setShowQuickRecharge] = useState(false);
-  // NEW: EkPay Iframe State
-  const [showEkPay, setShowEkPay] = useState(false);
 
   // Translations
   const t = {
@@ -235,8 +233,8 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
       
-    // Open EkPay in Iframe
-    setShowEkPay(true);
+    // Open EkPay in new tab immediately
+    window.location.href = EKPAY_LINK;
     
     // Close modal after a short delay
     setTimeout(() => {
@@ -253,84 +251,6 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
     }
     return `${key}${lang === 'bn' ? 'ম তলা' : 'th Floor'}`;
   };
-
-  if (showEkPay) {
-    return (
-      <div className="fixed inset-0 z-[200] bg-white flex flex-col">
-        {/* Header */}
-        <div className="bg-indigo-600 text-white p-3 flex items-center justify-between shadow-md shrink-0 z-50">
-           <div className="flex items-center gap-2">
-             <button onClick={() => setShowEkPay(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-               <X size={24} />
-             </button>
-             <span className="font-bold text-lg">EkPay Payment</span>
-           </div>
-           <button 
-             onClick={() => window.open(EKPAY_LINK, '_blank')}
-             className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1"
-           >
-             <ExternalLink size={14} />
-             Open in Browser
-           </button>
-        </div>
-
-        {/* Recharge Steps Scrollbar - Placed at the top of the EkPay View */}
-        <div className="bg-slate-50 border-b border-slate-200 p-3 overflow-x-auto no-scrollbar shrink-0 z-40 shadow-sm">
-           <div className="flex gap-3 min-w-max">
-              {[
-                { step: '১', title: 'একপে (EkPay) তে যান', icon: <ExternalLink size={14} /> },
-                { step: '২', title: 'DESCO PREPAID সিলেক্ট করুন', icon: <Check size={14} /> },
-                { step: '৩', title: 'একাউন্ট ও টাকার পরিমাণ দিন', icon: <Hash size={14} /> },
-                { step: '৪', title: 'পেমেন্ট মেথড (বিকাশ/নগদ)', icon: <CreditCard size={14} /> },
-                { step: '৫', title: 'পেমেন্ট সম্পন্ন করুন', icon: <Zap size={14} /> }
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-2.5 pr-4 shadow-sm min-w-[140px]">
-                   <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
-                      {item.step}
-                   </div>
-                   <div className="flex flex-col">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">ধাপ</span>
-                      <span className="text-xs font-bold text-slate-700 whitespace-nowrap flex items-center gap-1">
-                        {item.title}
-                        {idx === 0 && item.icon}
-                      </span>
-                   </div>
-                </div>
-              ))}
-           </div>
-        </div>
-
-        {/* Iframe Container - REPLACED with Intermediate View */}
-        <div className="flex-1 w-full h-full relative bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-           <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-100 animate-in zoom-in-95 duration-300">
-              <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-600 ring-8 ring-indigo-50/50">
-                 <ExternalLink size={36} />
-              </div>
-              
-              <h3 className="text-2xl font-bold text-slate-800 mb-3">পেমেন্ট সম্পন্ন করুন</h3>
-              <p className="text-slate-500 text-sm mb-8 leading-relaxed">
-                 উপরের ধাপগুলো অনুসরণ করে একপে (EkPay) ওয়েবসাইটে যেয়ে আপনার পেমেন্ট সম্পন্ন করুন।
-              </p>
-              
-              <button 
-                onClick={() => window.open(EKPAY_LINK, '_blank')}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-lg shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
-              >
-                <span>একপে ওয়েবসাইট ওপেন করুন</span>
-                <ExternalLink size={20} className="group-hover:translate-x-1 transition-transform" />
-              </button>
-              
-              <button 
-                onClick={() => setShowEkPay(false)}
-                className="w-full mt-4 py-3.5 rounded-2xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 hover:text-slate-700 transition-colors"
-              >
-                ফিরে যান
-              </button>
-           </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="pb-28 bg-slate-50 dark:bg-slate-900 min-h-screen relative overflow-hidden font-sans transition-colors duration-300">
@@ -592,9 +512,6 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                         {t.paymentNote}
                      </p>
                  </div>
-
-                 {/* Recharge Steps Scrollbar */}
-                 {/* Removed from here to move to EkPay View */}
 
                  {/* Action Buttons */}
                  <div className="flex flex-col gap-4">
