@@ -247,9 +247,7 @@ export const EmergencyView = () => {
         </a>
         {wa && (
           <a 
-            href={`https://api.whatsapp.com/send?phone=${waNumber}`} 
-            target="_blank" 
-            rel="noopener noreferrer" 
+            href={`whatsapp://send?phone=${waNumber}`} 
             className="flex-1 px-3 py-2.5 bg-[#25D366] rounded-xl text-white text-xs font-bold hover:bg-[#20b85a] transition-colors shadow-sm flex items-center justify-center gap-1.5 active:scale-95"
           >
             <WhatsAppIcon /> WhatsApp
