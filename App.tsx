@@ -27,6 +27,7 @@ import { PullToRefresh } from './components/PullToRefresh';
 import { PolicyView } from './components/PolicyView';
 import { MaintenancePopup } from './components/MaintenancePopup';
 import { PDFDownloadPage } from './components/PDFDownloadPage';
+import { ContactView } from './components/ContactView';
 
 const App: React.FC = () => {
   // Check for PDF Download Mode
@@ -333,6 +334,9 @@ const App: React.FC = () => {
 
       case 'POLICY':
         return <PolicyView onBack={() => window.history.back()} />;
+
+      case 'CONTACT':
+        return <ContactView onBack={() => window.history.back()} />;
 
       case 'MENU':
       case 'HOME':

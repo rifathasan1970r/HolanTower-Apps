@@ -156,6 +156,15 @@ export const MENU_ITEMS: MenuItem[] = [
     color: 'bg-purple-500',
     description: 'অ্যাপটি ডাউনলোড করুন',
     gradient: 'from-purple-400 to-violet-600'
+  },
+  { 
+    id: 'contact', 
+    label: 'যোগাযোগ', 
+    icon: Phone,
+    view: 'CONTACT',
+    color: 'bg-teal-500',
+    description: 'জরুরী যোগাযোগ নম্বর',
+    gradient: 'from-teal-400 to-emerald-600'
   }
 ];
 
@@ -283,6 +292,6 @@ export const BOTTOM_NAV_ITEMS = [
   { id: 'service', label: 'সার্ভিস চার্জ', icon: CreditCard, view: 'SERVICE_CHARGE' },
   { id: 'desco', label: 'ডেসকো', icon: Zap, view: 'DESCO' },
   { id: 'home', label: 'হোম', icon: Home, view: 'HOME' },
-  { id: 'emergency', label: 'জরুরী', icon: ShieldCheck, view: 'EMERGENCY' },
+  { id: 'contact', label: 'যোগাযোগ', icon: Phone, view: 'CONTACT' },
   { id: 'menu', label: 'মেনু', icon: MenuIcon, view: 'MENU' },
 ] as const;
