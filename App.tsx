@@ -212,11 +212,6 @@ const App: React.FC = () => {
       
       if (state) {
         if (state.view === 'BASE') {
-          if (isExitingRef.current) {
-            window.history.back();
-            return;
-          }
-
           // We hit the bottom of our app history
           setShowExitDialog(true);
           // Push the current view back so we stay in the app
@@ -273,8 +268,21 @@ const App: React.FC = () => {
     } catch (e) {
       // ignore
     }
-    isExitingRef.current = true;
-    window.history.back();
+    
+    try {
+      // @ts-ignore
+      if (navigator.app && navigator.app.exitApp) {
+        // @ts-ignore
+        navigator.app.exitApp();
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Go back 2 steps: 
+    // 1. Undo the pushState we did when showing the dialog
+    // 2. Undo the initial navigation to BASE (effectively exiting)
+    window.history.go(-2);
   };
 
   const renderContent = () => {
