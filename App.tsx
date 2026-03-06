@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset, Wrench, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './lib/supabaseClient';
@@ -30,6 +30,8 @@ import { PDFDownloadPage } from './components/PDFDownloadPage';
 import { ContactView } from './components/ContactView';
 
 const App: React.FC = () => {
+  const isExitingRef = useRef(false);
+
   // Check for PDF Download Mode
   const [isPdfMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -210,6 +212,11 @@ const App: React.FC = () => {
       
       if (state) {
         if (state.view === 'BASE') {
+          if (isExitingRef.current) {
+            window.history.back();
+            return;
+          }
+
           // We hit the bottom of our app history
           setShowExitDialog(true);
           // Push the current view back so we stay in the app
@@ -261,12 +268,13 @@ const App: React.FC = () => {
   const t = TRANSLATIONS['bn']; // Default to Bangla for now, can be dynamic if needed
 
   const handleExitApp = () => {
-    // Try to close the window
-    window.close();
-    // If window.close() doesn't work (common in browsers), 
-    // we can't do much more than hiding the dialog or showing a message.
-    // On Android, if we don't push the state back, the next back press exits.
-    setShowExitDialog(false);
+    try {
+      window.close();
+    } catch (e) {
+      // ignore
+    }
+    isExitingRef.current = true;
+    window.history.back();
   };
 
   const renderContent = () => {
