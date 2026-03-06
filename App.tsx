@@ -28,7 +28,6 @@ import { PolicyView } from './components/PolicyView';
 import { MaintenancePopup } from './components/MaintenancePopup';
 import { PDFDownloadPage } from './components/PDFDownloadPage';
 import { ContactView } from './components/ContactView';
-import { DownloadAppView } from './components/DownloadAppView';
 
 const App: React.FC = () => {
   const isExitingRef = useRef(false);
@@ -355,8 +354,6 @@ const App: React.FC = () => {
       case 'CONTACT':
         return <ContactView onBack={() => window.history.back()} />;
 
-      case 'DOWNLOAD_APP':
-        return <DownloadAppView onBack={() => window.history.back()} />;
       case 'MENU':
       case 'HOME':
       default:
@@ -431,7 +428,11 @@ const App: React.FC = () => {
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
-                      setCurrentView(item.view);
+                      if (item.view === 'DOWNLOAD_APP') {
+                        window.open('https://holan-tower-apps-download.vercel.app/#download', '_blank');
+                      } else {
+                        setCurrentView(item.view);
+                      }
                     }}
                     className="relative bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-white dark:border-slate-700 overflow-hidden group text-left h-32 flex flex-col justify-between"
                   >
