@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Zap, Filter, Check, Copy, Hash, ExternalLink, ShieldCheck, Lightbulb, ChevronRight, X, User, Info, CreditCard, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ViewState } from '../types';
@@ -32,7 +33,7 @@ const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: type
      }, 1500);
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] font-sans text-[#121212] overflow-y-auto animate-in fade-in duration-300">
        {/* Background */}
        <div className="fixed inset-0 bg-[url('https://i.imghippo.com/files/IxR3498AKE.png')] bg-cover bg-center blur-[2px] z-[-1]" />
@@ -135,7 +136,8 @@ const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: type
             {toastMsg}
          </div>
        )}
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -451,7 +453,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
       </div>
 
       {/* Confirmation Modal - Centered Style */}
-      {confirmModalData && (
+      {confirmModalData && createPortal(
         <div 
             className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
         >
@@ -534,7 +536,8 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                  </div>
               </div>
            </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Toast Notification */}
@@ -556,96 +559,101 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
       )}
 
       {/* Floating Action Widget */}
-      <style>{`
-        @keyframes redPulse {
-          0% { box-shadow:0 0 8px rgba(255,0,0,.6),0 0 16px rgba(255,0,0,.7),0 0 28px rgba(255,0,0,.8); }
-          50% { box-shadow:0 0 14px rgba(255,0,0,1),0 0 28px rgba(255,0,0,1),0 0 45px rgba(255,0,0,1); }
-          100% { box-shadow:0 0 8px rgba(255,0,0,.6),0 0 16px rgba(255,0,0,.7),0 0 28px rgba(255,0,0,.8); }
-        }
-        .eb-icon-custom {
-          animation: redPulse 3s ease-in-out infinite;
-        }
-        @keyframes iconPulsePremium {
-          0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
-          50% { box-shadow: 0 0 12px rgba(255,255,255,0.4); }
-        }
-        .icon-premium-pulse {
-          animation: iconPulsePremium 3s ease-in-out infinite;
-        }
-      `}</style>
+      {createPortal(
+        <>
+          <style>{`
+            @keyframes redPulse {
+              0% { box-shadow:0 0 8px rgba(255,0,0,.6),0 0 16px rgba(255,0,0,.7),0 0 28px rgba(255,0,0,.8); }
+              50% { box-shadow:0 0 14px rgba(255,0,0,1),0 0 28px rgba(255,0,0,1),0 0 45px rgba(255,0,0,1); }
+              100% { box-shadow:0 0 8px rgba(255,0,0,.6),0 0 16px rgba(255,0,0,.7),0 0 28px rgba(255,0,0,.8); }
+            }
+            .eb-icon-custom {
+              animation: redPulse 3s ease-in-out infinite;
+            }
+            @keyframes iconPulsePremium {
+              0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+              50% { box-shadow: 0 0 12px rgba(255,255,255,0.4); }
+            }
+            .icon-premium-pulse {
+              animation: iconPulsePremium 3s ease-in-out infinite;
+            }
+          `}</style>
 
-      {/* Floating Button */}
-      <div 
-        onClick={() => setIsPopupOpen(!isPopupOpen)}
-        className="fixed right-[18px] bottom-[90px] w-[40px] h-[40px] rounded-[10px] bg-gradient-to-br from-[#6a11cb] to-[#2575fc] flex items-center justify-center cursor-pointer z-[60] border border-white/35 eb-icon-custom transition-transform active:scale-110"
-      >
-        <svg 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          className={`w-5 h-5 text-white transition-transform duration-500 ${isPopupOpen ? 'rotate-180' : ''}`}
-        >
-          <path d="M13 2L3 14h7l-1 8L21 10h-7l-0.999-8z" fill="currentColor"></path>
-        </svg>
-      </div>
+          {/* Floating Button */}
+          <div 
+            onClick={() => setIsPopupOpen(!isPopupOpen)}
+            className="fixed right-[18px] bottom-[90px] w-[40px] h-[40px] rounded-[10px] bg-gradient-to-br from-[#6a11cb] to-[#2575fc] flex items-center justify-center cursor-pointer z-[60] border border-white/35 eb-icon-custom transition-transform active:scale-110"
+          >
+            <svg 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              className={`w-5 h-5 text-white transition-transform duration-500 ${isPopupOpen ? 'rotate-180' : ''}`}
+            >
+              <path d="M13 2L3 14h7l-1 8L21 10h-7l-0.999-8z" fill="currentColor"></path>
+            </svg>
+          </div>
 
-      {/* Popup */}
-      {isPopupOpen && (
-        <div
-          className="fixed right-[18px] bottom-[140px] w-[280px] sm:w-[300px] p-3 bg-gradient-to-br from-[#6a11cb] to-[#2575fc] rounded-[10px] border border-black/5 shadow-2xl z-[60]"
-        >
-           <h4 className="m-0 mb-1.5 text-base text-white font-extrabold">বিদ্যুৎ বিল রিচার্জ</h4>
-           
-           <div className="bg-white p-2.5 rounded-lg border border-black/5 mb-2.5">
-              <p className="m-0 mb-2 p-0 text-[#333] text-[13px] leading-snug font-semibold">
-                আপনার বিদ্যুৎ বিল দ্রুত ও সহজে রিচার্জ করুন — এখনই ekPay এ যেয়ে।
-              </p>
-              <strong className="block text-[#b32222] font-bold text-[13px] mt-1.5 mb-2">(নোট: অবশ্যই DESCO PREPAID সিলেক্ট করবেন।)</strong>
-              
-              <button 
-                onClick={(e) => { e.stopPropagation(); setIsDetailsOpen(!isDetailsOpen); }}
-                className="w-full py-2 px-2.5 bg-[#fff7e6] rounded-md border border-black/10 font-bold text-left text-[13px] flex items-center justify-between gap-2 text-slate-800"
-              >
-                <span>{isDetailsOpen ? 'বিস্তারিত লুকান' : 'বিস্তারিত দেখুন'}</span>
-                <ChevronRight size={16} className={`transition-transform duration-200 ${isDetailsOpen ? 'rotate-90' : ''}`} />
-              </button>
+          {/* Popup */}
+          {isPopupOpen && (
+            <div
+              className="fixed right-[18px] bottom-[140px] w-[280px] sm:w-[300px] p-3 bg-gradient-to-br from-[#6a11cb] to-[#2575fc] rounded-[10px] border border-black/5 shadow-2xl z-[60]"
+            >
+               <h4 className="m-0 mb-1.5 text-base text-white font-extrabold">বিদ্যুৎ বিল রিচার্জ</h4>
+               
+               <div className="bg-white p-2.5 rounded-lg border border-black/5 mb-2.5">
+                  <p className="m-0 mb-2 p-0 text-[#333] text-[13px] leading-snug font-semibold">
+                    আপনার বিদ্যুৎ বিল দ্রুত ও সহজে রিচার্জ করুন — এখনই ekPay এ যেয়ে।
+                  </p>
+                  <strong className="block text-[#b32222] font-bold text-[13px] mt-1.5 mb-2">(নোট: অবশ্যই DESCO PREPAID সিলেক্ট করবেন।)</strong>
+                  
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsDetailsOpen(!isDetailsOpen); }}
+                    className="w-full py-2 px-2.5 bg-[#fff7e6] rounded-md border border-black/10 font-bold text-left text-[13px] flex items-center justify-between gap-2 text-slate-800"
+                  >
+                    <span>{isDetailsOpen ? 'বিস্তারিত লুকান' : 'বিস্তারিত দেখুন'}</span>
+                    <ChevronRight size={16} className={`transition-transform duration-200 ${isDetailsOpen ? 'rotate-90' : ''}`} />
+                  </button>
 
-              {isDetailsOpen && (
-                <div className="overflow-hidden">
-                   <div className="bg-[#fff7e6] mt-1.5 p-2 rounded-md border border-black/5 text-xs font-semibold text-[#111] leading-relaxed">
-                      সেবা প্রদানকারী প্রতিষ্ঠানের নাম (DESCO PREPAID) সিলেক্ট করতে হবে। এরপর সঠিকভাবে অ্যাকাউন্ট নম্বর, রিচার্জের পরিমাণ, মোবাইল নম্বর দিতে হবে। তারপর প্রদানকারীর তথ্য দিতে হবে। এরপর মোবাইল ব্যাংকিং সিলেক্ট করে বিকাশ / নগদ / উপায় / রকেট এর মাধ্যমে পেমেন্ট সম্পূর্ণ করতে হবে।
-                   </div>
-                </div>
-              )}
-           </div>
+                  {isDetailsOpen && (
+                    <div className="overflow-hidden">
+                       <div className="bg-[#fff7e6] mt-1.5 p-2 rounded-md border border-black/5 text-xs font-semibold text-[#111] leading-relaxed">
+                          সেবা প্রদানকারী প্রতিষ্ঠানের নাম (DESCO PREPAID) সিলেক্ট করতে হবে। এরপর সঠিকভাবে অ্যাকাউন্ট নম্বর, রিচার্জের পরিমাণ, মোবাইল নম্বর দিতে হবে। তারপর প্রদানকারীর তথ্য দিতে হবে। এরপর মোবাইল ব্যাংকিং সিলেক্ট করে বিকাশ / নগদ / উপায় / রকেট এর মাধ্যমে পেমেন্ট সম্পূর্ণ করতে হবে।
+                       </div>
+                    </div>
+                  )}
+               </div>
 
-           <div className="flex flex-col gap-2">
-              <button 
-                onClick={() => {
-                   setIsPopupOpen(false);
-                   setShowQuickRecharge(true);
-                }}
-                className="w-full py-2 px-2.5 rounded-lg bg-gradient-to-r from-[#ff7373] to-[#ff3d3d] text-white font-bold text-[13px] border-none shadow-sm hover:opacity-90 active:scale-95 transition-all"
-              >
-                এখনি রিচার্জ করুন
-              </button>
+               <div className="flex flex-col gap-2">
+                  <button 
+                    onClick={() => {
+                       setIsPopupOpen(false);
+                       setShowQuickRecharge(true);
+                    }}
+                    className="w-full py-2 px-2.5 rounded-lg bg-gradient-to-r from-[#ff7373] to-[#ff3d3d] text-white font-bold text-[13px] border-none shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                  >
+                    এখনি রিচার্জ করুন
+                  </button>
 
-              <a 
-                href={BLOG_LINK}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-2 px-2.5 rounded-lg bg-white text-[#222] font-bold text-[13px] border border-black/5 shadow-sm text-center no-underline hover:bg-gray-50 active:scale-95 transition-all"
-              >
-                মোবাইল ব্যাংকিং/অ্যাপস এর মাধ্যমে
-              </a>
+                  <a 
+                    href={BLOG_LINK}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2 px-2.5 rounded-lg bg-white text-[#222] font-bold text-[13px] border border-black/5 shadow-sm text-center no-underline hover:bg-gray-50 active:scale-95 transition-all"
+                  >
+                    মোবাইল ব্যাংকিং/অ্যাপস এর মাধ্যমে
+                  </a>
 
-              <button 
-                onClick={() => setIsPopupOpen(false)}
-                className="w-full py-2 px-2.5 rounded-lg bg-white text-[#444] font-bold text-[13px] border border-black/10 shadow-sm hover:bg-gray-50 active:scale-95 transition-all"
-              >
-                 বাতিল করুন
-              </button>
-           </div>
-        </div>
+                  <button 
+                    onClick={() => setIsPopupOpen(false)}
+                    className="w-full py-2 px-2.5 rounded-lg bg-white text-[#444] font-bold text-[13px] border border-black/10 shadow-sm hover:bg-gray-50 active:scale-95 transition-all"
+                  >
+                     বাতিল করুন
+                  </button>
+               </div>
+            </div>
+          )}
+        </>,
+        document.body
       )}
 
     </div>
