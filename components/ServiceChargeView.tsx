@@ -516,19 +516,43 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   const handleModalSave = async () => {
     if (processingUpdate) return;
+    
+    // PIN Verification
+    if (pinInput !== '1234') {
+        alert('ভুল পিন! দয়া করে সঠিক পিন দিন।');
+        return;
+    }
+
     setProcessingUpdate(true);
 
     const { unit, month, year, amount, due, day, monthName, yearVal, isDateEnabled, status } = editModalData;
+    
     // Construct date string
-    const paidDate = (isDateEnabled && status !== 'UPCOMING') ? `${day} ${monthName} ${yearVal}` : '';
+    let paidDate = '';
+    if (status === 'PAID' || status === 'PARTIAL') {
+        if (isDateEnabled) {
+             paidDate = `${day} ${monthName} ${yearVal}`;
+        } else {
+             // If date is disabled but status is PAID/PARTIAL, maybe use current date or keep empty?
+             // Existing logic was: (isDateEnabled && status !== 'UPCOMING')
+             // Let's stick to user input. If disabled, empty string.
+             paidDate = '';
+        }
+    }
+
     const finalAmount = status === 'UPCOMING' ? 0 : amount;
     const finalDue = status === 'UPCOMING' ? 0 : due;
 
     // Determine DB Unit Text
+    // If viewMode is PARKING, we append _P. 
+    // BUT we must be careful. If the unit is already stored as 2A_P in editModalData.unit, we shouldn't append again.
+    // editModalData.unit comes from startEditing(unit, ...). 
+    // In startEditing, we pass the raw unit (e.g. '2A').
+    // So appending _P is correct if we are in PARKING mode.
     const dbUnitText = viewMode === 'PARKING' ? `${unit}_P` : unit;
 
     try {
-      // ১. প্রথমে চেক করি এই মাস ও ইউনিটের ডাটা সার্ভারে আগে থেকেই আছে কিনা
+      // Check if record exists
       const { data: existingData, error: fetchError } = await supabase
         .from('payments')
         .select('id')
@@ -542,8 +566,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       let error = null;
 
       if (existingData) {
-        // UPDATE (যদি ডাটা থাকে)
-        const res = await supabase
+        // UPDATE
+        const { error: updateError } = await supabase
           .from('payments')
           .update({
             amount: finalAmount,
@@ -551,33 +575,39 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             paid_date: paidDate
           })
           .eq('id', existingData.id);
-        error = res.error;
+        error = updateError;
       } else {
-        // INSERT (যদি ডাটা না থাকে)
-        const newRecord = {
-          unit_text: dbUnitText,
-          month_name: month,
-          year_num: year,
-          amount: finalAmount,
-          due: finalDue,
-          paid_date: paidDate
-        };
-
-        const res = await supabase
+        // INSERT
+        const { error: insertError } = await supabase
           .from('payments')
-          .insert(newRecord);
-        error = res.error;
+          .insert({
+            unit_text: dbUnitText,
+            month_name: month,
+            year_num: year,
+            amount: finalAmount,
+            due: finalDue,
+            paid_date: paidDate
+          });
+        error = insertError;
       }
 
       if (error) throw error;
 
-      // রিফ্রেশ পেমেন্ট ডাটা শুধুমাত্র (বসবাসের ধরন যাতে রিভার্ট না হয়)
+      // Also update occupancy/parking type if needed? 
+      // The user didn't explicitly ask to save occupancy changes from this modal to DB in this request,
+      // but the modal has occupancy toggles. 
+      // Currently handleModalOccupancyChange updates local state `editModalData`.
+      // If we want to persist occupancy, we should do it here too.
+      // However, occupancy is stored in `units_info`, not `payments`.
+      // Let's stick to payments for now as per "Service charge er moto PIN set kore deo edit korar jonno".
+      
       await fetchData(false, false); 
       setIsEditModalOpen(false);
+      setPinInput(''); // Reset PIN
       
     } catch (err: any) {
       console.error("Error saving payment:", err);
-      alert(`${t.saveFail}: ${err.message}`);
+      alert(`সেভ করতে সমস্যা হয়েছে: ${err.message}`);
     } finally {
       setProcessingUpdate(false);
     }
@@ -1554,9 +1584,24 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">তারিখ বা টাকার পরিমাণ প্রয়োজন নেই</p>
                 </div>
             )}
+
+            {/* PIN Input for Security */}
+            <div className="mt-4 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
+                <label className="block text-xs font-bold text-red-600 dark:text-red-400 mb-1.5 flex items-center gap-1.5">
+                    <Lock size={12} />
+                    নিরাপত্তা পিন (সেভ করতে পিন দিন)
+                </label>
+                <input 
+                    type="password" 
+                    value={pinInput}
+                    onChange={(e) => setPinInput(e.target.value)}
+                    placeholder="পিন কোড লিখুন"
+                    className="w-full bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 rounded-lg py-2 px-3 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900 transition-all placeholder:text-slate-400"
+                />
+            </div>
         </div>
 
-        <div className="mt-8 flex gap-3">
+        <div className="mt-6 flex gap-3">
             <button 
                 onClick={() => setIsEditModalOpen(false)}
                 className="flex-1 py-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"

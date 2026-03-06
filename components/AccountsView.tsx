@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, TrendingUp, TrendingDown, Wallet, CreditCard, Banknote, Droplets, Trash2, Zap, User, MoreHorizontal, Calculator, Calendar, ChevronRight, Save, X, Plus, Minus, PieChart, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Wallet, CreditCard, Banknote, Droplets, Trash2, Zap, User, MoreHorizontal, Calculator, Calendar, ChevronRight, Save, X, Plus, Minus, PieChart, ArrowUpRight, ArrowDownRight, Lock, Unlock, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 
@@ -23,7 +23,6 @@ interface MonthlyAccountData {
     caretaker: number;
     others: number;
   };
-  isSynced?: boolean;
 }
 
 const MONTHS = [
@@ -32,13 +31,30 @@ const MONTHS = [
 ];
 
 const INITIAL_YEAR = 2026;
+const EDIT_PIN = "1234"; // Default PIN for editing
+
+const getDefaultAccounts = (year: number): MonthlyAccountData[] => 
+  MONTHS.map(month => ({
+    month,
+    year,
+    income: { surplus: 0, serviceCharge: 0, others: 0 },
+    expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, others: 0 }
+  }));
 
 export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
   const [selectedYear, setSelectedYear] = useState(INITIAL_YEAR);
-  const [accounts, setAccounts] = useState<MonthlyAccountData[]>([]);
+  const [accounts, setAccounts] = useState<MonthlyAccountData[]>(getDefaultAccounts(INITIAL_YEAR));
   const [editingMonth, setEditingMonth] = useState<string | null>(null);
   const [editData, setEditData] = useState<MonthlyAccountData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // PIN Protection State
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [pendingMonth, setPendingMonth] = useState<string | null>(null);
 
   // Initialize Data
   useEffect(() => {
@@ -47,38 +63,64 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
 
   const loadData = async () => {
     setLoading(true);
-    // Try to load from LocalStorage first for immediate feedback
-    const localKey = `accounts_${selectedYear}`;
-    const localData = localStorage.getItem(localKey);
     
-    let initialData: MonthlyAccountData[] = [];
+    // 1. Try to load from Supabase
+    try {
+      const { data, error } = await supabase
+        .from('building_accounts')
+        .select('*')
+        .eq('year', selectedYear);
 
-    if (localData) {
-      initialData = JSON.parse(localData);
-    } else {
-      // Initialize empty months
-      initialData = MONTHS.map(month => ({
-        month,
-        year: selectedYear,
-        income: { surplus: 0, serviceCharge: 0, others: 0 },
-        expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, others: 0 }
-      }));
+      if (error) {
+        // If table doesn't exist or other error, fallback to local
+        console.warn("Supabase fetch failed, using local fallback:", error.message);
+        throw error;
+      }
+
+      if (data && data.length > 0) {
+        // Map data to ensure all months exist
+        const mappedData = MONTHS.map(month => {
+          const existing = data.find(d => d.month === month);
+          return existing || {
+            month,
+            year: selectedYear,
+            income: { surplus: 0, serviceCharge: 0, others: 0 },
+            expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, others: 0 }
+          };
+        });
+        setAccounts(mappedData);
+      } else {
+        // No data in Supabase, check LocalStorage
+        const localKey = `accounts_${selectedYear}`;
+        const localData = localStorage.getItem(localKey);
+        
+        if (localData) {
+          setAccounts(JSON.parse(localData));
+        } else {
+          setAccounts(getDefaultAccounts(selectedYear));
+        }
+      }
+    } catch (err) {
+      // Fallback to LocalStorage on any error
+      const localKey = `accounts_${selectedYear}`;
+      const localData = localStorage.getItem(localKey);
+      if (localData) {
+        setAccounts(JSON.parse(localData));
+      } else {
+        setAccounts(getDefaultAccounts(selectedYear));
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setAccounts(initialData);
-    setLoading(false);
-
-    // TODO: Sync with Supabase in background if table exists
-    // fetchSupabaseData(); 
-  };
-
-  const saveData = (updatedAccounts: MonthlyAccountData[]) => {
-    setAccounts(updatedAccounts);
-    localStorage.setItem(`accounts_${selectedYear}`, JSON.stringify(updatedAccounts));
-    // TODO: Persist to Supabase
   };
 
   const handleEditClick = (month: string) => {
+    if (!isAuthorized) {
+      setPendingMonth(month);
+      setShowPinModal(true);
+      return;
+    }
+    
     const account = accounts.find(a => a.month === month);
     if (account) {
       setEditData(JSON.parse(JSON.stringify(account))); // Deep copy
@@ -86,12 +128,58 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
     }
   };
 
-  const handleSaveEdit = () => {
-    if (editData) {
+  const handlePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pinInput === EDIT_PIN) {
+      setIsAuthorized(true);
+      setShowPinModal(false);
+      setPinInput("");
+      setPinError(false);
+      
+      if (pendingMonth) {
+        const account = accounts.find(a => a.month === pendingMonth);
+        if (account) {
+          setEditData(JSON.parse(JSON.stringify(account)));
+          setEditingMonth(pendingMonth);
+        }
+        setPendingMonth(null);
+      }
+    } else {
+      setPinError(true);
+      setPinInput("");
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editData) return;
+    
+    setIsSaving(true);
+    try {
+      // 1. Update Local State
       const updatedAccounts = accounts.map(a => a.month === editData.month ? editData : a);
-      saveData(updatedAccounts);
+      setAccounts(updatedAccounts);
+      localStorage.setItem(`accounts_${selectedYear}`, JSON.stringify(updatedAccounts));
+
+      // 2. Sync with Supabase
+      const { error } = await supabase
+        .from('building_accounts')
+        .upsert({
+          month: editData.month,
+          year: editData.year,
+          income: editData.income,
+          expense: editData.expense,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'month,year' });
+
+      if (error) throw error;
+
       setEditingMonth(null);
       setEditData(null);
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("তথ্য সেভ করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -143,19 +231,34 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
             <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
             <span className="text-base font-bold">ফিরে যান</span>
           </button>
-          <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+          
+          <div className="flex items-center gap-3">
             <button 
-                onClick={() => setSelectedYear(2025)}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${selectedYear === 2025 ? 'bg-white dark:bg-slate-600 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}
+              onClick={() => isAuthorized ? setIsAuthorized(false) : setShowPinModal(true)}
+              className={`p-2 rounded-lg transition-all flex items-center gap-2 ${isAuthorized 
+                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100' 
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-slate-200'}`}
+              title={isAuthorized ? "লক করুন" : "আনলক করুন"}
             >
-                2025
+              {isAuthorized ? <Unlock size={18} /> : <Lock size={18} />}
+              <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">
+                {isAuthorized ? "এডিট মোড" : "লকড"}
+              </span>
             </button>
-            <button 
-                onClick={() => setSelectedYear(2026)}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${selectedYear === 2026 ? 'bg-white dark:bg-slate-600 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}
-            >
-                2026
-            </button>
+            <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+              <button 
+                  onClick={() => setSelectedYear(2025)}
+                  className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${selectedYear === 2025 ? 'bg-white dark:bg-slate-600 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}
+              >
+                  2025
+              </button>
+              <button 
+                  onClick={() => setSelectedYear(2026)}
+                  className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${selectedYear === 2026 ? 'bg-white dark:bg-slate-600 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}
+              >
+                  2026
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -218,10 +321,17 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                 <Calendar size={16} className="text-indigo-500" />
                 মাসিক বিবরণী
             </h3>
+            {loading && <Loader2 size={16} className="animate-spin text-slate-400" />}
         </div>
 
         {/* Monthly List */}
         <div className="space-y-3">
+            {accounts.length === 0 && !loading && (
+              <div className="text-center py-10 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                <Calendar size={40} className="mx-auto text-slate-300 mb-2" />
+                <p className="text-sm text-slate-500">কোনো তথ্য পাওয়া যায়নি।</p>
+              </div>
+            )}
             {accounts.map((acc, index) => {
                 const { inc, exp, bal } = getMonthSummary(acc);
                 const isPositive = bal >= 0;
@@ -247,7 +357,17 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                     </span>
                                 </div>
                             </div>
-                            <ChevronRight size={18} className="text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors" />
+                            <div className="flex items-center gap-2">
+                              {isAuthorized ? (
+                                <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-md flex items-center gap-1">
+                                  <Save size={10} />
+                                  এডিট
+                                </span>
+                              ) : (
+                                <Lock size={14} className="text-slate-300" />
+                              )}
+                              <ChevronRight size={18} className="text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors" />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-2 text-center divide-x divide-slate-100 dark:divide-slate-700 bg-slate-50 dark:bg-slate-700/30 rounded-lg p-2">
@@ -269,6 +389,68 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
             })}
         </div>
       </div>
+
+      {/* PIN Modal */}
+      <AnimatePresence>
+        {showPinModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowPinModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 overflow-hidden"
+            >
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600 dark:text-indigo-400">
+                  <Lock size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white">পিন কোড দিন</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">এডিট করার জন্য ৪ ডিজিটের পিন দিন</p>
+              </div>
+
+              <form onSubmit={handlePinSubmit} className="space-y-4">
+                <input 
+                  type="password"
+                  maxLength={4}
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value);
+                    setPinError(false);
+                  }}
+                  autoFocus
+                  className={`w-full text-center text-3xl tracking-[1em] font-black py-4 bg-slate-50 dark:bg-slate-700 border-2 rounded-xl focus:outline-none transition-all ${pinError ? 'border-rose-500 animate-shake' : 'border-slate-100 dark:border-slate-600 focus:border-indigo-500'}`}
+                  placeholder="••••"
+                />
+                {pinError && (
+                  <p className="text-xs text-center font-bold text-rose-500">ভুল পিন! আবার চেষ্টা করুন।</p>
+                )}
+                <div className="flex gap-3 pt-2">
+                  <button 
+                    type="button"
+                    onClick={() => setShowPinModal(false)}
+                    className="flex-1 py-3 font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 transition-colors"
+                  >
+                    বাতিল
+                  </button>
+                  <button 
+                    type="submit"
+                    className="flex-1 py-3 font-bold text-white bg-indigo-600 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-colors"
+                  >
+                    নিশ্চিত করুন
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Edit Modal */}
       <AnimatePresence>
@@ -448,10 +630,11 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                     <div className="p-4 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 sticky bottom-0 z-10 pb-8 sm:pb-4">
                         <button 
                             onClick={handleSaveEdit}
-                            className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                            disabled={isSaving}
+                            className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
                         >
-                            <Save size={20} />
-                            সংরক্ষণ করুন
+                            {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                            {isSaving ? 'সেভ হচ্ছে...' : 'সংরক্ষণ করুন'}
                         </button>
                     </div>
                 </motion.div>
