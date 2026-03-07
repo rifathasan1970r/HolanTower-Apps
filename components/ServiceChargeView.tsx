@@ -88,6 +88,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedMonthForFullTable, setSelectedMonthForFullTable] = useState<number | null>(null);
   const [showFullYearTable, setShowFullYearTable] = useState<boolean>(false);
+  const [fullYearTableUnitFilter, setFullYearTableUnitFilter] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   // Supabase State
@@ -1066,6 +1067,132 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
     return { oneMonth, twoMonths, threePlusMonths, totalAccumulatedDue };
   }, [selectedYear, dbData, unitsInfo, lang, viewMode, visibleUnits]);
+
+  const fullYearTableView = (
+    <div className="animate-in slide-in-from-right duration-300">
+        <div className="flex items-center gap-3 mb-6">
+            <button 
+                onClick={() => setShowFullYearTable(false)}
+                className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95"
+            >
+                <ArrowLeft size={20} />
+            </button>
+            <div className="flex-1">
+                <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+                    {fullYearTableUnitFilter ? `${fullYearTableUnitFilter} এর ১২ মাসের তথ্য` : '১২ মাসের তথ্য'}
+                </h2>
+                <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">{selectedYear}</p>
+            </div>
+        </div>
+
+        {/* Year Selection Tabs for 12 Months Info */}
+        <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex mb-6">
+            <button 
+                onClick={() => setSelectedYear(2025)}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+            >
+                <CalendarDays size={16} /> 2025
+            </button>
+            <button 
+                onClick={() => setSelectedYear(2026)}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+            >
+                <CalendarDays size={16} /> 2026
+            </button>
+        </div>
+
+        <div className="space-y-4">
+            {MONTHS_LOGIC.map((month, idx) => (
+                <div key={idx} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <button 
+                        onClick={() => setSelectedMonthForFullTable(selectedMonthForFullTable === idx ? null : idx)}
+                        className="w-full px-5 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${selectedMonthForFullTable === idx ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
+                                {idx + 1}
+                            </div>
+                            <span className="font-bold text-slate-700 dark:text-white">{month}</span>
+                        </div>
+                        <ChevronDown size={20} className={`text-slate-400 transition-transform duration-300 ${selectedMonthForFullTable === idx ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {selectedMonthForFullTable === idx && (
+                        <div className="border-t border-slate-100 dark:border-slate-700">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-[11px]">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-600">
+                                            <th className="py-2 pl-4 text-left font-bold text-slate-500 uppercase">ইউনিট ও তারিখ</th>
+                                            <th className="py-2 text-center font-bold text-slate-500 uppercase">টাকা</th>
+                                            <th className="py-2 text-center font-bold text-slate-500 uppercase">বকেয়া</th>
+                                            <th className="py-2 pr-4 text-right font-bold text-slate-500 uppercase">অবস্থা</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
+                                        {(() => {
+                                            let totalAmount = 0;
+                                            let totalDue = 0;
+                                            const unitsToDisplay = fullYearTableUnitFilter ? [fullYearTableUnitFilter] : visibleUnits;
+                                            const rows = unitsToDisplay.map(unit => {
+                                                const unitData = getUnitData(unit)[idx];
+                                                totalAmount += unitData.amount;
+                                                totalDue += unitData.due;
+                                                return (
+                                                    <tr key={unit} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                                        <td className="py-3 pl-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold text-slate-700 dark:text-slate-300">{unit}</span>
+                                                                <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">{unitData.date}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-3 text-center font-bold text-slate-700 dark:text-slate-200">
+                                                            {unitData.amount > 0 ? `৳${unitData.amount}` : '-'}
+                                                        </td>
+                                                        <td className="py-3 text-center font-bold text-red-500">
+                                                            {unitData.due > 0 ? `৳${unitData.due}` : '-'}
+                                                        </td>
+                                                        <td className="py-3 pr-4 text-right">
+                                                            <span className={`px-2 py-1 rounded-full text-[9px] font-bold ${
+                                                                unitData.status === 'PAID' ? 'bg-green-100 text-green-600' :
+                                                                unitData.status === 'DUE' ? 'bg-red-100 text-red-600' :
+                                                                unitData.status === 'PARTIAL' ? 'bg-orange-100 text-orange-600' :
+                                                                'bg-slate-100 text-slate-500'
+                                                            }`}>
+                                                                {unitData.status === 'PAID' ? 'পরিশোধ' : 
+                                                                 unitData.status === 'DUE' ? 'বকেয়া' : 
+                                                                 unitData.status === 'PARTIAL' ? 'আংশিক' : 'বাকি'}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            });
+                                            return (
+                                                <>
+                                                    {rows}
+                                                    <tr className="bg-slate-50 dark:bg-slate-700/50 font-black">
+                                                        <td className="py-4 pl-4 text-slate-700 dark:text-white uppercase">মোট যোগফল</td>
+                                                        <td className="py-4 text-center text-indigo-600 dark:text-indigo-400">৳{totalAmount.toLocaleString()}</td>
+                                                        <td className="py-4 text-center text-red-600 dark:text-red-400">৳{totalDue.toLocaleString()}</td>
+                                                        <td className="py-4 pr-4 text-right"></td>
+                                                    </tr>
+                                                </>
+                                            );
+                                        })()}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    </div>
+  );
+
+  if (showFullYearTable) {
+    return fullYearTableView;
+  }
 
   const filteredUnitsData = allUnitsSummary.filter(data => 
     data.unit.toLowerCase().includes(searchTerm.toLowerCase())
@@ -2100,6 +2227,30 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     </div>
                 </div>
             </div>
+            
+            {/* 12 Months Info Button for this specific unit */}
+            <div className="mb-6">
+                <button 
+                    onClick={() => {
+                        setFullYearTableUnitFilter(selectedUnit);
+                        setShowFullYearTable(true);
+                    }}
+                    className="w-full bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 shadow-lg border border-white/10 flex items-center justify-between group active:scale-[0.98] transition-all"
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl text-white group-hover:scale-110 transition-transform">
+                            <CalendarIcon size={24} />
+                        </div>
+                        <div className="text-left">
+                            <h3 className="text-base font-bold text-white">১২ মাসের তথ্য</h3>
+                            <p className="text-xs text-indigo-100 font-medium opacity-90">এই ইউনিটের পুরো বছরের বিস্তারিত হিসাব দেখুন</p>
+                        </div>
+                    </div>
+                    <div className="bg-white/20 p-2 rounded-full text-white group-hover:bg-white/30 transition-colors">
+                        <ChevronRight size={20} />
+                    </div>
+                </button>
+            </div>
 
             {/* Payment Status Graph */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
@@ -2372,125 +2523,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             )}
          </div>
       </div>
-    </div>
-  );
-
-  const fullYearTableView = (
-    <div className="animate-in slide-in-from-right duration-300">
-        <div className="flex items-center gap-3 mb-6">
-            <button 
-                onClick={() => setShowFullYearTable(false)}
-                className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95"
-            >
-                <ArrowLeft size={20} />
-            </button>
-            <div className="flex-1">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-white">১২ মাসের তথ্য</h2>
-                <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">{selectedYear}</p>
-            </div>
-        </div>
-
-        {/* Year Selection Tabs for 12 Months Info */}
-        <div className="bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex mb-6">
-            <button 
-                onClick={() => setSelectedYear(2025)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2025 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-            >
-                <CalendarDays size={16} /> 2025
-            </button>
-            <button 
-                onClick={() => setSelectedYear(2026)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === 2026 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-            >
-                <CalendarDays size={16} /> 2026
-            </button>
-        </div>
-
-        <div className="space-y-4">
-            {MONTHS_LOGIC.map((month, idx) => (
-                <div key={idx} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <button 
-                        onClick={() => setSelectedMonthForFullTable(selectedMonthForFullTable === idx ? null : idx)}
-                        className="w-full px-5 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${selectedMonthForFullTable === idx ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
-                                {idx + 1}
-                            </div>
-                            <span className="font-bold text-slate-700 dark:text-white">{month}</span>
-                        </div>
-                        <ChevronDown size={20} className={`text-slate-400 transition-transform duration-300 ${selectedMonthForFullTable === idx ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {selectedMonthForFullTable === idx && (
-                        <div className="border-t border-slate-100 dark:border-slate-700">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-[11px]">
-                                    <thead>
-                                        <tr className="bg-slate-50/50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-600">
-                                            <th className="py-2 pl-4 text-left font-bold text-slate-500 uppercase">ইউনিট ও তারিখ</th>
-                                            <th className="py-2 text-center font-bold text-slate-500 uppercase">টাকা</th>
-                                            <th className="py-2 text-center font-bold text-slate-500 uppercase">বকেয়া</th>
-                                            <th className="py-2 pr-4 text-right font-bold text-slate-500 uppercase">অবস্থা</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-                                        {(() => {
-                                            let totalAmount = 0;
-                                            let totalDue = 0;
-                                            const rows = visibleUnits.map(unit => {
-                                                const unitData = getUnitData(unit)[idx];
-                                                totalAmount += unitData.amount;
-                                                totalDue += unitData.due;
-                                                return (
-                                                    <tr key={unit} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                                        <td className="py-3 pl-4">
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold text-slate-700 dark:text-slate-300">{unit}</span>
-                                                                <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">{unitData.date}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 text-center font-bold text-slate-700 dark:text-slate-200">
-                                                            {unitData.amount > 0 ? `৳${unitData.amount}` : '-'}
-                                                        </td>
-                                                        <td className="py-3 text-center font-bold text-red-500">
-                                                            {unitData.due > 0 ? `৳${unitData.due}` : '-'}
-                                                        </td>
-                                                        <td className="py-3 pr-4 text-right">
-                                                            <span className={`px-2 py-1 rounded-full text-[9px] font-bold ${
-                                                                unitData.status === 'PAID' ? 'bg-green-100 text-green-600' :
-                                                                unitData.status === 'DUE' ? 'bg-red-100 text-red-600' :
-                                                                unitData.status === 'PARTIAL' ? 'bg-orange-100 text-orange-600' :
-                                                                'bg-slate-100 text-slate-500'
-                                                            }`}>
-                                                                {unitData.status === 'PAID' ? 'পরিশোধ' : 
-                                                                 unitData.status === 'DUE' ? 'বকেয়া' : 
-                                                                 unitData.status === 'PARTIAL' ? 'আংশিক' : 'বাকি'}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            });
-                                            return (
-                                                <>
-                                                    {rows}
-                                                    <tr className="bg-slate-50 dark:bg-slate-700/50 font-black">
-                                                        <td className="py-4 pl-4 text-slate-700 dark:text-white uppercase">মোট যোগফল</td>
-                                                        <td className="py-4 text-center text-indigo-600 dark:text-indigo-400">৳{totalAmount.toLocaleString()}</td>
-                                                        <td className="py-4 text-center text-red-600 dark:text-red-400">৳{totalDue.toLocaleString()}</td>
-                                                        <td className="py-4 pr-4 text-right text-slate-800 dark:text-white">৳{(totalAmount + totalDue).toLocaleString()}</td>
-                                                    </tr>
-                                                </>
-                                            );
-                                        })()}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            ))}
-        </div>
     </div>
   );
 
@@ -3817,8 +3849,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             </div>
         </div>
       ) : showMonthlySummary ? (
-          showFullYearTable ? fullYearTableView : (
-          // VIEW 4: MONTHLY SUMMARY VIEW
           <div className="animate-in slide-in-from-right duration-300">
               <div className="flex items-center gap-3 mb-4">
                  <button 
@@ -3849,22 +3879,24 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 </button>
             </div>
 
-            {/* NEW: 12 Months Info Button Box - সবার উপরে */}
             <div className="mb-6">
                 <button 
-                    onClick={() => setShowFullYearTable(true)}
-                    className="w-full bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between group active:scale-[0.98] transition-all"
+                    onClick={() => {
+                        setFullYearTableUnitFilter(null);
+                        setShowFullYearTable(true);
+                    }}
+                    className="w-full bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 shadow-lg border border-white/10 flex items-center justify-between group active:scale-[0.98] transition-all"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="bg-indigo-100 dark:bg-indigo-900/30 p-3 rounded-xl text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+                        <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl text-white group-hover:scale-110 transition-transform">
                             <CalendarIcon size={24} />
                         </div>
                         <div className="text-left">
-                            <h3 className="text-base font-bold text-slate-800 dark:text-white">১২ মাসের তথ্য</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">পুরো বছরের বিস্তারিত হিসাব দেখুন</p>
+                            <h3 className="text-base font-bold text-white">১২ মাসের তথ্য</h3>
+                            <p className="text-xs text-indigo-100 font-medium opacity-90">পুরো বছরের বিস্তারিত হিসাব দেখুন</p>
                         </div>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-700 p-2 rounded-full text-slate-400 group-hover:text-indigo-500 transition-colors">
+                    <div className="bg-white/20 p-2 rounded-full text-white group-hover:bg-white/30 transition-colors">
                         <ChevronRight size={20} />
                     </div>
                 </button>
@@ -4032,7 +4064,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 </div>
             </div>
           </div>
-          )
       ) : (
         // VIEW 3: MAIN GRID DASHBOARD
         <div>
