@@ -42,9 +42,15 @@ const getDefaultAccounts = (year: number): MonthlyAccountData[] =>
   }));
 
 export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
+  const currentMonthName = useMemo(() => {
+    const date = new Date();
+    const monthIndex = date.getMonth();
+    return MONTHS[monthIndex];
+  }, []);
+
   const [selectedYear, setSelectedYear] = useState(INITIAL_YEAR);
   const [accounts, setAccounts] = useState<MonthlyAccountData[]>(getDefaultAccounts(INITIAL_YEAR));
-  const [editingMonth, setEditingMonth] = useState<string | null>(null);
+  const [editingMonth, setEditingMonth] = useState<string | null>(currentMonthName);
   const [editData, setEditData] = useState<MonthlyAccountData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -60,6 +66,16 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
   useEffect(() => {
     loadData();
   }, [selectedYear]);
+
+  // Set editData when editingMonth changes (for initial load or clicks)
+  useEffect(() => {
+    if (editingMonth && accounts.length > 0) {
+      const account = accounts.find(a => a.month === editingMonth);
+      if (account) {
+        setEditData(JSON.parse(JSON.stringify(account)));
+      }
+    }
+  }, [editingMonth, accounts]);
 
   const loadData = async () => {
     setLoading(true);
@@ -115,12 +131,12 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
   };
 
   const handleEditClick = (month: string) => {
-    if (!isAuthorized) {
-      setPendingMonth(month);
-      setShowPinModal(true);
+    if (editingMonth === month) {
+      setEditingMonth(null);
+      setEditData(null);
       return;
     }
-    
+
     const account = accounts.find(a => a.month === month);
     if (account) {
       setEditData(JSON.parse(JSON.stringify(account))); // Deep copy
@@ -135,15 +151,6 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
       setShowPinModal(false);
       setPinInput("");
       setPinError(false);
-      
-      if (pendingMonth) {
-        const account = accounts.find(a => a.month === pendingMonth);
-        if (account) {
-          setEditData(JSON.parse(JSON.stringify(account)));
-          setEditingMonth(pendingMonth);
-        }
-        setPendingMonth(null);
-      }
     } else {
       setPinError(true);
       setPinInput("");
@@ -219,42 +226,43 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="pb-24 animate-in slide-in-from-right duration-500 bg-slate-50 dark:bg-slate-900 min-h-screen relative transition-colors duration-300 font-sans">
+    <div className="pb-24 animate-in fade-in duration-1000 bg-[#fdfcfd] min-h-screen relative font-sans text-slate-900">
       
-      {/* Header - Sticky Navigation Only */}
-      <div className="bg-white dark:bg-slate-800 sticky top-0 z-20 border-b border-slate-100 dark:border-slate-700 shadow-sm">
-        <div className="flex items-center justify-between px-4 py-3">
+      {/* Header - Ultra Minimal Glass */}
+      <div className="bg-white/40 backdrop-blur-3xl sticky top-0 z-30 border-b border-slate-200/40">
+        <div className="flex items-center justify-between px-5 py-4">
           <button 
             onClick={onBack}
-            className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors py-1 group"
+            className="flex items-center gap-2 text-slate-400 hover:text-purple-600 transition-all group"
           >
-            <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
-            <span className="text-base font-bold">ফিরে যান</span>
+            <div className="w-8 h-8 rounded-full border border-slate-200/60 flex items-center justify-center group-hover:border-purple-200 group-hover:bg-purple-50 transition-all">
+              <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">ফিরে যান</span>
           </button>
           
           <div className="flex items-center gap-3">
             <button 
               onClick={() => isAuthorized ? setIsAuthorized(false) : setShowPinModal(true)}
-              className={`p-2 rounded-lg transition-all flex items-center gap-2 ${isAuthorized 
-                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100' 
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-slate-200'}`}
-              title={isAuthorized ? "লক করুন" : "আনলক করুন"}
+              className={`h-9 px-4 rounded-xl transition-all flex items-center gap-2 ${isAuthorized 
+                ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-200/50' 
+                : 'bg-slate-100/50 text-slate-400 border border-slate-200/50'}`}
             >
-              {isAuthorized ? <Unlock size={18} /> : <Lock size={18} />}
-              <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">
-                {isAuthorized ? "এডিট মোড" : "লকড"}
+              {isAuthorized ? <Unlock size={16} /> : <Lock size={16} />}
+              <span className="text-[9px] font-black uppercase tracking-[0.15em] hidden sm:inline">
+                {isAuthorized ? "এডিট" : "লকড"}
               </span>
             </button>
-            <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+            <div className="flex bg-slate-100/50 border border-slate-200/50 rounded-xl p-0.5">
               <button 
                   onClick={() => setSelectedYear(2025)}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${selectedYear === 2025 ? 'bg-white dark:bg-slate-600 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}
+                  className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${selectedYear === 2025 ? 'bg-white shadow-sm text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}
               >
                   2025
               </button>
               <button 
                   onClick={() => setSelectedYear(2026)}
-                  className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${selectedYear === 2026 ? 'bg-white dark:bg-slate-600 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500'}`}
+                  className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${selectedYear === 2026 ? 'bg-white shadow-sm text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}
               >
                   2026
               </button>
@@ -263,382 +271,328 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
         </div>
       </div>
 
-      <div className="p-5 space-y-6">
-        {/* Title & Summary Card Section (Scrollable) */}
-        <div>
-          <div className="flex items-center gap-3 mb-4 px-1">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none">
-                <Calculator size={20} />
+      <div className="w-full max-w-md mx-auto px-5 py-8 space-y-8">
+        {/* Title Section - Elegant & Centered */}
+        <div className="flex flex-col items-center text-center space-y-3">
+            <div className="w-14 h-14 rounded-[1.8rem] bg-gradient-to-br from-purple-900 to-purple-800 flex items-center justify-center text-white shadow-xl shadow-purple-100 mb-1 transform -rotate-3">
+                <Calculator size={28} />
             </div>
-            <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">স্বচ্ছ হিসাব কেন্দ্র</h2>
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                  বাৎসরিক হিসাব বিবরণী - {selectedYear}
-                </p>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tighter">স্বচ্ছ হিসাব কেন্দ্র</h2>
+            <div className="flex items-center gap-3">
+              <div className="h-[1px] w-8 bg-slate-200"></div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                বাৎসরিক বিবরণী • {selectedYear}
+              </p>
+              <div className="h-[1px] w-8 bg-slate-200"></div>
             </div>
-          </div>
+        </div>
 
-          {/* Premium Summary Card */}
-          <div className="relative overflow-hidden rounded-2xl shadow-xl border border-white/10 p-6 text-white group">
-             <div className="absolute inset-0 bg-gradient-to-br from-[#4f46e5] to-[#7c3aed] z-0"></div>
-             <div className="absolute top-0 right-0 p-8 opacity-10 transform rotate-12 group-hover:scale-110 transition-transform duration-700">
-                <PieChart size={120} />
-             </div>
+        {/* Luxury Summary Card - Full Width & Deep */}
+        <div className="relative group">
+          <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-500/10 to-violet-500/10 rounded-[2.5rem] blur-xl opacity-50 group-hover:opacity-100 transition duration-1000"></div>
+          <div className="relative overflow-hidden rounded-[2.2rem] bg-[#1a1033] border border-white/5 p-8 text-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
+             <div className="absolute top-0 right-0 -mr-12 -mt-12 w-48 h-48 bg-purple-500/20 rounded-full blur-[60px]"></div>
+             <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-48 h-48 bg-violet-500/20 rounded-full blur-[60px]"></div>
              
-             <div className="relative z-10">
-                <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <p className="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-1">বর্তমান স্থিতি (Balance)</p>
-                        <h3 className="text-3xl font-black tracking-tight">৳ {summary.balance.toLocaleString()}</h3>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur-md p-2 rounded-lg">
-                        <Wallet size={24} className="text-white" />
+             <div className="relative z-10 flex flex-col space-y-8">
+                <div className="space-y-1">
+                    <p className="text-purple-300/60 text-[9px] font-black uppercase tracking-[0.3em]">বর্তমান স্থিতি (Balance)</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xl font-light text-purple-300/40">৳</span>
+                      <h3 className="text-4xl font-black tracking-tighter text-white">
+                        {summary.balance.toLocaleString()}
+                      </h3>
                     </div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                    <div>
-                        <div className="flex items-center gap-1.5 mb-1 text-emerald-300">
-                            <ArrowUpRight size={14} />
-                            <p className="text-[10px] font-bold uppercase">মোট আয়</p>
+                
+                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-emerald-400">
+                            <div className="w-6 h-6 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                              <ArrowUpRight size={14} />
+                            </div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em]">মোট আয়</p>
                         </div>
-                        <p className="text-lg font-bold">৳ {summary.totalIncome.toLocaleString()}</p>
+                        <p className="text-2xl font-black tracking-tight">৳{summary.totalIncome.toLocaleString()}</p>
                     </div>
-                    <div>
-                        <div className="flex items-center gap-1.5 mb-1 text-rose-300">
-                            <ArrowDownRight size={14} />
-                            <p className="text-[10px] font-bold uppercase">মোট ব্যয়</p>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-rose-400">
+                            <div className="w-6 h-6 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
+                              <ArrowDownRight size={14} />
+                            </div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em]">মোট ব্যয়</p>
                         </div>
-                        <p className="text-lg font-bold">৳ {summary.totalExpense.toLocaleString()}</p>
+                        <p className="text-2xl font-black tracking-tight">৳{summary.totalExpense.toLocaleString()}</p>
                     </div>
                 </div>
              </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between px-1 pt-2">
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <Calendar size={16} className="text-indigo-500" />
+        {/* Monthly List Header */}
+        <div className="flex items-center justify-between px-2">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-600 shadow-lg shadow-purple-200"></div>
                 মাসিক বিবরণী
             </h3>
-            {loading && <Loader2 size={16} className="animate-spin text-slate-400" />}
+            {loading && <Loader2 size={16} className="animate-spin text-purple-600" />}
         </div>
 
-        {/* Monthly List */}
-        <div className="space-y-3">
+        {/* Monthly List - Expansive & Premium */}
+        <div className="space-y-5">
             {accounts.length === 0 && !loading && (
-              <div className="text-center py-10 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-                <Calendar size={40} className="mx-auto text-slate-300 mb-2" />
-                <p className="text-sm text-slate-500">কোনো তথ্য পাওয়া যায়নি।</p>
+              <div className="text-center py-16 bg-[#f8f6fa]/50 rounded-[2.5rem] border border-dashed border-slate-200">
+                <Calendar size={48} className="mx-auto text-slate-200 mb-4" />
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">কোনো তথ্য পাওয়া যায়নি</p>
               </div>
             )}
             {accounts.map((acc, index) => {
                 const { inc, exp, bal } = getMonthSummary(acc);
                 const isPositive = bal >= 0;
+                const isCurrentMonth = acc.month === currentMonthName;
 
                 return (
                     <motion.div
                         key={acc.month}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        onClick={() => handleEditClick(acc.month)}
-                        className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800 transition-all cursor-pointer active:scale-[0.99] group"
+                        transition={{ delay: index * 0.05, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                        className={`group bg-[#f8f6fa] rounded-[2rem] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.03)] transition-all overflow-hidden border border-transparent ${editingMonth === acc.month ? 'ring-2 ring-purple-600/30 shadow-purple-100/40' : 'hover:bg-[#f3eff5] hover:shadow-slate-200/50'}`}
                     >
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300 text-xs border border-slate-100 dark:border-slate-600 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                    {acc.month.substring(0, 3)}
+                        <div 
+                          onClick={() => handleEditClick(acc.month)}
+                          className={`p-5 cursor-pointer active:scale-[0.99] transition-all`}
+                        >
+                            <div className="flex items-center justify-between gap-4 mb-5">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-11 h-11 rounded-[1.2rem] flex items-center justify-center font-black text-[9px] uppercase tracking-widest border transition-all duration-700 ${isCurrentMonth ? 'bg-purple-600 border-purple-500 text-white shadow-xl shadow-purple-200' : 'bg-white border-slate-200/60 text-slate-400 group-hover:border-purple-200 group-hover:text-purple-600'}`}>
+                                        {acc.month.substring(0, 3)}
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <div className="flex items-center gap-2">
+                                          <h4 className="font-black text-slate-900 text-lg tracking-tighter">{acc.month}</h4>
+                                          {isCurrentMonth && (
+                                            <span className="text-[7px] bg-purple-600 text-white px-2 py-1 rounded-full uppercase font-black tracking-[0.1em] shadow-sm">
+                                              বর্তমান
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <div className={`w-1 h-1 rounded-full ${isPositive ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                                          <span className={`text-[8px] font-black uppercase tracking-[0.15em] ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                              {isPositive ? 'উদ্বৃত্ত' : 'ঘাটতি'}
+                                          </span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 className="font-bold text-slate-800 dark:text-white">{acc.month}</h4>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isPositive ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'}`}>
-                                        {isPositive ? 'উদ্বৃত্ত' : 'ঘাটতি'}
-                                    </span>
+                                <div className="flex items-center gap-3">
+                                  {isAuthorized ? (
+                                    <button className={`h-9 px-4 rounded-xl flex items-center gap-2 transition-all duration-500 ${editingMonth === acc.month ? 'bg-purple-600 text-white shadow-xl shadow-purple-200' : 'text-purple-600 bg-white border border-purple-100 hover:bg-purple-50'}`}>
+                                      {editingMonth === acc.month ? <X size={14} /> : <Save size={14} />}
+                                      <span className="text-[9px] font-black uppercase tracking-widest">
+                                        {editingMonth === acc.month ? 'বন্ধ' : 'এডিট'}
+                                      </span>
+                                    </button>
+                                  ) : (
+                                    <div className="w-9 h-9 bg-white rounded-xl border border-slate-200/60 flex items-center justify-center shadow-sm">
+                                      <Lock size={14} className="text-slate-300" />
+                                    </div>
+                                  )}
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-700 ${editingMonth === acc.month ? 'bg-purple-100 text-purple-600 rotate-90' : 'text-slate-300'}`}>
+                                    <ChevronRight size={18} />
+                                  </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              {isAuthorized ? (
-                                <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-md flex items-center gap-1">
-                                  <Save size={10} />
-                                  এডিট
-                                </span>
-                              ) : (
-                                <Lock size={14} className="text-slate-300" />
-                              )}
-                              <ChevronRight size={18} className="text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors" />
+
+                            <div className="grid grid-cols-3 gap-4 text-center bg-white/60 backdrop-blur-md rounded-[1.5rem] p-4 border border-white/40">
+                                <div className="space-y-1">
+                                    <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em]">আয়</p>
+                                    <p className="text-sm font-black text-emerald-600 tracking-tight">৳{inc.toLocaleString()}</p>
+                                </div>
+                                <div className="space-y-1 border-x border-slate-200/60">
+                                    <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em]">ব্যয়</p>
+                                    <p className="text-sm font-black text-rose-600 tracking-tight">৳{exp.toLocaleString()}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em]">স্থিতি</p>
+                                    <p className={`text-sm font-black tracking-tight ${bal >= 0 ? 'text-purple-600' : 'text-rose-600'}`}>৳{bal.toLocaleString()}</p>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 text-center divide-x divide-slate-100 dark:divide-slate-700 bg-slate-50 dark:bg-slate-700/30 rounded-lg p-2">
-                            <div>
-                                <p className="text-[9px] text-slate-400 dark:text-slate-500 mb-0.5">আয়</p>
-                                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">৳{inc.toLocaleString()}</p>
-                            </div>
-                            <div>
-                                <p className="text-[9px] text-slate-400 dark:text-slate-500 mb-0.5">ব্যয়</p>
-                                <p className="text-xs font-bold text-rose-600 dark:text-rose-400">৳{exp.toLocaleString()}</p>
-                            </div>
-                            <div>
-                                <p className="text-[9px] text-slate-400 dark:text-slate-500 mb-0.5">স্থিতি</p>
-                                <p className={`text-xs font-bold ${bal >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'}`}>৳{bal.toLocaleString()}</p>
-                            </div>
-                        </div>
+                        {/* Inline Edit Form / View Details */}
+                        <AnimatePresence>
+                          {editingMonth === acc.month && editData && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                              className="border-t border-white/40 bg-white/30"
+                            >
+                              <div className="p-6 space-y-10">
+                                {/* Income Section */}
+                                <div className="space-y-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100">
+                                            <TrendingUp size={16} />
+                                        </div>
+                                        <div className="space-y-0.5">
+                                          <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-800">আয় সমূহ</h4>
+                                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">মাসিক আয়ের বিবরণ</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {[
+                                          { label: 'পূর্বের জমা', field: 'surplus' },
+                                          { label: 'সার্ভিস চার্জ', field: 'serviceCharge' },
+                                          { label: 'অন্যান্য আয়', field: 'others' }
+                                        ].map((item) => (
+                                          <div key={item.field} className="flex items-center justify-between bg-white/60 border border-white rounded-xl py-3 px-5 shadow-sm">
+                                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</label>
+                                              {isAuthorized ? (
+                                                <input 
+                                                    type="number" 
+                                                    value={(editData.income as any)[item.field] || ''}
+                                                    onChange={(e) => handleInputChange('income', item.field, e.target.value)}
+                                                    className="w-24 bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-sm font-black text-slate-900 focus:ring-0 focus:border-purple-600 transition-all outline-none text-right"
+                                                    placeholder="0"
+                                                />
+                                              ) : (
+                                                <div className="text-sm font-black text-slate-900">৳ {(editData.income as any)[item.field].toLocaleString()}</div>
+                                              )}
+                                          </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Expense Section */}
+                                <div className="space-y-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-sm border border-rose-100">
+                                            <TrendingDown size={16} />
+                                        </div>
+                                        <div className="space-y-0.5">
+                                          <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-800">ব্যয় সমূহ</h4>
+                                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">মাসিক ব্যয়ের বিবরণ</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {[
+                                          { label: 'পানি', field: 'water' },
+                                          { label: 'বিদ্যুৎ', field: 'electricity' },
+                                          { label: 'ময়লা', field: 'garbage' },
+                                          { label: 'গার্ড', field: 'caretaker' },
+                                          { label: 'অন্যান্য', field: 'others' }
+                                        ].map((item) => (
+                                          <div key={item.field} className="flex items-center justify-between bg-white/60 border border-white rounded-xl py-3 px-5 shadow-sm">
+                                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</label>
+                                              {isAuthorized ? (
+                                                <input 
+                                                    type="number" 
+                                                    value={(editData.expense as any)[item.field] || ''}
+                                                    onChange={(e) => handleInputChange('expense', item.field, e.target.value)}
+                                                    className="w-24 bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-sm font-black text-slate-900 focus:ring-0 focus:border-purple-600 transition-all outline-none text-right"
+                                                    placeholder="0"
+                                                />
+                                              ) : (
+                                                <div className="text-sm font-black text-slate-900">৳ {(editData.expense as any)[item.field].toLocaleString()}</div>
+                                              )}
+                                          </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {isAuthorized && (
+                                  <div className="flex flex-col items-center gap-6 pt-8 border-t border-white/60">
+                                      <div className="space-y-1 text-center">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">মাসিক নিট স্থিতি</p>
+                                        <p className={`text-2xl font-black tracking-tight ${((editData.income.surplus + editData.income.serviceCharge + editData.income.others) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others)) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                          ৳{((editData.income.surplus + editData.income.serviceCharge + editData.income.others) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others)).toLocaleString()}
+                                        </p>
+                                      </div>
+                                      <button 
+                                          onClick={handleSaveEdit}
+                                          disabled={isSaving}
+                                          className="w-full py-4 px-10 bg-purple-600 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-2xl shadow-[0_15px_40px_-10px_rgba(147,51,234,0.4)] hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-95"
+                                      >
+                                          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                          {isSaving ? 'সেভ হচ্ছে...' : 'সেভ করুন'}
+                                      </button>
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                     </motion.div>
                 );
             })}
         </div>
       </div>
 
-      {/* PIN Modal */}
+      {/* PIN Modal - Ultra Luxury Glass */}
       <AnimatePresence>
         {showPinModal && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowPinModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-3xl"
             />
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 overflow-hidden"
+              initial={{ scale: 0.9, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 40 }}
+              className="relative w-full max-w-[280px] bg-white rounded-[3rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] p-10 overflow-hidden border border-white"
             >
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600 dark:text-indigo-400">
-                  <Lock size={32} />
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 text-slate-900 shadow-xl">
+                  <Lock size={36} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white">পিন কোড দিন</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">এডিট করার জন্য ৪ ডিজিটের পিন দিন</p>
+                <h3 className="text-3xl font-black text-slate-900 tracking-tighter">পিন কোড</h3>
+                <p className="text-[9px] font-black text-slate-400 mt-2 uppercase tracking-[0.3em]">এডিট করার জন্য ৪ ডিজিট</p>
               </div>
 
-              <form onSubmit={handlePinSubmit} className="space-y-4">
-                <input 
-                  type="password"
-                  maxLength={4}
-                  value={pinInput}
-                  onChange={(e) => {
-                    setPinInput(e.target.value);
-                    setPinError(false);
-                  }}
-                  autoFocus
-                  className={`w-full text-center text-3xl tracking-[1em] font-black py-4 bg-slate-50 dark:bg-slate-700 border-2 rounded-xl focus:outline-none transition-all ${pinError ? 'border-rose-500 animate-shake' : 'border-slate-100 dark:border-slate-600 focus:border-indigo-500'}`}
-                  placeholder="••••"
-                />
+              <form onSubmit={handlePinSubmit} className="space-y-8">
+                <div className="relative group">
+                  <div className="absolute -inset-1.5 bg-purple-600/10 rounded-[2rem] blur opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+                  <input 
+                    type="password"
+                    maxLength={4}
+                    value={pinInput}
+                    onChange={(e) => {
+                      setPinInput(e.target.value);
+                      setPinError(false);
+                    }}
+                    autoFocus
+                    className={`relative w-full text-center text-5xl tracking-[0.3em] font-black py-6 bg-slate-50 border-2 rounded-[2rem] focus:outline-none transition-all ${pinError ? 'border-rose-500 animate-shake' : 'border-slate-100 focus:border-purple-600 shadow-inner'}`}
+                    placeholder="••••"
+                  />
+                </div>
                 {pinError && (
-                  <p className="text-xs text-center font-bold text-rose-500">ভুল পিন! আবার চেষ্টা করুন।</p>
+                  <p className="text-[9px] text-center font-black text-rose-500 uppercase tracking-widest animate-bounce">ভুল পিন!</p>
                 )}
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-4">
                   <button 
                     type="button"
                     onClick={() => setShowPinModal(false)}
-                    className="flex-1 py-3 font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 transition-colors"
+                    className="flex-1 py-5 font-black text-slate-400 bg-slate-50 rounded-[1.5rem] hover:bg-slate-100 transition-colors uppercase text-[9px] tracking-widest"
                   >
                     বাতিল
                   </button>
                   <button 
                     type="submit"
-                    className="flex-1 py-3 font-bold text-white bg-indigo-600 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-colors"
+                    className="flex-1 py-5 font-black text-white bg-purple-600 rounded-[1.5rem] shadow-xl shadow-purple-100 hover:bg-purple-700 transition-colors uppercase text-[9px] tracking-widest"
                   >
-                    নিশ্চিত করুন
+                    নিশ্চিত
                   </button>
                 </div>
               </form>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
-
-      {/* Edit Modal */}
-      <AnimatePresence>
-        {editingMonth && editData && (
-            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
-                <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => setEditingMonth(null)}
-                    className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-                />
-                
-                <motion.div 
-                    initial={{ y: '100%' }}
-                    animate={{ y: 0 }}
-                    exit={{ y: '100%' }}
-                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                    className="relative w-full max-w-lg bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col"
-                >
-                    {/* Modal Header */}
-                    <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-800 sticky top-0 z-10">
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-white">{editData.month} মাসের হিসাব</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">তথ্য হালনাগাদ করুন</p>
-                        </div>
-                        <button 
-                            onClick={() => setEditingMonth(null)}
-                            className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-500 hover:bg-rose-100 hover:text-rose-500 transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
-                    </div>
-
-                    <div className="overflow-y-auto p-6 space-y-6">
-                        {/* Income Section */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                                <TrendingUp size={18} />
-                                <h4 className="font-bold text-sm uppercase tracking-wider">আয় সমূহ</h4>
-                            </div>
-                            
-                            <div className="grid gap-3">
-                                <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">পূর্বের জমা / উদ্বৃত্ত</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
-                                        <input 
-                                            type="number" 
-                                            value={editData.income.surplus || ''}
-                                            onChange={(e) => handleInputChange('income', 'surplus', e.target.value)}
-                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg py-2 pl-8 pr-3 font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">সার্ভিস চার্জ আদায়</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
-                                        <input 
-                                            type="number" 
-                                            value={editData.income.serviceCharge || ''}
-                                            onChange={(e) => handleInputChange('income', 'serviceCharge', e.target.value)}
-                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg py-2 pl-8 pr-3 font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">অন্যান্য আয়</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
-                                        <input 
-                                            type="number" 
-                                            value={editData.income.others || ''}
-                                            onChange={(e) => handleInputChange('income', 'others', e.target.value)}
-                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg py-2 pl-8 pr-3 font-bold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Expense Section */}
-                        <div className="space-y-4 pt-2">
-                            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-                                <TrendingDown size={18} />
-                                <h4 className="font-bold text-sm uppercase tracking-wider">ব্যয় সমূহ</h4>
-                            </div>
-                            
-                            <div className="grid gap-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">পানি বিল</label>
-                                        <div className="relative">
-                                            <input 
-                                                type="number" 
-                                                value={editData.expense.water || ''}
-                                                onChange={(e) => handleInputChange('expense', 'water', e.target.value)}
-                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 font-bold text-slate-800 dark:text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">বিদ্যুৎ বিল</label>
-                                        <div className="relative">
-                                            <input 
-                                                type="number" 
-                                                value={editData.expense.electricity || ''}
-                                                onChange={(e) => handleInputChange('expense', 'electricity', e.target.value)}
-                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 font-bold text-slate-800 dark:text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">ময়লা বিল</label>
-                                        <div className="relative">
-                                            <input 
-                                                type="number" 
-                                                value={editData.expense.garbage || ''}
-                                                onChange={(e) => handleInputChange('expense', 'garbage', e.target.value)}
-                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 font-bold text-slate-800 dark:text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">কেয়ারটেকার</label>
-                                        <div className="relative">
-                                            <input 
-                                                type="number" 
-                                                value={editData.expense.caretaker || ''}
-                                                onChange={(e) => handleInputChange('expense', 'caretaker', e.target.value)}
-                                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 font-bold text-slate-800 dark:text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">অন্যান্য ব্যয়</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
-                                        <input 
-                                            type="number" 
-                                            value={editData.expense.others || ''}
-                                            onChange={(e) => handleInputChange('expense', 'others', e.target.value)}
-                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg py-2 pl-8 pr-3 font-bold text-slate-800 dark:text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Live Summary in Modal */}
-                        <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl flex justify-between items-center border border-indigo-100 dark:border-indigo-800/50">
-                            <span className="text-sm font-bold text-indigo-800 dark:text-indigo-300">মাসিক স্থিতি</span>
-                            <span className={`text-lg font-black ${
-                                (editData.income.surplus + editData.income.serviceCharge + editData.income.others) - 
-                                (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others) >= 0 
-                                ? 'text-emerald-600 dark:text-emerald-400' 
-                                : 'text-rose-600 dark:text-rose-400'
-                            }`}>
-                                ৳ {((editData.income.surplus + editData.income.serviceCharge + editData.income.others) - 
-                                (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others)).toLocaleString()}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="p-4 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 sticky bottom-0 z-10 pb-8 sm:pb-4">
-                        <button 
-                            onClick={handleSaveEdit}
-                            disabled={isSaving}
-                            className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
-                        >
-                            {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                            {isSaving ? 'সেভ হচ্ছে...' : 'সংরক্ষণ করুন'}
-                        </button>
-                    </div>
-                </motion.div>
-            </div>
         )}
       </AnimatePresence>
     </div>
