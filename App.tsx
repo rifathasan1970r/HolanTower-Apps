@@ -293,13 +293,7 @@ const App: React.FC = () => {
           <ServiceChargeView 
             selectedUnit={selectedUnit} 
             onUnitSelect={(unit) => {
-              // Rule: From ANY Unit -> Go directly to All Unit List
-              // If we are in a unit and want to go back to list, use history.back()
-              if (unit === null && selectedUnit !== null) {
-                window.history.back();
-              } else {
-                setSelectedUnit(unit);
-              }
+              setSelectedUnit(unit);
             }}
             showSummaryList={showSummaryList}
             onSummaryToggle={(show) => {
@@ -314,16 +308,16 @@ const App: React.FC = () => {
         return <DescoView setView={setCurrentView} />;
 
       case 'DESCO_INFO':
-        return <DescoInfoView onBack={() => window.history.back()} />;
+        return <DescoInfoView onBack={() => setCurrentView('DESCO')} />;
 
       case 'DESCO_RULES':
-        return <DescoRulesView onBack={() => window.history.back()} />;
+        return <DescoRulesView onBack={() => setCurrentView('DESCO')} />;
 
       case 'ACCOUNTS':
-        return <AccountsView onBack={() => window.history.back()} />;
+        return <AccountsView onBack={() => setCurrentView('MENU')} />;
 
       case 'MAP_ROUTES':
-        return <MapRoutesView onBack={() => window.history.back()} />;
+        return <MapRoutesView onBack={() => setCurrentView('MENU')} />;
 
       case 'TO_LET':
         return <ToLetView />;
@@ -338,25 +332,25 @@ const App: React.FC = () => {
         return <LiftInstructionsView onBack={() => setCurrentView('MENU')} />;
 
       case 'MAINTENANCE':
-        return <MaintenanceView onBack={() => window.history.back()} />;
+        return <MaintenanceView onBack={() => setCurrentView('MENU')} />;
 
       case 'SETTINGS':
-        return <SettingsView onBack={() => window.history.back()} darkMode={darkMode} toggleDarkMode={toggleDarkMode} maintenanceMode={maintenanceMode} />;
+        return <SettingsView onBack={() => setCurrentView('MENU')} darkMode={darkMode} toggleDarkMode={toggleDarkMode} maintenanceMode={maintenanceMode} />;
       
       case 'PRAYER_TIME':
-        return <PrayerTimeView onBack={() => window.history.back()} />;
+        return <PrayerTimeView onBack={() => setCurrentView('MENU')} />;
 
       case 'RECHARGE_RULES':
-        return <RechargeRulesView onBack={() => window.history.back()} />;
+        return <RechargeRulesView onBack={() => setCurrentView('MENU')} />;
 
       case 'POLICY':
-        return <PolicyView onBack={() => window.history.back()} />;
+        return <PolicyView onBack={() => setCurrentView('MENU')} />;
 
       case 'CONTACT':
-        return <ContactView onBack={() => window.history.back()} />;
+        return <ContactView onBack={() => setCurrentView('MENU')} />;
 
       case 'DOWNLOAD_APP':
-        return <DownloadAppView onBack={() => window.history.back()} />;
+        return <DownloadAppView onBack={() => setCurrentView('MENU')} />;
       case 'MENU':
       case 'HOME':
       default:

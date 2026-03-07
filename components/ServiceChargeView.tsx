@@ -100,6 +100,16 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   // Admin State
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+  // Reset internal view states when unit changes or goes back to list
+  useEffect(() => {
+    setShowFullYearTable(false);
+    setFullYearTableUnitFilter(null);
+    setShowMonthlySummary(false);
+    setShowParkingView(false);
+    setShowSummaryModal(false);
+  }, [selectedUnit]);
+
   const DEFAULT_UNIT_INFO: UnitInfo = {
     unit_text: '',
     is_occupied: true,
