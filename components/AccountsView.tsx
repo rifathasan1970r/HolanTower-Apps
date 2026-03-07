@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, TrendingUp, TrendingDown, Wallet, CreditCard, Banknote, Droplets, Trash2, Zap, User, MoreHorizontal, Calculator, Calendar, ChevronRight, Save, X, Plus, Minus, PieChart, ArrowUpRight, ArrowDownRight, Lock, Unlock, Loader2 } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Wallet, CreditCard, Banknote, Droplets, Trash2, Zap, User, MoreHorizontal, Calculator, Calendar, CalendarDays, ChevronRight, Save, X, Plus, Minus, PieChart, ArrowUpRight, ArrowDownRight, Lock, Unlock, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 
@@ -226,312 +226,283 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="pb-24 animate-in fade-in duration-1000 bg-[#fdfcfd] min-h-screen relative font-sans text-slate-900">
+    <div className="pb-24 animate-in fade-in duration-1000 bg-[#f8fafc] min-h-screen relative font-sans text-slate-900">
       
-      {/* Header - Ultra Minimal Glass */}
-      <div className="bg-white/40 backdrop-blur-3xl sticky top-0 z-30 border-b border-slate-200/40">
-        <div className="flex items-center justify-between px-5 py-4">
+      {/* Header - Minimal & Refined */}
+      <div className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200">
+        <div className="flex items-center justify-between px-4 py-4 max-w-md mx-auto">
           <button 
             onClick={onBack}
-            className="flex items-center gap-2 text-slate-400 hover:text-purple-600 transition-all group"
+            className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 transition-all group"
           >
-            <div className="w-8 h-8 rounded-full border border-slate-200/60 flex items-center justify-center group-hover:border-purple-200 group-hover:bg-purple-50 transition-all">
-              <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+            <div className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center group-hover:border-emerald-200 group-hover:bg-emerald-50 transition-all">
+              <ArrowLeft size={18} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">ফিরে যান</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest">ফিরে যান</span>
           </button>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button 
               onClick={() => isAuthorized ? setIsAuthorized(false) : setShowPinModal(true)}
-              className={`h-9 px-4 rounded-xl transition-all flex items-center gap-2 ${isAuthorized 
-                ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-200/50' 
-                : 'bg-slate-100/50 text-slate-400 border border-slate-200/50'}`}
+              className={`p-2 rounded-full transition-all ${isAuthorized 
+                ? 'text-emerald-600 hover:bg-emerald-50' 
+                : 'text-slate-400 hover:bg-slate-100'}`}
             >
-              {isAuthorized ? <Unlock size={16} /> : <Lock size={16} />}
-              <span className="text-[9px] font-black uppercase tracking-[0.15em] hidden sm:inline">
-                {isAuthorized ? "এডিট" : "লকড"}
-              </span>
+              {isAuthorized ? <Unlock size={20} /> : <Lock size={20} />}
             </button>
-            <div className="flex bg-slate-100/50 border border-slate-200/50 rounded-xl p-0.5">
-              <button 
-                  onClick={() => setSelectedYear(2025)}
-                  className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${selectedYear === 2025 ? 'bg-white shadow-sm text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                  2025
-              </button>
-              <button 
-                  onClick={() => setSelectedYear(2026)}
-                  className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${selectedYear === 2026 ? 'bg-white shadow-sm text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                  2026
-              </button>
-            </div>
           </div>
         </div>
       </div>
 
-      <div className="w-full max-w-md mx-auto px-5 py-8 space-y-8">
-        {/* Title Section - Elegant & Centered */}
-        <div className="flex flex-col items-center text-center space-y-3">
-            <div className="w-14 h-14 rounded-[1.8rem] bg-gradient-to-br from-purple-900 to-purple-800 flex items-center justify-center text-white shadow-xl shadow-purple-100 mb-1 transform -rotate-3">
-                <Calculator size={28} />
-            </div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tighter">স্বচ্ছ হিসাব কেন্দ্র</h2>
-            <div className="flex items-center gap-3">
-              <div className="h-[1px] w-8 bg-slate-200"></div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
-                বাৎসরিক বিবরণী • {selectedYear}
-              </p>
-              <div className="h-[1px] w-8 bg-slate-200"></div>
-            </div>
-        </div>
-
-        {/* Luxury Summary Card - Full Width & Deep */}
-        <div className="relative group">
-          <div className="absolute -inset-1.5 bg-gradient-to-r from-purple-500/10 to-violet-500/10 rounded-[2.5rem] blur-xl opacity-50 group-hover:opacity-100 transition duration-1000"></div>
-          <div className="relative overflow-hidden rounded-[2.2rem] bg-[#1a1033] border border-white/5 p-8 text-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
-             <div className="absolute top-0 right-0 -mr-12 -mt-12 w-48 h-48 bg-purple-500/20 rounded-full blur-[60px]"></div>
-             <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-48 h-48 bg-violet-500/20 rounded-full blur-[60px]"></div>
-             
-             <div className="relative z-10 flex flex-col space-y-8">
-                <div className="space-y-1">
-                    <p className="text-purple-300/60 text-[9px] font-black uppercase tracking-[0.3em]">বর্তমান স্থিতি (Balance)</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xl font-light text-purple-300/40">৳</span>
-                      <h3 className="text-4xl font-black tracking-tighter text-white">
-                        {summary.balance.toLocaleString()}
-                      </h3>
-                    </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-emerald-400">
-                            <div className="w-6 h-6 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                              <ArrowUpRight size={14} />
-                            </div>
-                            <p className="text-[9px] font-black uppercase tracking-[0.2em]">মোট আয়</p>
-                        </div>
-                        <p className="text-2xl font-black tracking-tight">৳{summary.totalIncome.toLocaleString()}</p>
-                    </div>
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-rose-400">
-                            <div className="w-6 h-6 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
-                              <ArrowDownRight size={14} />
-                            </div>
-                            <p className="text-[9px] font-black uppercase tracking-[0.2em]">মোট ব্যয়</p>
-                        </div>
-                        <p className="text-2xl font-black tracking-tight">৳{summary.totalExpense.toLocaleString()}</p>
-                    </div>
-                </div>
-             </div>
+      <div className="w-full max-w-md mx-auto px-4 py-6 space-y-6">
+        {/* Title Section */}
+        <div className="space-y-4">
+          <div className="space-y-1">
+              <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">স্বচ্ছ হিসাব খাতা</h2>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">বাৎসরিক আর্থিক বিবরণী • {selectedYear}</p>
+          </div>
+          
+          {/* Year Selection Tabs - Matching ServiceChargeView style */}
+          <div className="bg-white border border-slate-100 p-1 rounded-xl shadow-sm flex">
+            {[2025, 2026, 2027].map(year => (
+              <button 
+                key={year}
+                onClick={() => setSelectedYear(year)}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${selectedYear === year ? 'bg-emerald-50 text-emerald-600 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+              >
+                <CalendarDays size={16} /> {year}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Monthly List Header */}
-        <div className="flex items-center justify-between px-2">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-purple-600 shadow-lg shadow-purple-200"></div>
-                মাসিক বিবরণী
-            </h3>
-            {loading && <Loader2 size={16} className="animate-spin text-purple-600" />}
+        {/* Premium Ledger Summary Card */}
+        <div 
+          className="rounded-2xl shadow-xl overflow-hidden border-none"
+          style={{ background: 'linear-gradient(135deg, #6a11cb, #2575fc)' }}
+        >
+          <div className="p-6 border-b border-white/10">
+            <div className="flex justify-between items-center">
+              <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">মোট স্থিতি (Net Balance)</p>
+              <div className="w-8 h-8 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center text-white shadow-sm backdrop-blur-sm">
+                <PieChart size={18} />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-1">
+              <span className="text-xl font-medium text-white/60">৳</span>
+              <h3 className="text-4xl font-black text-white tracking-tighter">
+                {summary.balance.toLocaleString()}
+              </h3>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 divide-x divide-white/10">
+            <div className="p-5 space-y-1">
+              <div className="flex items-center gap-2 text-white/90">
+                <ArrowUpRight size={14} className="text-emerald-300" />
+                <p className="text-[9px] font-bold uppercase tracking-wider">মোট আয়</p>
+              </div>
+              <p className="text-xl font-extrabold text-white">৳{summary.totalIncome.toLocaleString()}</p>
+            </div>
+            <div className="p-5 space-y-1">
+              <div className="flex items-center gap-2 text-white/90">
+                <ArrowDownRight size={14} className="text-rose-300" />
+                <p className="text-[9px] font-bold uppercase tracking-wider">মোট ব্যয়</p>
+              </div>
+              <p className="text-xl font-extrabold text-white">৳{summary.totalExpense.toLocaleString()}</p>
+            </div>
+          </div>
         </div>
 
-        {/* Monthly List - Expansive & Premium */}
-        <div className="space-y-5">
-            {accounts.length === 0 && !loading && (
-              <div className="text-center py-16 bg-[#f8f6fa]/50 rounded-[2.5rem] border border-dashed border-slate-200">
-                <Calendar size={48} className="mx-auto text-slate-200 mb-4" />
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">কোনো তথ্য পাওয়া যায়নি</p>
-              </div>
-            )}
+        {/* Ledger Table Header */}
+        <div className="grid grid-cols-12 px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-y border-slate-200 bg-slate-50/50">
+          <div className="col-span-4 border-r border-slate-200/50 pr-2">বিবরণ (Month)</div>
+          <div className="col-span-3 text-right border-r border-slate-200/50 px-2">আয় (+)</div>
+          <div className="col-span-3 text-right border-r border-slate-200/50 px-2">ব্যয় (-)</div>
+          <div className="col-span-2 text-right pl-2">স্থিতি</div>
+        </div>
+
+        {/* Monthly Ledger Rows */}
+        <div className="space-y-2">
             {accounts.map((acc, index) => {
                 const { inc, exp, bal } = getMonthSummary(acc);
-                const isPositive = bal >= 0;
                 const isCurrentMonth = acc.month === currentMonthName;
+                const isEditing = editingMonth === acc.month;
+                const currentMonthIndex = MONTHS.indexOf(currentMonthName);
+                const monthIndex = MONTHS.indexOf(acc.month);
+                const isFutureMonth = monthIndex > currentMonthIndex;
 
                 return (
-                    <motion.div
-                        key={acc.month}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                        className={`group bg-[#f8f6fa] rounded-[2rem] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.03)] transition-all overflow-hidden border border-transparent ${editingMonth === acc.month ? 'ring-2 ring-purple-600/30 shadow-purple-100/40' : 'hover:bg-[#f3eff5] hover:shadow-slate-200/50'}`}
-                    >
-                        <div 
+                    <div key={acc.month} className="space-y-2">
+                      <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: index * 0.02 }}
                           onClick={() => handleEditClick(acc.month)}
-                          className={`p-5 cursor-pointer active:scale-[0.99] transition-all`}
-                        >
-                            <div className="flex items-center justify-between gap-4 mb-5">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-11 h-11 rounded-[1.2rem] flex items-center justify-center font-black text-[9px] uppercase tracking-widest border transition-all duration-700 ${isCurrentMonth ? 'bg-purple-600 border-purple-500 text-white shadow-xl shadow-purple-200' : 'bg-white border-slate-200/60 text-slate-400 group-hover:border-purple-200 group-hover:text-purple-600'}`}>
-                                        {acc.month.substring(0, 3)}
-                                    </div>
-                                    <div className="space-y-0.5">
-                                        <div className="flex items-center gap-2">
-                                          <h4 className="font-black text-slate-900 text-lg tracking-tighter">{acc.month}</h4>
-                                          {isCurrentMonth && (
-                                            <span className="text-[7px] bg-purple-600 text-white px-2 py-1 rounded-full uppercase font-black tracking-[0.1em] shadow-sm">
-                                              বর্তমান
-                                            </span>
-                                          )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <div className={`w-1 h-1 rounded-full ${isPositive ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
-                                          <span className={`text-[8px] font-black uppercase tracking-[0.15em] ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                              {isPositive ? 'উদ্বৃত্ত' : 'ঘাটতি'}
-                                          </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  {isAuthorized ? (
-                                    <button className={`h-9 px-4 rounded-xl flex items-center gap-2 transition-all duration-500 ${editingMonth === acc.month ? 'bg-purple-600 text-white shadow-xl shadow-purple-200' : 'text-purple-600 bg-white border border-purple-100 hover:bg-purple-50'}`}>
-                                      {editingMonth === acc.month ? <X size={14} /> : <Save size={14} />}
-                                      <span className="text-[9px] font-black uppercase tracking-widest">
-                                        {editingMonth === acc.month ? 'বন্ধ' : 'এডিট'}
-                                      </span>
-                                    </button>
-                                  ) : (
-                                    <div className="w-9 h-9 bg-white rounded-xl border border-slate-200/60 flex items-center justify-center shadow-sm">
-                                      <Lock size={14} className="text-slate-300" />
-                                    </div>
-                                  )}
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-700 ${editingMonth === acc.month ? 'bg-purple-100 text-purple-600 rotate-90' : 'text-slate-300'}`}>
-                                    <ChevronRight size={18} />
-                                  </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-4 text-center bg-white/60 backdrop-blur-md rounded-[1.5rem] p-4 border border-white/40">
-                                <div className="space-y-1">
-                                    <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em]">আয়</p>
-                                    <p className="text-sm font-black text-emerald-600 tracking-tight">৳{inc.toLocaleString()}</p>
-                                </div>
-                                <div className="space-y-1 border-x border-slate-200/60">
-                                    <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em]">ব্যয়</p>
-                                    <p className="text-sm font-black text-rose-600 tracking-tight">৳{exp.toLocaleString()}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em]">স্থিতি</p>
-                                    <p className={`text-sm font-black tracking-tight ${bal >= 0 ? 'text-purple-600' : 'text-rose-600'}`}>৳{bal.toLocaleString()}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Inline Edit Form / View Details */}
-                        <AnimatePresence>
-                          {editingMonth === acc.month && editData && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                              className="border-t border-white/40 bg-white/30"
-                            >
-                              <div className="p-6 space-y-10">
-                                {/* Income Section */}
-                                <div className="space-y-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100">
-                                            <TrendingUp size={16} />
-                                        </div>
-                                        <div className="space-y-0.5">
-                                          <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-800">আয় সমূহ</h4>
-                                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">মাসিক আয়ের বিবরণ</p>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {[
-                                          { label: 'পূর্বের জমা', field: 'surplus' },
-                                          { label: 'সার্ভিস চার্জ', field: 'serviceCharge' },
-                                          { label: 'অন্যান্য আয়', field: 'others' }
-                                        ].map((item) => (
-                                          <div key={item.field} className="flex items-center justify-between bg-white/60 border border-white rounded-xl py-3 px-5 shadow-sm">
-                                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</label>
-                                              {isAuthorized ? (
-                                                <input 
-                                                    type="number" 
-                                                    value={(editData.income as any)[item.field] || ''}
-                                                    onChange={(e) => handleInputChange('income', item.field, e.target.value)}
-                                                    className="w-24 bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-sm font-black text-slate-900 focus:ring-0 focus:border-purple-600 transition-all outline-none text-right"
-                                                    placeholder="0"
-                                                />
-                                              ) : (
-                                                <div className="text-sm font-black text-slate-900">৳ {(editData.income as any)[item.field].toLocaleString()}</div>
-                                              )}
-                                          </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Expense Section */}
-                                <div className="space-y-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-sm border border-rose-100">
-                                            <TrendingDown size={16} />
-                                        </div>
-                                        <div className="space-y-0.5">
-                                          <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-800">ব্যয় সমূহ</h4>
-                                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">মাসিক ব্যয়ের বিবরণ</p>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {[
-                                          { label: 'পানি', field: 'water' },
-                                          { label: 'বিদ্যুৎ', field: 'electricity' },
-                                          { label: 'ময়লা', field: 'garbage' },
-                                          { label: 'গার্ড', field: 'caretaker' },
-                                          { label: 'অন্যান্য', field: 'others' }
-                                        ].map((item) => (
-                                          <div key={item.field} className="flex items-center justify-between bg-white/60 border border-white rounded-xl py-3 px-5 shadow-sm">
-                                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</label>
-                                              {isAuthorized ? (
-                                                <input 
-                                                    type="number" 
-                                                    value={(editData.expense as any)[item.field] || ''}
-                                                    onChange={(e) => handleInputChange('expense', item.field, e.target.value)}
-                                                    className="w-24 bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-sm font-black text-slate-900 focus:ring-0 focus:border-purple-600 transition-all outline-none text-right"
-                                                    placeholder="0"
-                                                />
-                                              ) : (
-                                                <div className="text-sm font-black text-slate-900">৳ {(editData.expense as any)[item.field].toLocaleString()}</div>
-                                              )}
-                                          </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {isAuthorized && (
-                                  <div className="flex flex-col items-center gap-6 pt-8 border-t border-white/60">
-                                      <div className="space-y-1 text-center">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">মাসিক নিট স্থিতি</p>
-                                        <p className={`text-2xl font-black tracking-tight ${((editData.income.surplus + editData.income.serviceCharge + editData.income.others) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others)) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                          ৳{((editData.income.surplus + editData.income.serviceCharge + editData.income.others) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others)).toLocaleString()}
-                                        </p>
-                                      </div>
-                                      <button 
-                                          onClick={handleSaveEdit}
-                                          disabled={isSaving}
-                                          className="w-full py-4 px-10 bg-purple-600 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-2xl shadow-[0_15px_40px_-10px_rgba(147,51,234,0.4)] hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-95"
-                                      >
-                                          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                                          {isSaving ? 'সেভ হচ্ছে...' : 'সেভ করুন'}
-                                      </button>
-                                  </div>
-                                )}
+                          className={`grid grid-cols-12 items-center px-4 py-5 cursor-pointer transition-all rounded-xl border relative ${isEditing ? 'bg-emerald-50 border-emerald-200 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'} ${isCurrentMonth ? 'border-emerald-500/50 ring-1 ring-emerald-500/20 animate-glow' : ''}`}
+                      >
+                          <div className="col-span-4 flex items-center gap-3 border-r border-slate-100 h-full pr-2">
+                              <div className={`w-1.5 h-1.5 rounded-full ${isCurrentMonth ? 'bg-emerald-500' : isFutureMonth ? 'bg-amber-400' : 'bg-slate-200'}`}></div>
+                              <div className="flex flex-col">
+                                <span className={`text-sm font-bold ${isEditing ? 'text-emerald-700' : 'text-slate-700'}`}>{acc.month}</span>
                               </div>
-                            </motion.div>
+                          </div>
+                          
+                          {isFutureMonth ? (
+                            <div className="col-span-8 text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em] flex items-center justify-center h-full">
+                              আসন্ন
+                            </div>
+                          ) : (
+                            <>
+                              <div className="col-span-3 text-right text-xs font-bold text-emerald-600 border-r border-slate-100 h-full px-2 flex items-center justify-end">
+                                ৳{inc.toLocaleString()}
+                              </div>
+                              <div className="col-span-3 text-right text-xs font-bold text-rose-500 border-r border-slate-100 h-full px-2 flex items-center justify-end">
+                                ৳{exp.toLocaleString()}
+                              </div>
+                              <div className={`col-span-2 text-right text-xs font-black h-full pl-2 flex items-center justify-end ${bal >= 0 ? 'text-slate-800' : 'text-rose-600'}`}>
+                                {bal.toLocaleString()}
+                              </div>
+                            </>
                           )}
-                        </AnimatePresence>
-                    </motion.div>
+                          
+                          {/* Tiny hint at bottom */}
+                          <div className="absolute bottom-1 left-0 right-0 flex justify-center items-center gap-2 pointer-events-none">
+                            <div className="flex items-center justify-center w-3 h-3 rounded-full bg-slate-50 border border-slate-200">
+                              <Plus size={7} className="text-slate-400" />
+                            </div>
+                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-tight">বিস্তারিত তথ্য দেখুন</span>
+                            <div className="flex items-center justify-center w-3 h-3 rounded-full bg-slate-50 border border-slate-200">
+                              <ChevronRight size={7} className={`text-slate-400 transition-transform ${isEditing ? 'rotate-90' : ''}`} />
+                            </div>
+                          </div>
+                      </motion.div>
+
+                      {/* Inline Detail/Edit View */}
+                      <AnimatePresence>
+                        {isEditing && editData && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden bg-white border border-emerald-100 rounded-xl shadow-inner mx-1"
+                          >
+                            <div className="p-5 space-y-6">
+                              {/* Income Section */}
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-md flex items-center justify-center">
+                                      <TrendingUp size={12} />
+                                    </div>
+                                    <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">আয় বিবরণী</h4>
+                                  </div>
+                                  <div className="h-[1px] flex-1 mx-4 bg-emerald-50"></div>
+                                  <button className="w-5 h-5 bg-slate-50 text-slate-400 rounded-md flex items-center justify-center hover:bg-slate-100">
+                                    <Plus size={10} />
+                                  </button>
+                                </div>
+                                <div className="space-y-2">
+                                  {[
+                                    { label: 'পূর্বের জমা', field: 'surplus' },
+                                    { label: 'সার্ভিস চার্জ', field: 'serviceCharge' },
+                                    { label: 'অন্যান্য আয়', field: 'others' }
+                                  ].map((item) => (
+                                    <div key={item.field} className="flex items-center justify-between text-xs">
+                                      <span className="text-slate-500 font-medium">{item.label}</span>
+                                      {isAuthorized ? (
+                                        <input 
+                                          type="number" 
+                                          value={(editData.income as any)[item.field] || ''}
+                                          onChange={(e) => handleInputChange('income', item.field, e.target.value)}
+                                          className="w-24 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-right font-bold text-slate-800 focus:border-emerald-500 outline-none"
+                                        />
+                                      ) : (
+                                        <span className="font-bold text-slate-700">৳ {(editData.income as any)[item.field].toLocaleString()}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                  {/* Income Total */}
+                                  <div className="pt-2 border-t border-emerald-50 flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">মোট আয়</span>
+                                    <span className="text-xs font-black text-emerald-700">৳ {(editData.income.surplus + editData.income.serviceCharge + editData.income.others).toLocaleString()}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Expense Section */}
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 bg-rose-50 text-rose-600 rounded-md flex items-center justify-center">
+                                      <TrendingDown size={12} />
+                                    </div>
+                                    <h4 className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">ব্যয় বিবরণী</h4>
+                                  </div>
+                                  <div className="h-[1px] flex-1 mx-4 bg-rose-50"></div>
+                                  <button className="w-5 h-5 bg-slate-50 text-slate-400 rounded-md flex items-center justify-center hover:bg-slate-100">
+                                    <Minus size={10} />
+                                  </button>
+                                </div>
+                                <div className="grid grid-cols-1 gap-2">
+                                  {[
+                                    { label: 'পানি বিল', field: 'water' },
+                                    { label: 'বিদ্যুৎ বিল', field: 'electricity' },
+                                    { label: 'ময়লা বিল', field: 'garbage' },
+                                    { label: 'গার্ড/কেয়ারটেকার', field: 'caretaker' },
+                                    { label: 'অন্যান্য ব্যয়', field: 'others' }
+                                  ].map((item) => (
+                                    <div key={item.field} className="flex items-center justify-between text-xs">
+                                      <span className="text-slate-500 font-medium">{item.label}</span>
+                                      {isAuthorized ? (
+                                        <input 
+                                          type="number" 
+                                          value={(editData.expense as any)[item.field] || ''}
+                                          onChange={(e) => handleInputChange('expense', item.field, e.target.value)}
+                                          className="w-24 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-right font-bold text-slate-800 focus:border-emerald-500 outline-none"
+                                        />
+                                      ) : (
+                                        <span className="font-bold text-slate-700">৳ {(editData.expense as any)[item.field].toLocaleString()}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                  {/* Expense Total */}
+                                  <div className="pt-2 border-t border-rose-50 flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">মোট ব্যয়</span>
+                                    <span className="text-xs font-black text-rose-700">৳ {(editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others).toLocaleString()}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {isAuthorized && (
+                                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                                  <div className="text-right flex-1 mr-4">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase">নিট স্থিতি</p>
+                                    <p className={`text-lg font-black ${((editData.income.surplus + editData.income.serviceCharge + editData.income.others) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others)) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                      ৳{((editData.income.surplus + editData.income.serviceCharge + editData.income.others) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others)).toLocaleString()}
+                                    </p>
+                                  </div>
+                                  <button 
+                                    onClick={handleSaveEdit}
+                                    disabled={isSaving}
+                                    className="bg-emerald-600 text-white px-6 py-2.5 rounded-lg text-xs font-bold shadow-md shadow-emerald-100 hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95"
+                                  >
+                                    {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                    সেভ করুন
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                 );
             })}
         </div>
       </div>
 
-      {/* PIN Modal - Ultra Luxury Glass */}
+      {/* PIN Modal - Clean & Professional */}
       <AnimatePresence>
         {showPinModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
@@ -540,52 +511,49 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowPinModal(false)}
-              className="absolute inset-0 bg-slate-950/60 backdrop-blur-3xl"
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
             />
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 40 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 40 }}
-              className="relative w-full max-w-[280px] bg-white rounded-[3rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] p-10 overflow-hidden border border-white"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-[300px] bg-white rounded-2xl shadow-2xl p-8 border border-slate-100"
             >
-              <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-slate-50 to-white border border-slate-100 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 text-slate-900 shadow-xl">
-                  <Lock size={36} />
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <Lock size={24} />
                 </div>
-                <h3 className="text-3xl font-black text-slate-900 tracking-tighter">পিন কোড</h3>
-                <p className="text-[9px] font-black text-slate-400 mt-2 uppercase tracking-[0.3em]">এডিট করার জন্য ৪ ডিজিট</p>
+                <h3 className="text-xl font-bold text-slate-800">নিরাপত্তা পিন</h3>
+                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">এডিট মোড আনলক করুন</p>
               </div>
 
-              <form onSubmit={handlePinSubmit} className="space-y-8">
-                <div className="relative group">
-                  <div className="absolute -inset-1.5 bg-purple-600/10 rounded-[2rem] blur opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
-                  <input 
-                    type="password"
-                    maxLength={4}
-                    value={pinInput}
-                    onChange={(e) => {
-                      setPinInput(e.target.value);
-                      setPinError(false);
-                    }}
-                    autoFocus
-                    className={`relative w-full text-center text-5xl tracking-[0.3em] font-black py-6 bg-slate-50 border-2 rounded-[2rem] focus:outline-none transition-all ${pinError ? 'border-rose-500 animate-shake' : 'border-slate-100 focus:border-purple-600 shadow-inner'}`}
-                    placeholder="••••"
-                  />
-                </div>
+              <form onSubmit={handlePinSubmit} className="space-y-6">
+                <input 
+                  type="password"
+                  maxLength={4}
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value);
+                    setPinError(false);
+                  }}
+                  autoFocus
+                  className={`w-full text-center text-3xl tracking-[0.5em] font-bold py-3 bg-slate-50 border-2 rounded-xl focus:outline-none transition-all ${pinError ? 'border-rose-500' : 'border-slate-100 focus:border-emerald-500'}`}
+                  placeholder="••••"
+                />
                 {pinError && (
-                  <p className="text-[9px] text-center font-black text-rose-500 uppercase tracking-widest animate-bounce">ভুল পিন!</p>
+                  <p className="text-[10px] text-center font-bold text-rose-500 uppercase">ভুল পিন কোড!</p>
                 )}
-                <div className="flex gap-4">
+                <div className="flex gap-3">
                   <button 
                     type="button"
                     onClick={() => setShowPinModal(false)}
-                    className="flex-1 py-5 font-black text-slate-400 bg-slate-50 rounded-[1.5rem] hover:bg-slate-100 transition-colors uppercase text-[9px] tracking-widest"
+                    className="flex-1 py-3 text-xs font-bold text-slate-400 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
                   >
                     বাতিল
                   </button>
                   <button 
                     type="submit"
-                    className="flex-1 py-5 font-black text-white bg-purple-600 rounded-[1.5rem] shadow-xl shadow-purple-100 hover:bg-purple-700 transition-colors uppercase text-[9px] tracking-widest"
+                    className="flex-1 py-3 text-xs font-bold text-white bg-emerald-600 rounded-lg shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-colors"
                   >
                     নিশ্চিত
                   </button>
