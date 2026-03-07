@@ -132,7 +132,7 @@ export const MENU_ITEMS: MenuItem[] = [
   },
   { 
     id: 'policy', 
-    label: 'পরিচালনার প্রস্তাবিত নীতিমালা', 
+    label: 'নীতিমালা অনুমোদন ও কার্যকর', 
     icon: FileText, 
     view: 'POLICY',
     color: 'bg-rose-500',
