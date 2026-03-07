@@ -31,7 +31,7 @@ const MONTHS = [
 ];
 
 const INITIAL_YEAR = 2026;
-const EDIT_PIN = "1234"; // Default PIN for editing
+const EDIT_PIN = "1966"; // Default PIN for editing
 
 const getDefaultAccounts = (year: number): MonthlyAccountData[] => 
   MONTHS.map(month => ({

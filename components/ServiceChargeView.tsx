@@ -337,7 +337,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   // Admin Logic
   const handleLogin = () => {
-    if (pinInput === '1234') { 
+    if (pinInput === '1966') { 
       setIsAdmin(true);
       setShowLogin(false);
       setPinInput('');
@@ -517,12 +517,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const handleModalSave = async () => {
     if (processingUpdate) return;
     
-    // PIN Verification
-    if (pinInput !== '1234') {
-        alert('ভুল পিন! দয়া করে সঠিক পিন দিন।');
-        return;
-    }
-
     setProcessingUpdate(true);
 
     const { unit, month, year, amount, due, day, monthName, yearVal, isDateEnabled, status } = editModalData;
@@ -1584,21 +1578,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">তারিখ বা টাকার পরিমাণ প্রয়োজন নেই</p>
                 </div>
             )}
-
-            {/* PIN Input for Security */}
-            <div className="mt-4 bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
-                <label className="block text-xs font-bold text-red-600 dark:text-red-400 mb-1.5 flex items-center gap-1.5">
-                    <Lock size={12} />
-                    নিরাপত্তা পিন (সেভ করতে পিন দিন)
-                </label>
-                <input 
-                    type="password" 
-                    value={pinInput}
-                    onChange={(e) => setPinInput(e.target.value)}
-                    placeholder="পিন কোড লিখুন"
-                    className="w-full bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 rounded-lg py-2 px-3 text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900 transition-all placeholder:text-slate-400"
-                />
-            </div>
         </div>
 
         <div className="mt-6 flex gap-3">

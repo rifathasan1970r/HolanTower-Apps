@@ -86,7 +86,7 @@ const icons: { [key: string]: React.ElementType } = {
   ShieldAlert, User, Wrench, Siren, Plus, X, Edit, LogOut, Settings
 };
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || '123';
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || '1966';
 
 const Card = ({ 
   title, 
