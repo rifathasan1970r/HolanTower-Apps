@@ -29,6 +29,7 @@ import { MaintenancePopup } from './components/MaintenancePopup';
 import { PDFDownloadPage } from './components/PDFDownloadPage';
 import { ContactView } from './components/ContactView';
 import { DownloadAppView } from './components/DownloadAppView';
+import { DuePaymentMarquee } from './components/DuePaymentMarquee';
 
 const App: React.FC = () => {
   const isExitingRef = useRef(false);
@@ -444,6 +445,13 @@ const App: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            {/* Due Payment Marquee (Only Home) */}
+            {currentView === 'HOME' && (
+              <div className="px-1">
+                <DuePaymentMarquee />
+              </div>
+            )}
 
             {/* Image Slider Section (Only Home) */}
             {currentView === 'HOME' && (
