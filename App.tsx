@@ -49,10 +49,11 @@ const App: React.FC = () => {
 
   const [currentView, setCurrentView] = useState<ViewState>(() => {
     if (typeof window !== 'undefined') {
+      const savedView = localStorage.getItem('currentView');
+      if (savedView) return savedView as ViewState;
+      
       const params = new URLSearchParams(window.location.search);
       const viewParam = params.get('view');
-      // Basic validation to ensure it's a valid view string if needed, 
-      // but casting is usually fine if we trust the source or handle invalid views gracefully in renderContent
       if (viewParam) return viewParam as ViewState;
     }
     return 'HOME';
@@ -60,11 +61,27 @@ const App: React.FC = () => {
 
   const [selectedUnit, setSelectedUnit] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
+      const savedUnit = localStorage.getItem('selectedUnit');
+      if (savedUnit) return savedUnit;
+
       const params = new URLSearchParams(window.location.search);
       return params.get('unit') || null;
     }
     return null;
   });
+
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+
+  // Persist state
+  useEffect(() => {
+    localStorage.setItem('currentView', currentView);
+    if (selectedUnit) {
+      localStorage.setItem('selectedUnit', selectedUnit);
+    } else {
+      localStorage.removeItem('selectedUnit');
+    }
+  }, [currentView, selectedUnit]);
+
   const [showSummaryList, setShowSummaryList] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [greeting, setGreeting] = useState('');
@@ -553,7 +570,7 @@ const App: React.FC = () => {
         className="px-5 relative z-10"
         style={{ paddingTop: 'var(--header-height)' }}
       >
-        <PullToRefresh isEnabled={isReloadEnabled}>
+        <PullToRefresh isEnabled={isReloadEnabled && !isAssistantOpen}>
           {renderContent()}
           {currentView !== 'HOME' && (
             <div className="mt-12 mb-8 text-center">
@@ -606,7 +623,7 @@ const App: React.FC = () => {
     </div>
 
     {/* Gemini Assistant - Only visible on HOME view */}
-    <Assistant isVisible={currentView === 'HOME'} />
+    <Assistant isVisible={currentView === 'HOME'} isOpen={isAssistantOpen} onOpenChange={setIsAssistantOpen} />
 
     {/* Maintenance Popup */}
     <MaintenancePopup enabled={maintenanceMode} />

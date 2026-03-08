@@ -11,6 +11,8 @@ interface Message {
 interface AssistantProps {
   isVisible: boolean;
   lang?: 'bn' | 'en';
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
 }
 
 const SUGGESTIONS_BN = [
@@ -41,8 +43,7 @@ const SUGGESTIONS_EN = [
   "Location map"
 ];
 
-const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn', isOpen, onOpenChange }) => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +73,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
   // অন্য পেজে গেলে চ্যাট বন্ধ করে দিবে
   useEffect(() => {
     if (!isVisible) {
-      setIsOpen(false);
+      onOpenChange(false);
     }
   }, [isVisible]);
 
@@ -106,7 +107,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
             exit={{ scale: 0, rotate: -180 }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => setIsOpen(true)}
+            onClick={() => onOpenChange(true)}
             className="fixed bottom-24 right-5 z-40 p-3 rounded-full shadow-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-violet-600 text-white flex items-center justify-center border-2 border-white/30 backdrop-blur-md group"
           >
             <div className="relative">
@@ -153,7 +154,7 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn' }) => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => setIsOpen(false)} 
+                  onClick={() => onOpenChange(false)} 
                   className="hover:bg-white/20 p-1.5 rounded-full transition-colors active:scale-90 relative z-10"
                 >
                   <X size={20} />
