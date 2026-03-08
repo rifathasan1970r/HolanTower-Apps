@@ -82,6 +82,9 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   onSummaryToggle
 }) => {
   const [showMonthlySummary, setShowMonthlySummary] = useState<boolean>(false);
+  const [showDueSummary, setShowDueSummary] = useState<boolean>(false);
+  const [dueSummaryData, setDueSummaryData] = useState<{unit: string, due2025: number, due2026: number}[]>([]);
+  const [loadingDueSummary, setLoadingDueSummary] = useState<boolean>(false);
   const [showParkingView, setShowParkingView] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'SERVICE' | 'PARKING'>('SERVICE');
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
@@ -106,6 +109,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     setShowFullYearTable(false);
     setFullYearTableUnitFilter(null);
     setShowMonthlySummary(false);
+    setShowDueSummary(false);
     setShowParkingView(false);
     setShowSummaryModal(false);
   }, [selectedUnit]);
@@ -268,6 +272,68 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   useEffect(() => {
     fetchData();
   }, [selectedYear]);
+
+  const fetchDueSummaryData = async () => {
+    setLoadingDueSummary(true);
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .in('year_num', [2025, 2026]);
+      
+      if (error) throw error;
+
+      const summaryMap: Record<string, { due2025: number, due2026: number }> = {};
+      
+      ALL_UNITS.forEach(unit => {
+        summaryMap[unit] = { due2025: 0, due2026: 0 };
+      });
+
+      const now = new Date();
+      const currentRealYear = now.getFullYear();
+      const currentRealMonthIdx = now.getMonth();
+
+      ALL_UNITS.forEach(unit => {
+        const isOccupiedDefault = unit.slice(-1) !== 'B';
+        
+        [2025, 2026].forEach(year => {
+          const uInfoKey = `${unit}-${year}`;
+          const uInfo = unitsInfo[uInfoKey] || unitsInfo[unit];
+          const isOccupied = uInfo?.is_occupied ?? isOccupiedDefault;
+          const defaultAmount = isOccupied ? 2000 : 500;
+
+          MONTHS_LOGIC.forEach((month, index) => {
+            const paymentRecord = data?.find(
+              d => d.unit_text === unit && d.month_name === month && d.year_num === year
+            );
+
+            if (paymentRecord) {
+              if (year === 2025) summaryMap[unit].due2025 += paymentRecord.due;
+              if (year === 2026) summaryMap[unit].due2026 += paymentRecord.due;
+            } else {
+              const isFuture = year > currentRealYear || (year === currentRealYear && index > currentRealMonthIdx);
+              if (!isFuture) {
+                if (year === 2025) summaryMap[unit].due2025 += defaultAmount;
+                if (year === 2026) summaryMap[unit].due2026 += defaultAmount;
+              }
+            }
+          });
+        });
+      });
+
+      const result = ALL_UNITS.map(unit => ({
+        unit,
+        due2025: summaryMap[unit].due2025,
+        due2026: summaryMap[unit].due2026
+      }));
+
+      setDueSummaryData(result);
+    } catch (error) {
+      console.error('Error fetching due summary data:', error);
+    } finally {
+      setLoadingDueSummary(false);
+    }
+  };
 
   const handleSaveParkingConfig = async (newParkingUnits: string[], newExternalUnits: {id: string, name: string, owner: string}[]) => {
     setIsSavingParking(true);
@@ -3858,6 +3924,124 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 </div>
             </div>
         </div>
+      ) : showDueSummary ? (
+          <div className="animate-in slide-in-from-right duration-300">
+              <div className="flex items-center gap-3 mb-4">
+                 <button 
+                  onClick={() => setShowDueSummary(false)}
+                  className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div className="flex-1">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">বকেয়া সামারি</h2>
+                    <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">২০২৫ ও ২০২৬ সাল</p>
+                </div>
+             </div>
+
+             {loadingDueSummary ? (
+                 <div className="flex justify-center items-center py-20">
+                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                 </div>
+             ) : (
+                 <>
+                     {/* Summary Box */}
+                     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 mb-6">
+                         <div className="grid grid-cols-2 gap-3 mb-3">
+                             <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center border border-red-100 dark:border-red-800/50 flex flex-col items-center justify-center">
+                                 <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">২০২৫ মোট বকেয়া</p>
+                                 <div className="flex items-baseline gap-1">
+                                     <p className="text-xl font-black text-red-600 dark:text-red-400">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025, 0).toLocaleString()}</p>
+                                 </div>
+                             </div>
+                             <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3 text-center border border-orange-100 dark:border-orange-800/50 flex flex-col items-center justify-center">
+                                 <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">২০২৬ মোট বকেয়া</p>
+                                 <div className="flex items-baseline gap-1">
+                                     <p className="text-xl font-black text-orange-600 dark:text-orange-400">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2026, 0).toLocaleString()}</p>
+                                 </div>
+                             </div>
+                         </div>
+                         <div className="bg-slate-50 dark:bg-slate-700/30 rounded-xl p-3 flex justify-between items-center border border-slate-100 dark:border-slate-700">
+                             <div className="flex items-center gap-2">
+                                 <div className="bg-indigo-100 dark:bg-indigo-900/30 p-1.5 rounded-full text-indigo-600 dark:text-indigo-400">
+                                     <Wallet size={14} />
+                                 </div>
+                                 <span className="text-xs font-bold text-slate-600 dark:text-slate-300">সর্বমোট বকেয়া</span>
+                             </div>
+                             <span className="text-base font-black text-indigo-600 dark:text-indigo-400">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025 + item.due2026, 0).toLocaleString()}</span>
+                         </div>
+                     </div>
+
+                     {/* 27 Units List */}
+                     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden mb-8">
+                         <div className="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                             <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">ইউনিট ভিত্তিক বকেয়া তালিকা</h3>
+                         </div>
+                         <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                             {dueSummaryData.map((item, idx) => (
+                                 <div 
+                                     key={idx} 
+                                     onClick={() => {
+                                         onUnitSelect(item.unit);
+                                         setShowDueSummary(false);
+                                     }}
+                                     className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                                 >
+                                     <div className="flex items-center gap-3">
+                                         <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                                             {item.unit}
+                                         </div>
+                                     </div>
+                                     <div className="flex gap-4 text-right">
+                                         <div>
+                                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">২০২৫</p>
+                                             <p className={`text-sm font-bold ${item.due2025 > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                 {item.due2025 > 0 ? `৳ ${item.due2025.toLocaleString()}` : '0'}
+                                             </p>
+                                         </div>
+                                         <div>
+                                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">২০২৬</p>
+                                             <p className={`text-sm font-bold ${item.due2026 > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                 {item.due2026 > 0 ? `৳ ${item.due2026.toLocaleString()}` : '0'}
+                                             </p>
+                                         </div>
+                                         <div className="pl-2 border-l border-slate-200 dark:border-slate-700">
+                                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">মোট</p>
+                                             <p className={`text-sm font-bold ${(item.due2025 + item.due2026) > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                                 {(item.due2025 + item.due2026) > 0 ? `৳ ${(item.due2025 + item.due2026).toLocaleString()}` : '0'}
+                                             </p>
+                                         </div>
+                                     </div>
+                                 </div>
+                             ))}
+                         </div>
+                         <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 flex justify-between items-center">
+                             <h3 className="text-sm font-bold text-slate-800 dark:text-white">সর্বমোট বকেয়া</h3>
+                             <div className="flex gap-4 text-right">
+                                 <div>
+                                     <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">২০২৫</p>
+                                     <p className="text-sm font-bold text-red-600 dark:text-red-400">
+                                         ৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025, 0).toLocaleString()}
+                                     </p>
+                                 </div>
+                                 <div>
+                                     <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">২০২৬</p>
+                                     <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                                         ৳ {dueSummaryData.reduce((sum, item) => sum + item.due2026, 0).toLocaleString()}
+                                     </p>
+                                 </div>
+                                 <div className="pl-2 border-l border-slate-200 dark:border-slate-700">
+                                     <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">মোট</p>
+                                     <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                                         ৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025 + item.due2026, 0).toLocaleString()}
+                                     </p>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </>
+             )}
+          </div>
       ) : showMonthlySummary ? (
           <div className="animate-in slide-in-from-right duration-300">
               <div className="flex items-center gap-3 mb-4">
@@ -3904,6 +4088,29 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                         <div className="text-left">
                             <h3 className="text-base font-bold text-white">১২ মাসের তথ্য</h3>
                             <p className="text-xs text-indigo-100 font-medium opacity-90">পুরো বছরের বিস্তারিত হিসাব দেখুন</p>
+                        </div>
+                    </div>
+                    <div className="bg-white/20 p-2 rounded-full text-white group-hover:bg-white/30 transition-colors">
+                        <ChevronRight size={20} />
+                    </div>
+                </button>
+            </div>
+
+            <div className="mb-6">
+                <button 
+                    onClick={() => {
+                        setShowDueSummary(true);
+                        fetchDueSummaryData();
+                    }}
+                    className="w-full bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl p-5 shadow-lg border border-white/10 flex items-center justify-between group active:scale-[0.98] transition-all"
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl text-white group-hover:scale-110 transition-transform">
+                            <Wallet size={24} />
+                        </div>
+                        <div className="text-left">
+                            <h3 className="text-base font-bold text-white">বকেয়া সামারি</h3>
+                            <p className="text-xs text-red-100 font-medium opacity-90">২০২৫ ও ২০২৬ সালের বকেয়া হিসাব</p>
                         </div>
                     </div>
                     <div className="bg-white/20 p-2 rounded-full text-white group-hover:bg-white/30 transition-colors">
