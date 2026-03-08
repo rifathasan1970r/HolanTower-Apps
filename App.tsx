@@ -49,9 +49,6 @@ const App: React.FC = () => {
 
   const [currentView, setCurrentView] = useState<ViewState>(() => {
     if (typeof window !== 'undefined') {
-      const savedView = localStorage.getItem('currentView');
-      if (savedView) return savedView as ViewState;
-      
       const params = new URLSearchParams(window.location.search);
       const viewParam = params.get('view');
       if (viewParam) return viewParam as ViewState;
@@ -61,9 +58,6 @@ const App: React.FC = () => {
 
   const [selectedUnit, setSelectedUnit] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
-      const savedUnit = localStorage.getItem('selectedUnit');
-      if (savedUnit) return savedUnit;
-
       const params = new URLSearchParams(window.location.search);
       return params.get('unit') || null;
     }
@@ -72,15 +66,7 @@ const App: React.FC = () => {
 
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
-  // Persist state
-  useEffect(() => {
-    localStorage.setItem('currentView', currentView);
-    if (selectedUnit) {
-      localStorage.setItem('selectedUnit', selectedUnit);
-    } else {
-      localStorage.removeItem('selectedUnit');
-    }
-  }, [currentView, selectedUnit]);
+  // Persist state removed to always start at HOME
 
   const [showSummaryList, setShowSummaryList] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
