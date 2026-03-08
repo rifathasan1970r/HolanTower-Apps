@@ -12,21 +12,33 @@ interface Contact {
   role?: string;
   phone: string;
   isSecurity?: boolean;
+  theme?: 'indigo' | 'emerald' | 'amber' | 'blue' | 'purple';
 }
 
 const CONTACTS: Contact[] = [
   {
     id: '1',
-    name: 'নজরুল ইসলাম',
-    phone: '+8801731597652',
+    name: 'মোঃ মোজাম্মেল হক',
+    role: 'সেক্রেটারি',
+    phone: '+8801718635845',
+    theme: 'indigo'
   },
   {
     id: '2',
-    name: 'আবু সাঈদ',
-    phone: '+8801716524033',
+    name: 'মো: শাহীন',
+    role: 'ক্যাশিয়ার',
+    phone: '+8801822532977',
+    theme: 'emerald'
   },
   {
     id: '3',
+    name: 'মো গোলাম ফারুক',
+    role: 'কার্যকরী সদস্য',
+    phone: '+8801822940728',
+    theme: 'amber'
+  },
+  {
+    id: '4',
     name: 'রিফাত',
     role: 'নিরাপত্তা ও তত্ত্বাবধানে',
     phone: '+8801310988954',
@@ -106,27 +118,27 @@ export const ContactView: React.FC<ContactViewProps> = ({ onBack }) => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 mt-5 relative z-10">
+            <div className="flex gap-2 mt-5 relative z-10">
               <button
                 onClick={() => handleCall(contact.phone)}
-                className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all active:scale-95 ${
+                className={`w-1/3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold transition-all active:scale-95 ${
                   contact.isSecurity
                     ? 'bg-white text-slate-900 hover:bg-slate-100'
                     : 'bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg shadow-indigo-200 dark:shadow-none'
                 }`}
               >
-                <Phone size={16} /> কল করুন
+                <Phone size={14} /> কল করুন
               </button>
               
               <button
                 onClick={() => handleWhatsApp(contact.phone)}
-                className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all active:scale-95 border ${
+                className={`w-2/3 py-2.5 rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold transition-all active:scale-95 border ${
                   contact.isSecurity
                     ? 'border-white/20 text-white hover:bg-white/10'
                     : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
-                <MessageCircle size={16} /> মেসেজ
+                <MessageCircle size={14} /> হোয়াটসঅ্যাপ বার্তা
               </button>
             </div>
           </motion.div>

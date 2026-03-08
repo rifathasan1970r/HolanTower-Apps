@@ -37,8 +37,10 @@ const initialContacts = [
     colorClass: 'bg-green-100',
     iconColor: 'text-green-600 dark:text-green-400',
     people: [
-      { id: '1', name: 'রিফাত', role: 'নিরাপত্তা ও তত্ত্বাবধান', phone: '+8801310-988954', wa: true },
-      { id: '2', name: 'আবু সাঈদ', role: 'ম্যানেজার', phone: '+8801716-524033', wa: true },
+      { id: '1', name: 'মোঃ মোজাম্মেল হক', role: 'সেক্রেটারি', phone: '01718635845', wa: true },
+      { id: '2', name: 'মো: শাহীন', role: 'ক্যাশিয়ার', phone: '01822532977', wa: true },
+      { id: '3', name: 'মো গোলাম ফারুক', role: 'কার্যকরী সদস্য', phone: '01822940728', wa: true },
+      { id: '4', name: 'রিফাত', role: 'নিরাপত্তা ও তত্ত্বাবধান', phone: '+8801310-988954', wa: true },
     ]
   },
   {
@@ -48,10 +50,10 @@ const initialContacts = [
     colorClass: 'bg-amber-100',
     iconColor: 'text-amber-600 dark:text-amber-400',
     people: [
-      { id: '3', name: 'সম্রাট', role: 'নির্মাণ ঠিকাদার', phone: '01648-496150', wa: true },
-      { id: '4', name: 'সুমন', role: 'বিদ্যুৎ ঠিকাদার', phone: '01674-200082', wa: true },
-      { id: '5', name: 'ইউসুফ', role: 'পয়ঃনিষ্কাশন ঠিকাদার', phone: '01826-535683', wa: true },
-      { id: '6', name: 'এরশাদ', role: 'প্লাম্বিং সার্ভিস', phone: '01946500016', wa: false },
+      { id: '5', name: 'সম্রাট', role: 'নির্মাণ ঠিকাদার', phone: '01648-496150', wa: true },
+      { id: '6', name: 'সুমন', role: 'বিদ্যুৎ ঠিকাদার', phone: '01674-200082', wa: true },
+      { id: '7', name: 'ইউসুফ', role: 'পয়ঃনিষ্কাশন ঠিকাদার', phone: '01826-535683', wa: true },
+      { id: '8', name: 'এরশাদ', role: 'প্লাম্বিং সার্ভিস', phone: '01946500016', wa: false },
     ]
   },
   {
@@ -61,8 +63,8 @@ const initialContacts = [
     colorClass: 'bg-indigo-100',
     iconColor: 'text-indigo-600 dark:text-indigo-400',
     people: [
-      { id: '7', name: 'পরিচ্ছন্নতা কর্মী', role: 'ময়লা ফেলার সার্ভিস', phone: '01797550346', wa: false },
-      { id: '8', name: 'গ্যাস সরবরাহকারী', role: 'গ্যাস সিলিন্ডার', phone: '01660183718', wa: false },
+      { id: '9', name: 'পরিচ্ছন্নতা কর্মী', role: 'ময়লা ফেলার সার্ভিস', phone: '01797550346', wa: false },
+      { id: '10', name: 'গ্যাস সরবরাহকারী', role: 'গ্যাস সিলিন্ডার', phone: '01660183718', wa: false },
     ]
   },
   {
@@ -72,11 +74,11 @@ const initialContacts = [
     colorClass: 'bg-sky-100',
     iconColor: 'text-sky-600 dark:text-sky-400',
     people: [
-      { id: '9', name: 'সার্কেল নেটওয়ার্ক', role: 'ISP হটলাইন', phone: '16237', wa: false },
-      { id: '10', name: 'সার্কেল নেটওয়ার্ক', role: 'ISP সাপোর্ট', phone: '09611-800900', wa: false },
-      { id: '11', name: 'নেট 3 লিংক', role: 'ISP বিকল্প', phone: '09639179384', wa: false },
-      { id: '12', name: 'টাস কেবল', role: 'ডিস / কেবল টিভি', phone: '01951498883', wa: false },
-      { id: '13', name: 'সোহান', role: 'ডিস বিল কালেক্টর', phone: '01329727781', wa: false },
+      { id: '11', name: 'সার্কেল নেটওয়ার্ক', role: 'ISP হটলাইন', phone: '16237', wa: false },
+      { id: '12', name: 'সার্কেল নেটওয়ার্ক', role: 'ISP সাপোর্ট', phone: '09611-800900', wa: false },
+      { id: '13', name: 'নেট 3 লিংক', role: 'ISP বিকল্প', phone: '09639179384', wa: false },
+      { id: '14', name: 'টাস কেবল', role: 'ডিস / কেবল টিভি', phone: '01951498883', wa: false },
+      { id: '15', name: 'সোহান', role: 'ডিস বিল কালেক্টর', phone: '01329727781', wa: false },
     ]
   },
 ];
@@ -123,8 +125,8 @@ const Card = ({
 );
 
 export const EmergencyView = () => {
-  const [contacts, setContacts] = useLocalStorage('emergencyContacts_v3', initialContacts);
-  const [isAdmin, setIsAdmin] = useLocalStorage('isAdmin_v3', false);
+  const [contacts, setContacts] = useLocalStorage('emergencyContacts_v4', initialContacts);
+  const [isAdmin, setIsAdmin] = useLocalStorage('isAdmin_v4', false);
   const [showLogin, setShowLogin] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
