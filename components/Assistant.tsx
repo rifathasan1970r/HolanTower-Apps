@@ -129,6 +129,9 @@ const Assistant: React.FC<AssistantProps> = ({ isVisible, lang = 'bn', isOpen, o
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.95 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm md:items-end md:justify-end md:p-6 md:bottom-20 md:right-4 md:inset-auto"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
           >
             {/* Height: h-[500px] and max-h-[70vh] for mobile optimization */}
             <div className="w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[500px] max-h-[70vh] border border-gray-100 dark:border-slate-700 ring-1 ring-black/5">

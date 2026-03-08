@@ -14,6 +14,7 @@ export const PullToRefresh: React.FC<{ children: React.ReactNode; isEnabled?: bo
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
+      console.log('PullToRefresh touchstart, isEnabled:', isEnabled);
       if (!isEnabled) return;
       // Only allow pull to refresh if we are at the very top of the page
       if (window.scrollY <= 0) {
