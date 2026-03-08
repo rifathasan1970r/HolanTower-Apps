@@ -52,10 +52,10 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose, conte
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "AIzaSyB6qSEIfouJnqdm2HLuAYu2fV6QFwJsusI";
+    const apiKey = process.env.GEMINI_API_KEY;
     
     if (!apiKey) {
-      setMessages(prev => [...prev, { role: 'model', text: "দুঃখিত, এআই সিস্টেমের এপিআই কী (API Key) পাওয়া যায়নি। অনুগ্রহ করে ডেভেলপারকে জানান।" }]);
+      setMessages(prev => [...prev, { role: 'model', text: "দুঃখিত, এআই সিস্টেমের এপিআই কী (API Key) কনফিগার করা নেই। অনুগ্রহ করে ডেভেলপারকে জানান।" }]);
       setIsLoading(false);
       return;
     }

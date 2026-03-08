@@ -1,26 +1,20 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY;
-
-// Initialize Gemini only if API key is present
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
-
 const MAX_RETRIES = 3;
 const BASE_DELAY = 1000;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getGeminiResponse = async (prompt: string, lang: 'bn' | 'en' = 'bn'): Promise<string> => {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "AIzaSyB6qSEIfouJnqdm2HLuAYu2fV6QFwJsusI";
+  const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
     return lang === 'bn' 
-      ? "দুঃখিত, এআই সিস্টেম বর্তমানে উপলব্ধ নয়। দয়া করে পরে আবার চেষ্টা করুন। (API Key Missing)"
-      : "Sorry, AI system is currently unavailable. Please try again later. (API Key Missing)";
+      ? "দুঃখিত, এআই সিস্টেম বর্তমানে উপলব্ধ নয়। (API Key Missing)"
+      : "Sorry, AI system is currently unavailable. (API Key Missing)";
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const model = ai.models;
   
   const systemInstruction = `
     You are the intelligent, polite, and efficient Building Assistant for "Hollan Tower" (হলান টাওয়ার).
@@ -50,7 +44,7 @@ export const getGeminiResponse = async (prompt: string, lang: 'bn' | 'en' = 'bn'
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      const response = await model.generateContent({
+      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
