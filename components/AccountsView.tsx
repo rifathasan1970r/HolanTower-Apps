@@ -26,6 +26,7 @@ interface MonthlyAccountData {
     electricity: number;
     garbage: number;
     caretaker: number;
+    nightGuard: number;
     otherItems: OtherItem[];
   };
 }
@@ -43,7 +44,7 @@ const getDefaultAccounts = (year: number): MonthlyAccountData[] =>
     month,
     year,
     income: { surplus: 0, serviceCharge: 0, otherItems: [] },
-    expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, otherItems: [] }
+    expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, nightGuard: 0, otherItems: [] }
   }));
 
 export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
@@ -98,7 +99,11 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
         
         // Ensure otherItems exists
         if (existing.income && !existing.income.otherItems) existing.income.otherItems = [];
-        if (existing.expense && !existing.expense.otherItems) existing.expense.otherItems = [];
+        if (existing.expense) {
+          if (!existing.expense.otherItems) existing.expense.otherItems = [];
+          if (existing.expense.nightGuard === undefined) existing.expense.nightGuard = 0;
+          if (existing.expense.garbage === undefined) existing.expense.garbage = 0;
+        }
         
         return existing;
       }
@@ -107,7 +112,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
         month,
         year: selectedYear,
         income: { surplus: 0, serviceCharge: 0, otherItems: [] },
-        expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, otherItems: [] }
+        expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, nightGuard: 0, otherItems: [] }
       };
     });
   };
@@ -261,7 +266,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
       const otherExpense = acc.expense.otherItems?.reduce((sum, item) => sum + item.amount, 0) || 0;
       
       totalIncome += (acc.income.surplus + acc.income.serviceCharge + otherIncome);
-      totalExpense += (acc.expense.water + acc.expense.electricity + acc.expense.garbage + acc.expense.caretaker + otherExpense);
+      totalExpense += (acc.expense.water + acc.expense.electricity + acc.expense.garbage + acc.expense.caretaker + acc.expense.nightGuard + otherExpense);
     });
 
     return {
@@ -276,7 +281,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
     const otherExpense = acc.expense.otherItems?.reduce((sum, item) => sum + item.amount, 0) || 0;
     
     const inc = acc.income.surplus + acc.income.serviceCharge + otherIncome;
-    const exp = acc.expense.water + acc.expense.electricity + acc.expense.garbage + acc.expense.caretaker + otherExpense;
+    const exp = acc.expense.water + acc.expense.electricity + acc.expense.garbage + acc.expense.caretaker + acc.expense.nightGuard + otherExpense;
     return { inc, exp, bal: inc - exp };
   };
 
@@ -338,7 +343,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
         >
           <div className="p-6 border-b border-white/10">
             <div className="flex justify-between items-center">
-              <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">মোট স্থিতি (Net Balance)</p>
+              <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">মোট উদ্বৃত্ত</p>
               <div className="w-8 h-8 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center text-white shadow-sm backdrop-blur-sm">
                 <PieChart size={18} />
               </div>
@@ -374,7 +379,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
           <div className="col-span-4 border-r border-slate-200/50 pr-2">বিবরণ (Month)</div>
           <div className="col-span-3 text-right border-r border-slate-200/50 px-2">আয় (+)</div>
           <div className="col-span-3 text-right border-r border-slate-200/50 px-2">ব্যয় (-)</div>
-          <div className="col-span-2 text-right pl-2">স্থিতি</div>
+          <div className="col-span-2 text-right pl-2">উদ্বৃত্ত</div>
         </div>
 
         {/* Monthly Ledger Rows */}
@@ -484,28 +489,30 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
 
                                   {/* Dynamic Income Fields */}
                                   {editData.income.otherItems?.map((item, idx) => (
-                                    <div key={`income-other-${idx}`} className="flex items-center gap-2">
+                                    <div key={`income-other-${idx}`} className="flex items-center justify-between gap-2">
                                       {isAuthorized ? (
                                         <>
-                                          <input 
-                                            type="text" 
-                                            value={item.label}
-                                            placeholder="বিবরণ"
-                                            onChange={(e) => handleOtherItemChange('income', idx, 'label', e.target.value)}
-                                            className="flex-1 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-xs font-medium text-slate-700 focus:border-emerald-500 outline-none"
-                                          />
+                                          <div className="flex-1 flex items-center gap-2 min-w-0">
+                                            <button 
+                                              onClick={() => removeOtherItem('income', idx)}
+                                              className="shrink-0 text-rose-400 hover:text-rose-600 transition-colors"
+                                            >
+                                              <Trash2 size={14} />
+                                            </button>
+                                            <input 
+                                              type="text" 
+                                              value={item.label}
+                                              placeholder="বিবরণ"
+                                              onChange={(e) => handleOtherItemChange('income', idx, 'label', e.target.value)}
+                                              className="flex-1 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-xs font-medium text-slate-700 focus:border-emerald-500 outline-none min-w-0"
+                                            />
+                                          </div>
                                           <input 
                                             type="number" 
                                             value={item.amount || ''}
                                             onChange={(e) => handleOtherItemChange('income', idx, 'amount', e.target.value)}
-                                            className="w-24 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-right font-bold text-slate-800 focus:border-emerald-500 outline-none"
+                                            className="w-24 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-right font-bold text-slate-800 focus:border-emerald-500 outline-none shrink-0"
                                           />
-                                          <button 
-                                            onClick={() => removeOtherItem('income', idx)}
-                                            className="text-rose-400 hover:text-rose-600 p-1"
-                                          >
-                                            <Trash2 size={12} />
-                                          </button>
                                         </>
                                       ) : (
                                         <div className="flex items-center justify-between w-full text-xs">
@@ -553,8 +560,9 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                   {[
                                     { label: 'বিদ্যুৎ বিল', field: 'electricity' },
                                     { label: 'পানি বিল', field: 'water' },
-                                    { label: 'ময়লা বিল', field: 'garbage' },
-                                    { label: 'গার্ড/কেয়ারটেকার বেতন', field: 'caretaker' }
+                                    { label: 'ময়লার বিল', field: 'garbage' },
+                                    { label: 'গার্ড/কেয়ারটেকার বেতন', field: 'caretaker' },
+                                    { label: 'নাইট গার্ড বিল', field: 'nightGuard' }
                                   ].map((item) => (
                                     <div key={item.field} className="flex items-center justify-between text-xs">
                                       <span className="text-slate-500 font-medium">{item.label}</span>
@@ -580,28 +588,30 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
 
                                   {/* Dynamic Expense Fields */}
                                   {editData.expense.otherItems?.map((item, idx) => (
-                                    <div key={`expense-other-${idx}`} className="flex items-center gap-2">
+                                    <div key={`expense-other-${idx}`} className="flex items-center justify-between gap-2">
                                       {isAuthorized ? (
                                         <>
-                                          <input 
-                                            type="text" 
-                                            value={item.label}
-                                            placeholder="বিবরণ"
-                                            onChange={(e) => handleOtherItemChange('expense', idx, 'label', e.target.value)}
-                                            className="flex-1 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-xs font-medium text-slate-700 focus:border-emerald-500 outline-none"
-                                          />
+                                          <div className="flex-1 flex items-center gap-2 min-w-0">
+                                            <button 
+                                              onClick={() => removeOtherItem('expense', idx)}
+                                              className="shrink-0 text-rose-400 hover:text-rose-600 transition-colors"
+                                            >
+                                              <Trash2 size={14} />
+                                            </button>
+                                            <input 
+                                              type="text" 
+                                              value={item.label}
+                                              placeholder="বিবরণ"
+                                              onChange={(e) => handleOtherItemChange('expense', idx, 'label', e.target.value)}
+                                              className="flex-1 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-xs font-medium text-slate-700 focus:border-emerald-500 outline-none min-w-0"
+                                            />
+                                          </div>
                                           <input 
                                             type="number" 
                                             value={item.amount || ''}
                                             onChange={(e) => handleOtherItemChange('expense', idx, 'amount', e.target.value)}
-                                            className="w-24 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-right font-bold text-slate-800 focus:border-emerald-500 outline-none"
+                                            className="w-24 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-right font-bold text-slate-800 focus:border-emerald-500 outline-none shrink-0"
                                           />
-                                          <button 
-                                            onClick={() => removeOtherItem('expense', idx)}
-                                            className="text-rose-400 hover:text-rose-600 p-1"
-                                          >
-                                            <Trash2 size={12} />
-                                          </button>
                                         </>
                                       ) : (
                                         <div className="flex items-center justify-between w-full text-xs">
@@ -627,30 +637,44 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                   <div className="pt-2 border-t border-rose-50 flex justify-between items-center">
                                     <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">মোট ব্যয়</span>
                                     <span className="text-xs font-black text-rose-700">
-                                      ৳ {(editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)).toLocaleString()}
+                                      ৳ {(editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.nightGuard + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)).toLocaleString()}
                                     </span>
                                   </div>
                                 </div>
                               </div>
 
-                              {isAuthorized && (
-                                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                                  <div className="text-right flex-1 mr-4">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase">নিট স্থিতি</p>
-                                    <p className={`text-lg font-black ${((editData.income.surplus + editData.income.serviceCharge + (editData.income.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0))) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                      ৳{((editData.income.surplus + editData.income.serviceCharge + (editData.income.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0))).toLocaleString()}
-                                    </p>
+                              {/* Comprehensive Summary Block - Always visible when expanded */}
+                              <div className="pt-4 border-t border-slate-100 space-y-3">
+                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-2">
+                                  <div className="flex justify-between items-center text-[10px] font-bold">
+                                    <span className="text-slate-500 uppercase">মোট আয়</span>
+                                    <span className="text-emerald-600">৳ {(editData.income.surplus + editData.income.serviceCharge + (editData.income.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)).toLocaleString()}</span>
                                   </div>
-                                  <button 
-                                    onClick={handleSaveEdit}
-                                    disabled={isSaving}
-                                    className="bg-emerald-600 text-white px-6 py-2.5 rounded-lg text-xs font-bold shadow-md shadow-emerald-100 hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95"
-                                  >
-                                    {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                    সেভ করুন
-                                  </button>
+                                  <div className="flex justify-between items-center text-[10px] font-bold">
+                                    <span className="text-slate-500 uppercase">মোট ব্যয়</span>
+                                    <span className="text-rose-600">৳ {(editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.nightGuard + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)).toLocaleString()}</span>
+                                  </div>
+                                  <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                                    <span className="text-[11px] font-black text-slate-700 uppercase">নিট উদ্বৃত্ত</span>
+                                    <span className={`text-sm font-black ${((editData.income.surplus + editData.income.serviceCharge + (editData.income.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.nightGuard + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0))) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                      ৳{((editData.income.surplus + editData.income.serviceCharge + (editData.income.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.nightGuard + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0))).toLocaleString()}
+                                    </span>
+                                  </div>
                                 </div>
-                              )}
+
+                                {isAuthorized && (
+                                  <div className="flex items-center justify-end">
+                                    <button 
+                                      onClick={handleSaveEdit}
+                                      disabled={isSaving}
+                                      className="bg-emerald-600 text-white px-6 py-2.5 rounded-lg text-xs font-bold shadow-md shadow-emerald-100 hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95"
+                                    >
+                                      {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                      সেভ করুন
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </motion.div>
                         )}
