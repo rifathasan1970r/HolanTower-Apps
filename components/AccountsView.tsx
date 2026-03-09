@@ -7,6 +7,11 @@ interface AccountsViewProps {
   onBack: () => void;
 }
 
+interface OtherItem {
+  label: string;
+  amount: number;
+}
+
 interface MonthlyAccountData {
   id?: string;
   month: string;
@@ -14,14 +19,14 @@ interface MonthlyAccountData {
   income: {
     surplus: number;
     serviceCharge: number;
-    others: number;
+    otherItems: OtherItem[];
   };
   expense: {
     water: number;
     electricity: number;
     garbage: number;
     caretaker: number;
-    others: number;
+    otherItems: OtherItem[];
   };
 }
 
@@ -37,8 +42,8 @@ const getDefaultAccounts = (year: number): MonthlyAccountData[] =>
   MONTHS.map(month => ({
     month,
     year,
-    income: { surplus: 0, serviceCharge: 0, others: 0 },
-    expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, others: 0 }
+    income: { surplus: 0, serviceCharge: 0, otherItems: [] },
+    expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, otherItems: [] }
   }));
 
 export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
@@ -77,6 +82,36 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
     }
   }, [editingMonth, accounts]);
 
+  const migrateAccountData = (data: any[]): MonthlyAccountData[] => {
+    return MONTHS.map(month => {
+      const existing = data.find(d => d.month === month);
+      if (existing) {
+        // Migration: convert legacy 'others' number to otherItems array
+        if (existing.income && typeof existing.income.others === 'number' && !existing.income.otherItems) {
+          existing.income.otherItems = existing.income.others > 0 ? [{ label: 'অন্যান্য আয়', amount: existing.income.others }] : [];
+          delete existing.income.others;
+        }
+        if (existing.expense && typeof existing.expense.others === 'number' && !existing.expense.otherItems) {
+          existing.expense.otherItems = existing.expense.others > 0 ? [{ label: 'অন্যান্য ব্যয়', amount: existing.expense.others }] : [];
+          delete existing.expense.others;
+        }
+        
+        // Ensure otherItems exists
+        if (existing.income && !existing.income.otherItems) existing.income.otherItems = [];
+        if (existing.expense && !existing.expense.otherItems) existing.expense.otherItems = [];
+        
+        return existing;
+      }
+      
+      return {
+        month,
+        year: selectedYear,
+        income: { surplus: 0, serviceCharge: 0, otherItems: [] },
+        expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, otherItems: [] }
+      };
+    });
+  };
+
   const loadData = async () => {
     setLoading(true);
     
@@ -94,24 +129,14 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
       }
 
       if (data && data.length > 0) {
-        // Map data to ensure all months exist
-        const mappedData = MONTHS.map(month => {
-          const existing = data.find(d => d.month === month);
-          return existing || {
-            month,
-            year: selectedYear,
-            income: { surplus: 0, serviceCharge: 0, others: 0 },
-            expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, others: 0 }
-          };
-        });
-        setAccounts(mappedData);
+        setAccounts(migrateAccountData(data));
       } else {
         // No data in Supabase, check LocalStorage
         const localKey = `accounts_${selectedYear}`;
         const localData = localStorage.getItem(localKey);
         
         if (localData) {
-          setAccounts(JSON.parse(localData));
+          setAccounts(migrateAccountData(JSON.parse(localData)));
         } else {
           setAccounts(getDefaultAccounts(selectedYear));
         }
@@ -121,7 +146,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
       const localKey = `accounts_${selectedYear}`;
       const localData = localStorage.getItem(localKey);
       if (localData) {
-        setAccounts(JSON.parse(localData));
+        setAccounts(migrateAccountData(JSON.parse(localData)));
       } else {
         setAccounts(getDefaultAccounts(selectedYear));
       }
@@ -202,14 +227,57 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
     });
   };
 
+  const handleOtherItemChange = (section: 'income' | 'expense', index: number, field: 'label' | 'amount', value: string) => {
+    if (!editData) return;
+    const updatedItems = [...editData[section].otherItems];
+    if (field === 'amount') {
+      updatedItems[index].amount = parseFloat(value) || 0;
+    } else {
+      updatedItems[index].label = value;
+    }
+    setEditData({
+      ...editData,
+      [section]: {
+        ...editData[section],
+        otherItems: updatedItems
+      }
+    });
+  };
+
+  const addOtherItem = (section: 'income' | 'expense') => {
+    if (!editData) return;
+    setEditData({
+      ...editData,
+      [section]: {
+        ...editData[section],
+        otherItems: [...editData[section].otherItems, { label: '', amount: 0 }]
+      }
+    });
+  };
+
+  const removeOtherItem = (section: 'income' | 'expense', index: number) => {
+    if (!editData) return;
+    const updatedItems = editData[section].otherItems.filter((_, i) => i !== index);
+    setEditData({
+      ...editData,
+      [section]: {
+        ...editData[section],
+        otherItems: updatedItems
+      }
+    });
+  };
+
   // Calculations
   const summary = useMemo(() => {
     let totalIncome = 0;
     let totalExpense = 0;
 
     accounts.forEach(acc => {
-      totalIncome += (acc.income.surplus + acc.income.serviceCharge + acc.income.others);
-      totalExpense += (acc.expense.water + acc.expense.electricity + acc.expense.garbage + acc.expense.caretaker + acc.expense.others);
+      const otherIncome = acc.income.otherItems?.reduce((sum, item) => sum + item.amount, 0) || 0;
+      const otherExpense = acc.expense.otherItems?.reduce((sum, item) => sum + item.amount, 0) || 0;
+      
+      totalIncome += (acc.income.surplus + acc.income.serviceCharge + otherIncome);
+      totalExpense += (acc.expense.water + acc.expense.electricity + acc.expense.garbage + acc.expense.caretaker + otherExpense);
     });
 
     return {
@@ -220,8 +288,11 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
   }, [accounts]);
 
   const getMonthSummary = (acc: MonthlyAccountData) => {
-    const inc = acc.income.surplus + acc.income.serviceCharge + acc.income.others;
-    const exp = acc.expense.water + acc.expense.electricity + acc.expense.garbage + acc.expense.caretaker + acc.expense.others;
+    const otherIncome = acc.income.otherItems?.reduce((sum, item) => sum + item.amount, 0) || 0;
+    const otherExpense = acc.expense.otherItems?.reduce((sum, item) => sum + item.amount, 0) || 0;
+    
+    const inc = acc.income.surplus + acc.income.serviceCharge + otherIncome;
+    const exp = acc.expense.water + acc.expense.electricity + acc.expense.garbage + acc.expense.caretaker + otherExpense;
     return { inc, exp, bal: inc - exp };
   };
 
@@ -398,15 +469,21 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                     <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">আয় বিবরণী</h4>
                                   </div>
                                   <div className="h-[1px] flex-1 mx-4 bg-emerald-50"></div>
-                                  <button className="w-5 h-5 bg-slate-50 text-slate-400 rounded-md flex items-center justify-center hover:bg-slate-100">
-                                    <Plus size={10} />
-                                  </button>
+                                  {isAuthorized && (
+                                    <button 
+                                      onClick={() => addOtherItem('income')}
+                                      className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-md flex items-center justify-center hover:bg-emerald-100 transition-colors"
+                                      title="অন্যান্য আয় যোগ করুন"
+                                    >
+                                      <Plus size={10} />
+                                    </button>
+                                  )}
                                 </div>
                                 <div className="space-y-2">
+                                  {/* Fixed Income Fields */}
                                   {[
-                                    { label: 'পূর্বের জমা', field: 'surplus' },
-                                    { label: 'সার্ভিস চার্জ', field: 'serviceCharge' },
-                                    { label: 'অন্যান্য আয়', field: 'others' }
+                                    { label: `${MONTHS[(MONTHS.indexOf(acc.month) - 1 + 12) % 12]} মাসের উদ্বৃত্ত টাকা`, field: 'surplus' },
+                                    { label: 'সার্ভিস চার্জ', field: 'serviceCharge' }
                                   ].map((item) => (
                                     <div key={item.field} className="flex items-center justify-between text-xs">
                                       <span className="text-slate-500 font-medium">{item.label}</span>
@@ -422,10 +499,54 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                       )}
                                     </div>
                                   ))}
+
+                                  {/* Dynamic Income Title */}
+                                  {(editData.income.otherItems?.length > 0 || isAuthorized) && (
+                                    <div className="pt-2 pb-1 border-t border-emerald-50/50">
+                                      <p className="text-[9px] font-bold text-emerald-500/70 uppercase tracking-tighter">অন্যান্য হতে আয়</p>
+                                    </div>
+                                  )}
+
+                                  {/* Dynamic Income Fields */}
+                                  {editData.income.otherItems?.map((item, idx) => (
+                                    <div key={`income-other-${idx}`} className="flex items-center gap-2">
+                                      {isAuthorized ? (
+                                        <>
+                                          <input 
+                                            type="text" 
+                                            value={item.label}
+                                            placeholder="বিবরণ"
+                                            onChange={(e) => handleOtherItemChange('income', idx, 'label', e.target.value)}
+                                            className="flex-1 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-xs font-medium text-slate-700 focus:border-emerald-500 outline-none"
+                                          />
+                                          <input 
+                                            type="number" 
+                                            value={item.amount || ''}
+                                            onChange={(e) => handleOtherItemChange('income', idx, 'amount', e.target.value)}
+                                            className="w-24 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-right font-bold text-slate-800 focus:border-emerald-500 outline-none"
+                                          />
+                                          <button 
+                                            onClick={() => removeOtherItem('income', idx)}
+                                            className="text-rose-400 hover:text-rose-600 p-1"
+                                          >
+                                            <Trash2 size={12} />
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <div className="flex items-center justify-between w-full text-xs">
+                                          <span className="text-slate-500 font-medium">{item.label || 'অন্যান্য আয়'}</span>
+                                          <span className="font-bold text-slate-700">৳ {item.amount.toLocaleString()}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+
                                   {/* Income Total */}
                                   <div className="pt-2 border-t border-emerald-50 flex justify-between items-center">
                                     <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">মোট আয়</span>
-                                    <span className="text-xs font-black text-emerald-700">৳ {(editData.income.surplus + editData.income.serviceCharge + editData.income.others).toLocaleString()}</span>
+                                    <span className="text-xs font-black text-emerald-700">
+                                      ৳ {(editData.income.surplus + editData.income.serviceCharge + (editData.income.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)).toLocaleString()}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -440,17 +561,23 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                     <h4 className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">ব্যয় বিবরণী</h4>
                                   </div>
                                   <div className="h-[1px] flex-1 mx-4 bg-rose-50"></div>
-                                  <button className="w-5 h-5 bg-slate-50 text-slate-400 rounded-md flex items-center justify-center hover:bg-slate-100">
-                                    <Minus size={10} />
-                                  </button>
+                                  {isAuthorized && (
+                                    <button 
+                                      onClick={() => addOtherItem('expense')}
+                                      className="w-5 h-5 bg-rose-50 text-rose-600 rounded-md flex items-center justify-center hover:bg-rose-100 transition-colors"
+                                      title="অন্যান্য ব্যয় যোগ করুন"
+                                    >
+                                      <Plus size={10} />
+                                    </button>
+                                  )}
                                 </div>
                                 <div className="grid grid-cols-1 gap-2">
+                                  {/* Fixed Expense Fields */}
                                   {[
-                                    { label: 'পানি বিল', field: 'water' },
                                     { label: 'বিদ্যুৎ বিল', field: 'electricity' },
+                                    { label: 'পানি বিল', field: 'water' },
                                     { label: 'ময়লা বিল', field: 'garbage' },
-                                    { label: 'গার্ড/কেয়ারটেকার', field: 'caretaker' },
-                                    { label: 'অন্যান্য ব্যয়', field: 'others' }
+                                    { label: 'গার্ড/কেয়ারটেকার বেতন', field: 'caretaker' }
                                   ].map((item) => (
                                     <div key={item.field} className="flex items-center justify-between text-xs">
                                       <span className="text-slate-500 font-medium">{item.label}</span>
@@ -466,10 +593,54 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                       )}
                                     </div>
                                   ))}
+
+                                  {/* Dynamic Expense Title */}
+                                  {(editData.expense.otherItems?.length > 0 || isAuthorized) && (
+                                    <div className="pt-2 pb-1 border-t border-rose-50/50">
+                                      <p className="text-[9px] font-bold text-rose-500/70 uppercase tracking-tighter">অন্যান্য হতে ব্যয়</p>
+                                    </div>
+                                  )}
+
+                                  {/* Dynamic Expense Fields */}
+                                  {editData.expense.otherItems?.map((item, idx) => (
+                                    <div key={`expense-other-${idx}`} className="flex items-center gap-2">
+                                      {isAuthorized ? (
+                                        <>
+                                          <input 
+                                            type="text" 
+                                            value={item.label}
+                                            placeholder="বিবরণ"
+                                            onChange={(e) => handleOtherItemChange('expense', idx, 'label', e.target.value)}
+                                            className="flex-1 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-xs font-medium text-slate-700 focus:border-emerald-500 outline-none"
+                                          />
+                                          <input 
+                                            type="number" 
+                                            value={item.amount || ''}
+                                            onChange={(e) => handleOtherItemChange('expense', idx, 'amount', e.target.value)}
+                                            className="w-24 bg-slate-50 border border-slate-200 rounded-md py-1 px-2 text-right font-bold text-slate-800 focus:border-emerald-500 outline-none"
+                                          />
+                                          <button 
+                                            onClick={() => removeOtherItem('expense', idx)}
+                                            className="text-rose-400 hover:text-rose-600 p-1"
+                                          >
+                                            <Trash2 size={12} />
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <div className="flex items-center justify-between w-full text-xs">
+                                          <span className="text-slate-500 font-medium">{item.label || 'অন্যান্য ব্যয়'}</span>
+                                          <span className="font-bold text-slate-700">৳ {item.amount.toLocaleString()}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+
                                   {/* Expense Total */}
                                   <div className="pt-2 border-t border-rose-50 flex justify-between items-center">
                                     <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">মোট ব্যয়</span>
-                                    <span className="text-xs font-black text-rose-700">৳ {(editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others).toLocaleString()}</span>
+                                    <span className="text-xs font-black text-rose-700">
+                                      ৳ {(editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)).toLocaleString()}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -478,8 +649,8 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                 <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                                   <div className="text-right flex-1 mr-4">
                                     <p className="text-[9px] font-bold text-slate-400 uppercase">নিট স্থিতি</p>
-                                    <p className={`text-lg font-black ${((editData.income.surplus + editData.income.serviceCharge + editData.income.others) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others)) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                      ৳{((editData.income.surplus + editData.income.serviceCharge + editData.income.others) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.others)).toLocaleString()}
+                                    <p className={`text-lg font-black ${((editData.income.surplus + editData.income.serviceCharge + (editData.income.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0))) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                      ৳{((editData.income.surplus + editData.income.serviceCharge + (editData.income.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)) - (editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0))).toLocaleString()}
                                     </p>
                                   </div>
                                   <button 
