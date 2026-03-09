@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { AIAssistant } from './AIAssistant';
-import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car, Bot, FileDown, ChevronDown, MessageSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car, Bot, FileDown, ChevronDown, MessageSquare, Bell, AlertCircle } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabaseClient';
 import { TRANSLATIONS, FLAT_OWNERS } from '../constants';
@@ -174,7 +174,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [smsApiKey, setSmsApiKey] = useLocalStorage('smsApiKey', '');
   const [smsSenderId, setSmsSenderId] = useLocalStorage('smsSenderId', '');
   const [smsMessage, setSmsMessage] = useState('');
+  const [smsTemplateType, setSmsTemplateType] = useState<'request' | 'received' | 'due' | 'custom'>('request');
+  const [smsTarget, setSmsTarget] = useState<'tenant' | 'owner'>('tenant');
+  const [smsMonth, setSmsMonth] = useState<string>(MONTHS_LOGIC[new Date().getMonth()]);
   const [smsSelectedUnits, setSmsSelectedUnits] = useState<string[]>(ALL_UNITS);
+  const [smsSentUnits, setSmsSentUnits] = useState<string[]>([]);
   const [isSendingSms, setIsSendingSms] = useState(false);
 
   // Refresh data when switching to Parking mode or becoming Admin to ensure latest configuration is loaded
@@ -1134,7 +1138,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                         </div>
                         <span className="text-sm font-bold text-slate-600 dark:text-slate-300">বছরে মোট আদায়</span>
                     </div>
-                    <span className="text-lg font-black text-green-600 dark:text-green-400">৳ {grandTotalCollected.toLocaleString()}</span>
+                    <span className="text-lg font-black text-green-600 dark:text-green-400 whitespace-nowrap">৳ {grandTotalCollected.toLocaleString()}</span>
                 </div>
 
                 {/* Total Due */}
@@ -1145,7 +1149,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                         </div>
                         <span className="text-sm font-bold text-slate-600 dark:text-slate-300">বছরে মোট বকেয়া</span>
                     </div>
-                    <span className="text-lg font-black text-red-600 dark:text-red-400">৳ {grandTotalDue.toLocaleString()}</span>
+                    <span className="text-lg font-black text-red-600 dark:text-red-400 whitespace-nowrap">৳ {grandTotalDue.toLocaleString()}</span>
                 </div>
 
                 {/* Highest Due Month */}
@@ -1161,14 +1165,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     </div>
                     <div className="flex justify-between items-end">
                         <span className="text-[10px] text-slate-500 dark:text-slate-400">এই মাসে বকেয়া ছিল</span>
-                        <span className="text-lg font-black text-slate-800 dark:text-white">৳ {highestDueMonthStat?.due.toLocaleString()}</span>
+                        <span className="text-lg font-black text-slate-800 dark:text-white whitespace-nowrap">৳ {highestDueMonthStat?.due.toLocaleString()}</span>
                     </div>
                 </div>
 
                 {/* Total Billable (Collected + Due) */}
                 <div className="bg-slate-50 dark:bg-slate-700/30 border border-slate-100 dark:border-slate-700 rounded-xl p-4 flex justify-between items-center">
                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400">বছরের মোট দাবি (Billable)</span>
-                    <span className="text-base font-black text-slate-700 dark:text-slate-300">৳ {(grandTotalCollected + grandTotalDue).toLocaleString()}</span>
+                    <span className="text-base font-black text-slate-700 dark:text-slate-300 whitespace-nowrap">৳ {(grandTotalCollected + grandTotalDue).toLocaleString()}</span>
                 </div>
             </div>
          </div>
@@ -1774,11 +1778,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                   <div className="grid grid-cols-2 gap-3 pt-2">
                       <div className="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-700 dark:to-slate-800 rounded-2xl p-4 text-white shadow-lg shadow-slate-900/20 dark:shadow-none">
                           <p className="text-[10px] text-slate-300 font-medium uppercase tracking-wider mb-1">মোট টাকা</p>
-                          <p className="font-bold text-lg">৳ {totalAmount.toLocaleString()}</p>
+                          <p className="font-bold text-base sm:text-lg whitespace-nowrap">৳ {totalAmount.toLocaleString()}</p>
                       </div>
                       <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-4 text-white shadow-lg shadow-red-500/20 dark:shadow-none">
                           <p className="text-[10px] text-red-100 font-medium uppercase tracking-wider mb-1">মোট বকেয়া</p>
-                          <p className="font-bold text-lg">৳ {totalDue.toLocaleString()}</p>
+                          <p className="font-bold text-base sm:text-lg whitespace-nowrap">৳ {totalDue.toLocaleString()}</p>
                       </div>
                   </div>
               </div>
@@ -2449,7 +2453,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         for (const unit of smsSelectedUnits) {
             const uInfoKey = `${unit}-${selectedYear}`;
             const uInfo = (unitsInfo[uInfoKey] || unitsInfo[unit] || DEFAULT_UNIT_INFO) as UnitInfo;
-            const phone = uInfo.phone || '';
+            const phone = smsTarget === 'tenant' ? (uInfo.phone || '') : (uInfo.owner_phone || '');
 
             if (!phone) {
                 failCount++;
@@ -2467,8 +2471,20 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 continue;
             }
 
+            // Calculate Amount
+            const payment = dbData.find(d => d.unit_text === unit && d.month_name === smsMonth && d.year_num === selectedYear);
+            const dueAmount = payment ? payment.due : (unit.slice(-1) !== 'B' ? 2000 : 500);
+            const paidAmount = payment ? payment.amount : 0;
+            
+            // If message implies due, show due amount. If paid, show paid amount.
+            // A simple heuristic: if message contains 'পাওয়া গেছে' or 'গ্রহণ করা হয়েছে', use paidAmount, else use dueAmount.
+            const isPaidMessage = smsMessage.includes('পাওয়া গেছে') || smsMessage.includes('গ্রহণ করা হয়েছে') || smsMessage.includes('সফলভাবে');
+            const amountToReplace = isPaidMessage ? paidAmount : dueAmount;
+
             // Replace variables in message
-            const personalizedMessage = smsMessage.replace(/{{unit}}/g, unit);
+            const personalizedMessage = smsMessage
+                .replace(/{{unit}}/g, unit)
+                .replace(/{{amount}}/g, amountToReplace.toString());
 
             try {
                 const response = await fetch(`https://bulksmsbd.net/api/smsapi?api_key=${smsApiKey}&type=text&number=${cleanPhone}&senderid=${smsSenderId}&message=${encodeURIComponent(personalizedMessage)}`);
@@ -2476,6 +2492,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 
                 if (data.response_code === 202) {
                     successCount++;
+                    setSmsSentUnits(prev => [...prev, unit]);
                 } else {
                     failCount++;
                     console.error('SMS API Error:', data);
@@ -2802,38 +2819,106 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 </div>
              </div>
 
+             {/* Target Selector */}
+             <div className="grid grid-cols-2 gap-3 mb-4">
+                <button
+                    onClick={() => setSmsTarget('tenant')}
+                    className={`p-3 rounded-xl font-bold text-xs text-center transition-all ${smsTarget === 'tenant' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-900' : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                >
+                    ভাড়াটিয়া
+                </button>
+                <button
+                    onClick={() => setSmsTarget('owner')}
+                    className={`p-3 rounded-xl font-bold text-xs text-center transition-all ${smsTarget === 'owner' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-slate-900' : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                >
+                    মালিকপক্ষ
+                </button>
+             </div>
+
+             {/* Month Selector */}
+             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 block">মাস নির্বাচন করুন (অ্যামাউন্ট হিসাবের জন্য)</label>
+                <div className="relative">
+                    <select 
+                        value={smsMonth}
+                        onChange={(e) => setSmsMonth(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-3 pl-4 pr-10 appearance-none font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                        {MONTHS_LOGIC.map((m, i) => (
+                            <option key={i} value={m}>{t.months[i]}</option>
+                        ))}
+                    </select>
+                    <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rotate-90" size={16} />
+                </div>
+             </div>
+
              {/* Message Input */}
              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4">
-                <div className="mb-3">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 block">টেমপ্লেট নির্বাচন করুন</label>
-                    <div className="flex flex-wrap gap-2">
+                <div className="mb-4">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3 block">টেমপ্লেট নির্বাচন করুন</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <button 
-                            onClick={() => setSmsMessage('সম্মানিত বাসিন্দা (ইউনিট: {{unit}}), অনুগ্রহ করে চলতি মাসের সার্ভিস চার্জ পরিশোধ করার জন্য অনুরোধ করা হচ্ছে। ধন্যবাদ।')}
-                            className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                            onClick={() => {
+                                setSmsTemplateType('request');
+                                setSmsMessage('সম্মানিত বাসিন্দা (ইউনিট: {{unit}}), অনুগ্রহ করে চলতি মাসের সার্ভিস চার্জ ({{amount}} টাকা) পরিশোধ করার জন্য অনুরোধ করা হচ্ছে। ধন্যবাদ।');
+                                setSmsSelectedUnits(ALL_UNITS);
+                            }}
+                            className={`p-4 rounded-2xl border text-left transition-all duration-300 relative overflow-hidden group ${smsTemplateType === 'request' ? 'bg-gradient-to-br from-emerald-500 to-teal-600 border-transparent shadow-lg shadow-emerald-500/30 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700'}`}
                         >
-                            সার্ভিস চার্জ দেওয়ার জন্য
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className={`p-2 rounded-full ${smsTemplateType === 'request' ? 'bg-white/20' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'}`}>
+                                    <Bell size={18} />
+                                </div>
+                                <h3 className={`font-bold text-sm ${smsTemplateType === 'request' ? 'text-white' : 'text-slate-800 dark:text-white'}`}>পেমেন্ট অনুরোধ</h3>
+                            </div>
+                            <p className={`text-[10px] leading-tight ${smsTemplateType === 'request' ? 'text-emerald-50' : 'text-slate-500 dark:text-slate-400'}`}>সব ইউনিটে একসাথে পাঠানো যাবে</p>
                         </button>
+                        
                         <button 
-                            onClick={() => setSmsMessage('সম্মানিত বাসিন্দা (ইউনিট: {{unit}}), আপনার সার্ভিস চার্জ সফলভাবে গ্রহণ করা হয়েছে। ধন্যবাদ।')}
-                            className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                            onClick={() => {
+                                setSmsTemplateType('received');
+                                setSmsMessage('সম্মানিত বাসিন্দা (ইউনিট: {{unit}}), আপনার সার্ভিস চার্জ ({{amount}} টাকা) সফলভাবে গ্রহণ করা হয়েছে। ধন্যবাদ।');
+                                setSmsSelectedUnits([]);
+                            }}
+                            className={`p-4 rounded-2xl border text-left transition-all duration-300 relative overflow-hidden group ${smsTemplateType === 'received' ? 'bg-gradient-to-br from-blue-500 to-indigo-600 border-transparent shadow-lg shadow-blue-500/30 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700'}`}
                         >
-                            সার্ভিস চার্জ পাওয়া গেছে
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className={`p-2 rounded-full ${smsTemplateType === 'received' ? 'bg-white/20' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'}`}>
+                                    <CheckCircle2 size={18} />
+                                </div>
+                                <h3 className={`font-bold text-sm ${smsTemplateType === 'received' ? 'text-white' : 'text-slate-800 dark:text-white'}`}>পেমেন্ট রিসিভড</h3>
+                            </div>
+                            <p className={`text-[10px] leading-tight ${smsTemplateType === 'received' ? 'text-blue-50' : 'text-slate-500 dark:text-slate-400'}`}>আলাদা আলাদা ইউনিটের জন্য</p>
                         </button>
+                        
                         <button 
-                            onClick={() => setSmsMessage('সম্মানিত বাসিন্দা (ইউনিট: {{unit}}), আপনার সার্ভিস চার্জ এখনো বকেয়া আছে। অনুগ্রহ করে দ্রুত পরিশোধ করুন। ধন্যবাদ।')}
-                            className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                            onClick={() => {
+                                setSmsTemplateType('due');
+                                setSmsMessage('সম্মানিত বাসিন্দা (ইউনিট: {{unit}}), আপনার সার্ভিস চার্জ ({{amount}} টাকা) এখনো বকেয়া আছে। অনুগ্রহ করে দ্রুত পরিশোধ করুন। ধন্যবাদ।');
+                                setSmsSelectedUnits([]);
+                            }}
+                            className={`p-4 rounded-2xl border text-left transition-all duration-300 relative overflow-hidden group ${smsTemplateType === 'due' ? 'bg-gradient-to-br from-rose-500 to-red-600 border-transparent shadow-lg shadow-rose-500/30 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-700'}`}
                         >
-                            সার্ভিস চার্জ বকেয়া আছে
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className={`p-2 rounded-full ${smsTemplateType === 'due' ? 'bg-white/20' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'}`}>
+                                    <AlertCircle size={18} />
+                                </div>
+                                <h3 className={`font-bold text-sm ${smsTemplateType === 'due' ? 'text-white' : 'text-slate-800 dark:text-white'}`}>বকেয়া রিমাইন্ডার</h3>
+                            </div>
+                            <p className={`text-[10px] leading-tight ${smsTemplateType === 'due' ? 'text-rose-50' : 'text-slate-500 dark:text-slate-400'}`}>আলাদা আলাদা ইউনিটের জন্য</p>
                         </button>
                     </div>
                 </div>
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 block flex justify-between">
                     <span>এসএমএস মেসেজ</span>
-                    <span className="text-[10px] text-emerald-500 normal-case">ইউনিট নম্বর বসাতে {'{{unit}}'} ব্যবহার করুন</span>
+                    <span className="text-[10px] text-emerald-500 normal-case">{'{{unit}}'} এবং {'{{amount}}'} ব্যবহার করুন</span>
                 </label>
                 <textarea 
                     value={smsMessage}
-                    onChange={(e) => setSmsMessage(e.target.value)}
+                    onChange={(e) => {
+                        setSmsMessage(e.target.value);
+                        setSmsTemplateType('custom');
+                    }}
                     placeholder="আপনার মেসেজ এখানে লিখুন..."
                     rows={4}
                     className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
@@ -2844,25 +2929,28 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4">
                 <div className="flex justify-between items-center mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">ইউনিট সমূহ ({smsSelectedUnits.length} নির্বাচিত)</label>
-                    <button 
-                        onClick={() => {
-                            if (smsSelectedUnits.length === ALL_UNITS.length) {
-                                setSmsSelectedUnits([]);
-                            } else {
-                                setSmsSelectedUnits(ALL_UNITS);
-                            }
-                        }}
-                        className="text-xs font-bold text-emerald-600 dark:text-emerald-400"
-                    >
-                        {smsSelectedUnits.length === ALL_UNITS.length ? 'সব বাতিল করুন' : 'সব নির্বাচন করুন'}
-                    </button>
+                    {smsTemplateType === 'request' && (
+                        <button 
+                            onClick={() => {
+                                if (smsSelectedUnits.length === ALL_UNITS.length) {
+                                    setSmsSelectedUnits([]);
+                                } else {
+                                    setSmsSelectedUnits(ALL_UNITS);
+                                }
+                            }}
+                            className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+                        >
+                            {smsSelectedUnits.length === ALL_UNITS.length ? 'সব বাতিল করুন' : 'সব নির্বাচন করুন'}
+                        </button>
+                    )}
                 </div>
                 <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
                     {ALL_UNITS.map(unit => {
                         const uInfoKey = `${unit}-${selectedYear}`;
                         const uInfo = (unitsInfo[uInfoKey] || unitsInfo[unit] || DEFAULT_UNIT_INFO) as UnitInfo;
-                        const phone = uInfo.phone || '';
+                        const phone = smsTarget === 'tenant' ? (uInfo.phone || '') : (uInfo.owner_phone || '');
                         const isSelected = smsSelectedUnits.includes(unit);
+                        const isSent = smsSentUnits.includes(unit);
 
                         return (
                             <div 
@@ -2877,6 +2965,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
                                     isSelected 
                                     ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' 
+                                    : isSent
+                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 opacity-80'
                                     : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600'
                                 }`}
                             >
@@ -2884,12 +2974,18 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                     <div className={`w-5 h-5 rounded flex items-center justify-center border ${
                                         isSelected 
                                         ? 'bg-emerald-500 border-emerald-500 text-white' 
+                                        : isSent
+                                        ? 'bg-blue-500 border-blue-500 text-white'
                                         : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-500'
                                     }`}>
                                         {isSelected && <Check size={14} />}
+                                        {!isSelected && isSent && <CheckCircle2 size={14} />}
                                     </div>
                                     <div>
-                                        <p className="text-sm font-bold text-slate-800 dark:text-white">{unit}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white">{unit}</p>
+                                            {isSent && <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded-full font-bold">পাঠানো হয়েছে</span>}
+                                        </div>
                                         <p className="text-[10px] text-slate-500 dark:text-slate-400">{phone || 'নম্বর নেই'}</p>
                                     </div>
                                 </div>
@@ -3485,18 +3581,18 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     </h3>
                 </div>
                 
-                <div className="grid grid-cols-3 divide-x divide-white/20">
-                    <div className="pr-4">
+                <div className="grid grid-cols-[auto_1fr_1fr] divide-x divide-white/20">
+                    <div className="pr-3">
                         <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">{t.unit}</p>
-                        <p className="text-lg font-bold">{ALL_UNITS.length}</p>
+                        <p className="text-base sm:text-lg font-bold">{ALL_UNITS.length}</p>
                     </div>
-                    <div className="px-4 text-center">
+                    <div className="px-3 text-center">
                         <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">{t.totalCollected}</p>
-                        <p className="text-lg font-bold">৳ {grandTotalCollected.toLocaleString()}</p>
+                        <p className="text-base sm:text-lg font-bold whitespace-nowrap">৳ {grandTotalCollected.toLocaleString()}</p>
                     </div>
-                    <div className="pl-4 text-right">
+                    <div className="pl-3 text-right">
                         <p className="text-[10px] text-red-200 font-medium uppercase mb-1">{t.totalDue}</p>
-                        <p className="text-lg font-bold text-red-100">৳ {grandTotalDue.toLocaleString()}</p>
+                        <p className="text-base sm:text-lg font-bold text-red-100 whitespace-nowrap">৳ {grandTotalDue.toLocaleString()}</p>
                     </div>
                 </div>
             </div>
@@ -3589,13 +3685,13 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                              <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center border border-red-100 dark:border-red-800/50 flex flex-col items-center justify-center">
                                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">২০২৫ মোট বকেয়া</p>
                                  <div className="flex items-baseline gap-1">
-                                     <p className="text-xl font-black text-red-600 dark:text-red-400">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025, 0).toLocaleString()}</p>
+                                     <p className="text-lg sm:text-xl font-black text-red-600 dark:text-red-400 whitespace-nowrap">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025, 0).toLocaleString()}</p>
                                  </div>
                              </div>
                              <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3 text-center border border-orange-100 dark:border-orange-800/50 flex flex-col items-center justify-center">
                                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">২০২৬ মোট বকেয়া</p>
                                  <div className="flex items-baseline gap-1">
-                                     <p className="text-xl font-black text-orange-600 dark:text-orange-400">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2026, 0).toLocaleString()}</p>
+                                     <p className="text-lg sm:text-xl font-black text-orange-600 dark:text-orange-400 whitespace-nowrap">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2026, 0).toLocaleString()}</p>
                                  </div>
                              </div>
                          </div>
@@ -3606,7 +3702,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                  </div>
                                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300">সর্বমোট বকেয়া</span>
                              </div>
-                             <span className="text-base font-black text-indigo-600 dark:text-indigo-400">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025 + item.due2026, 0).toLocaleString()}</span>
+                             <span className="text-base font-black text-indigo-600 dark:text-indigo-400 whitespace-nowrap">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025 + item.due2026, 0).toLocaleString()}</span>
                          </div>
                      </div>
 
@@ -3958,18 +4054,18 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     </div>
                 </div>
                 
-                <div className="grid grid-cols-3 divide-x divide-white/20">
-                    <div className="pr-4">
+                <div className="grid grid-cols-[auto_1fr_1fr] divide-x divide-white/20">
+                    <div className="pr-3">
                         <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">{t.flatType}</p>
-                        <p className="text-lg font-bold">{t.all}</p>
+                        <p className="text-base sm:text-lg font-bold">{t.all}</p>
                     </div>
-                    <div className="px-4 text-center">
+                    <div className="px-3 text-center">
                         <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">{t.totalCollected}</p>
-                        <p className="text-lg font-bold">৳ {grandTotalCollected.toLocaleString()}</p>
+                        <p className="text-base sm:text-lg font-bold whitespace-nowrap">৳ {grandTotalCollected.toLocaleString()}</p>
                     </div>
-                    <div className="pl-4 text-right">
+                    <div className="pl-3 text-right">
                         <p className="text-[10px] text-red-200 font-medium uppercase mb-1">{t.totalDue}</p>
-                        <p className="text-lg font-bold text-red-100">৳ {grandTotalDue.toLocaleString()}</p>
+                        <p className="text-base sm:text-lg font-bold text-red-100 whitespace-nowrap">৳ {grandTotalDue.toLocaleString()}</p>
                     </div>
                 </div>
                 <p className="text-[10px] text-indigo-200 mt-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
