@@ -131,25 +131,10 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
       if (data && data.length > 0) {
         setAccounts(migrateAccountData(data));
       } else {
-        // No data in Supabase, check LocalStorage
-        const localKey = `accounts_${selectedYear}`;
-        const localData = localStorage.getItem(localKey);
-        
-        if (localData) {
-          setAccounts(migrateAccountData(JSON.parse(localData)));
-        } else {
-          setAccounts(getDefaultAccounts(selectedYear));
-        }
-      }
-    } catch (err) {
-      // Fallback to LocalStorage on any error
-      const localKey = `accounts_${selectedYear}`;
-      const localData = localStorage.getItem(localKey);
-      if (localData) {
-        setAccounts(migrateAccountData(JSON.parse(localData)));
-      } else {
         setAccounts(getDefaultAccounts(selectedYear));
       }
+    } catch (err) {
+      setAccounts(getDefaultAccounts(selectedYear));
     } finally {
       setLoading(false);
     }
@@ -190,7 +175,6 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
       // 1. Update Local State
       const updatedAccounts = accounts.map(a => a.month === editData.month ? editData : a);
       setAccounts(updatedAccounts);
-      localStorage.setItem(`accounts_${selectedYear}`, JSON.stringify(updatedAccounts));
 
       // 2. Sync with Supabase
       const { error } = await supabase
@@ -469,15 +453,6 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                     <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">আয় বিবরণী</h4>
                                   </div>
                                   <div className="h-[1px] flex-1 mx-4 bg-emerald-50"></div>
-                                  {isAuthorized && (
-                                    <button 
-                                      onClick={() => addOtherItem('income')}
-                                      className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-md flex items-center justify-center hover:bg-emerald-100 transition-colors"
-                                      title="অন্যান্য আয় যোগ করুন"
-                                    >
-                                      <Plus size={10} />
-                                    </button>
-                                  )}
                                 </div>
                                 <div className="space-y-2">
                                   {/* Fixed Income Fields */}
@@ -541,6 +516,17 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                     </div>
                                   ))}
 
+                                  {/* Add Other Income Button */}
+                                  {isAuthorized && (
+                                    <button 
+                                      onClick={() => addOtherItem('income')}
+                                      className="w-full py-2 mt-1 border border-dashed border-emerald-200 rounded-lg flex items-center justify-center gap-2 text-emerald-600 hover:bg-emerald-50 transition-all group"
+                                    >
+                                      <Plus size={14} className="group-hover:scale-110 transition-transform" />
+                                      <span className="text-[10px] font-bold uppercase tracking-wider">অন্যান্য আয় যোগ করুন</span>
+                                    </button>
+                                  )}
+
                                   {/* Income Total */}
                                   <div className="pt-2 border-t border-emerald-50 flex justify-between items-center">
                                     <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">মোট আয়</span>
@@ -561,15 +547,6 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                     <h4 className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">ব্যয় বিবরণী</h4>
                                   </div>
                                   <div className="h-[1px] flex-1 mx-4 bg-rose-50"></div>
-                                  {isAuthorized && (
-                                    <button 
-                                      onClick={() => addOtherItem('expense')}
-                                      className="w-5 h-5 bg-rose-50 text-rose-600 rounded-md flex items-center justify-center hover:bg-rose-100 transition-colors"
-                                      title="অন্যান্য ব্যয় যোগ করুন"
-                                    >
-                                      <Plus size={10} />
-                                    </button>
-                                  )}
                                 </div>
                                 <div className="grid grid-cols-1 gap-2">
                                   {/* Fixed Expense Fields */}
@@ -634,6 +611,17 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                       )}
                                     </div>
                                   ))}
+
+                                  {/* Add Other Expense Button */}
+                                  {isAuthorized && (
+                                    <button 
+                                      onClick={() => addOtherItem('expense')}
+                                      className="w-full py-2 mt-1 border border-dashed border-rose-200 rounded-lg flex items-center justify-center gap-2 text-rose-600 hover:bg-rose-50 transition-all group"
+                                    >
+                                      <Plus size={14} className="group-hover:scale-110 transition-transform" />
+                                      <span className="text-[10px] font-bold uppercase tracking-wider">অন্যান্য ব্যয় যোগ করুন</span>
+                                    </button>
+                                  )}
 
                                   {/* Expense Total */}
                                   <div className="pt-2 border-t border-rose-50 flex justify-between items-center">
