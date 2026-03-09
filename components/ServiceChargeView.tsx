@@ -31,6 +31,7 @@ interface MonthlyRecord {
   amount: number;
   due: number;
   status: Status;
+  note?: string;
 }
 
 interface PaymentData {
@@ -41,6 +42,7 @@ interface PaymentData {
   amount: number;
   due: number;
   paid_date: string;
+  note?: string;
 }
 
 interface UnitInfo {
@@ -151,7 +153,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     status: 'PAID' as 'PAID' | 'DUE' | 'UPCOMING' | 'PARTIAL',
     isOccupied: true, // Local occupancy for this specific entry
     parkingType: 'MOTORCYCLE' as 'MOTORCYCLE' | 'CAR',
-    ownershipType: 'OWNER' as 'OWNER' | 'TENANT' | 'EXTERNAL'
+    ownershipType: 'OWNER' as 'OWNER' | 'TENANT' | 'EXTERNAL',
+    note: ''
   });
 
   const t = TRANSLATIONS[lang];
@@ -596,7 +599,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
       status: initialStatus,
       isOccupied: modalOccupancy,
       parkingType: 'CAR',
-      ownershipType: 'OWNER'
+      ownershipType: 'OWNER',
+      note: existing?.note || ''
     });
     setIsEditModalOpen(true);
   };
@@ -606,7 +610,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     
     setProcessingUpdate(true);
 
-    const { unit, month, year, amount, due, day, monthName, yearVal, isDateEnabled, status } = editModalData;
+    const { unit, month, year, amount, due, day, monthName, yearVal, isDateEnabled, status, note } = editModalData;
     
     // Construct date string
     let paidDate = '';
@@ -653,7 +657,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
           .update({
             amount: finalAmount,
             due: finalDue,
-            paid_date: paidDate
+            paid_date: paidDate,
+            note: note
           })
           .eq('id', existingData.id);
         error = updateError;
@@ -667,7 +672,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
             year_num: year,
             amount: finalAmount,
             due: finalDue,
-            paid_date: paidDate
+            paid_date: paidDate,
+            note: note
           });
         error = insertError;
       }
@@ -759,7 +765,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
           date: paymentRecord.paid_date || '-',
           amount: paymentRecord.amount,
           due: paymentRecord.due,
-          status: recStatus
+          status: recStatus,
+          note: paymentRecord.note
         };
       }
 
@@ -1614,6 +1621,20 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">তারিখ বা টাকার পরিমাণ প্রয়োজন নেই</p>
                 </div>
             )}
+
+            {/* Monthly Note Box */}
+            <div className="mt-4">
+                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <MessageSquare size={12} className="text-indigo-500" />
+                    এই মাসের নোট
+                </label>
+                <textarea 
+                    value={editModalData.note || ''}
+                    onChange={(e) => setEditModalData({...editModalData, note: e.target.value})}
+                    placeholder="এই মাসের বিশেষ কোনো তথ্য এখানে লিখুন..."
+                    className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 transition-all min-h-[80px] resize-none"
+                />
+            </div>
         </div>
 
         <div className="mt-6 flex gap-3">
@@ -2015,14 +2036,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                             const dbMonth = MONTHS_LOGIC[record.monthIndex];
 
                             return (
-                              <tr 
-                                key={idx} 
-                                className={`
-                                  transition-all duration-200 
-                                  ${record.status === 'DUE' ? 'bg-red-50/10 dark:bg-red-900/10' : ''}
-                                  ${isEditable ? 'hover:bg-indigo-50 dark:hover:bg-indigo-900/30 active:bg-indigo-100/50 dark:active:bg-indigo-900/50' : 'hover:bg-slate-50/50 dark:hover:bg-slate-700/50'}
-                                `}
-                              >
+                              <React.Fragment key={idx}>
+                                <tr 
+                                  key={idx} 
+                                  className={`
+                                    transition-all duration-200 
+                                    ${record.status === 'DUE' ? 'bg-red-50/10 dark:bg-red-900/10' : ''}
+                                    ${isEditable ? 'hover:bg-indigo-50 dark:hover:bg-indigo-900/30 active:bg-indigo-100/50 dark:active:bg-indigo-900/50' : 'hover:bg-slate-50/50 dark:hover:bg-slate-700/50'}
+                                  `}
+                                >
                                   <td onClick={() => isEditable && startEditing(selectedUnit, dbMonth)} className="py-3 pl-3 align-middle cursor-pointer">
                                       <div className="font-bold text-slate-800 dark:text-white text-sm">{record.month}</div>
                                       <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 whitespace-nowrap">{record.date}</div>
@@ -2058,6 +2080,27 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                       </div>
                                   </td>
                               </tr>
+                              {record.note && (
+                                <tr className="bg-slate-50/30 dark:bg-slate-900/10">
+                                  <td colSpan={4} className="py-2 px-3">
+                                    <div className="relative group/note">
+                                      <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg blur opacity-5 group-hover/note:opacity-10 transition duration-500"></div>
+                                      <div className="relative bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg p-2.5 shadow-sm flex items-start gap-2.5">
+                                        <div className="bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-md text-indigo-600 dark:text-indigo-400 shrink-0">
+                                          <Bot size={12} />
+                                        </div>
+                                        <div className="flex-1">
+                                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5">মাসিক নোট</p>
+                                          <p className="text-[11px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed italic">
+                                            "{record.note}"
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
                           );
                         })}
                     </tbody>

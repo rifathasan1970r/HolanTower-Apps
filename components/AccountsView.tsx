@@ -20,6 +20,7 @@ interface MonthlyAccountData {
     surplus: number;
     serviceCharge: number;
     otherItems: OtherItem[];
+    note?: string;
   };
   expense: {
     water: number;
@@ -43,7 +44,7 @@ const getDefaultAccounts = (year: number): MonthlyAccountData[] =>
   MONTHS.map(month => ({
     month,
     year,
-    income: { surplus: 0, serviceCharge: 0, otherItems: [] },
+    income: { surplus: 0, serviceCharge: 0, otherItems: [], note: '' },
     expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, nightGuard: 0, otherItems: [] }
   }));
 
@@ -99,6 +100,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
         
         // Ensure otherItems exists
         if (existing.income && !existing.income.otherItems) existing.income.otherItems = [];
+        if (existing.income && existing.income.note === undefined) existing.income.note = '';
         if (existing.expense) {
           if (!existing.expense.otherItems) existing.expense.otherItems = [];
           if (existing.expense.nightGuard === undefined) existing.expense.nightGuard = 0;
@@ -111,7 +113,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
       return {
         month,
         year: selectedYear,
-        income: { surplus: 0, serviceCharge: 0, otherItems: [] },
+        income: { surplus: 0, serviceCharge: 0, otherItems: [], note: '' },
         expense: { water: 0, electricity: 0, garbage: 0, caretaker: 0, nightGuard: 0, otherItems: [] }
       };
     });
@@ -639,6 +641,41 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                     <span className="text-xs font-black text-rose-700">
                                       ৳ {(editData.expense.water + editData.expense.electricity + editData.expense.garbage + editData.expense.caretaker + editData.expense.nightGuard + (editData.expense.otherItems?.reduce((sum, i) => sum + i.amount, 0) || 0)).toLocaleString()}
                                     </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Premium Note Box */}
+                              <div className="pt-4 border-t border-slate-100">
+                                <div className="relative bg-white rounded-xl p-4 border border-slate-200 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] overflow-hidden group">
+                                  {/* Decorative elements */}
+                                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-bl-[100px] -mr-8 -mt-8 transition-transform duration-500 group-hover:scale-110 pointer-events-none"></div>
+                                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-slate-50 to-slate-100/50 rounded-tr-[80px] -ml-6 -mb-6 transition-transform duration-500 group-hover:scale-110 pointer-events-none"></div>
+                                  
+                                  <div className="relative z-10 space-y-3">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center shadow-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                      </div>
+                                      <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest">বিশেষ নোট / মন্তব্য</h4>
+                                    </div>
+                                    
+                                    {isAuthorized ? (
+                                      <textarea
+                                        value={editData.income.note || ''}
+                                        onChange={(e) => setEditData({ ...editData, income: { ...editData.income, note: e.target.value } })}
+                                        placeholder="এই মাসের জন্য কোনো বিশেষ নোট বা মন্তব্য লিখুন..."
+                                        className="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-3 text-xs font-medium text-slate-700 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 outline-none resize-none min-h-[80px] transition-all placeholder:text-slate-400"
+                                      />
+                                    ) : (
+                                      <div className="bg-slate-50/50 border border-slate-100 rounded-lg p-3 min-h-[60px]">
+                                        {editData.income.note ? (
+                                          <p className="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">{editData.income.note}</p>
+                                        ) : (
+                                          <p className="text-xs font-medium text-slate-400 italic">কোনো নোট বা মন্তব্য যোগ করা হয়নি</p>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
