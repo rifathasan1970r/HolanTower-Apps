@@ -1,13 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { AIAssistant } from './AIAssistant';
-import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car, Bot, FileDown, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car, Bot, FileDown, ChevronDown, MessageSquare } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { supabase } from '../lib/supabaseClient';
 import { TRANSLATIONS, FLAT_OWNERS } from '../constants';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
+import { useLocalStorage } from '../src/hooks/useLocalStorage';
 
 // কনফিগারেশন: ২৭টি ইউনিট (ফ্লোর ২ থেকে ১০)
 const FLOORS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -168,10 +169,13 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [newExternalOwner, setNewExternalOwner] = useState('');
   const [showAIAssistant, setShowAIAssistant] = useState(false);
 
-  // Bulk Update State
-  const [showBulkUpdate, setShowBulkUpdate] = useState<boolean>(false);
-  const [bulkUpdateMonth, setBulkUpdateMonth] = useState<string>(MONTHS_LOGIC[new Date().getMonth()]);
-  const [bulkData, setBulkData] = useState<Record<string, { status: Status, amount: number, due: number, date: string, isOccupied: boolean }>>({});
+  // SMS Sender State
+  const [showSmsSender, setShowSmsSender] = useState<boolean>(false);
+  const [smsApiKey, setSmsApiKey] = useLocalStorage('smsApiKey', '');
+  const [smsSenderId, setSmsSenderId] = useLocalStorage('smsSenderId', '');
+  const [smsMessage, setSmsMessage] = useState('');
+  const [smsSelectedUnits, setSmsSelectedUnits] = useState<string[]>(ALL_UNITS);
+  const [isSendingSms, setIsSendingSms] = useState(false);
 
   // Refresh data when switching to Parking mode or becoming Admin to ensure latest configuration is loaded
   useEffect(() => {
@@ -720,109 +724,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     }
   };
 
-  const handleSingleUnitSave = async (unit: string) => {
-    const d = bulkData[unit];
-    if (!d) return;
-
-    if (!confirm(`আপনি কি নিশ্চিত যে আপনি ${unit} ইউনিটের তথ্য আপডেট করতে চান?`)) return;
-    
-    setLoading(true);
-
-    try {
-        const dbUnitText = viewMode === 'PARKING' ? `${unit}_P` : unit;
-        
-        // Format Date: YYYY-MM-DD -> D MonthName YYYY
-        let paidDate = null;
-        
-        // If date is selected, use it
-        if (d.date) {
-            const [y, m, day] = d.date.split('-');
-            const mIdx = parseInt(m) - 1;
-            if (mIdx >= 0 && mIdx < MONTHS_LOGIC.length) {
-                const mName = MONTHS_LOGIC[mIdx];
-                paidDate = `${parseInt(day)} ${mName} ${y}`;
-            }
-        } 
-        // If no date selected but status is PAID/PARTIAL, default to today
-        else if (d.status === 'PAID' || d.status === 'PARTIAL') {
-            const now = new Date();
-            const day = now.getDate();
-            const mName = MONTHS_LOGIC[now.getMonth()];
-            const y = now.getFullYear();
-            paidDate = `${day} ${mName} ${y}`;
-        }
-
-        // 1. Payment Update
-        const { data: existing } = await supabase
-            .from('payments')
-            .select('id')
-            .eq('unit_text', dbUnitText)
-            .eq('month_name', bulkUpdateMonth)
-            .eq('year_num', selectedYear)
-            .maybeSingle();
-        
-        const paymentPayload = {
-            unit_text: dbUnitText,
-            month_name: bulkUpdateMonth,
-            year_num: selectedYear,
-            amount: d.amount,
-            due: d.due,
-            paid_date: paidDate
-        };
-
-        let error = null;
-
-        if (existing) {
-            const { error: upError } = await supabase.from('payments').update(paymentPayload).eq('id', existing.id);
-            error = upError;
-        } else {
-            const { error: inError } = await supabase.from('payments').insert(paymentPayload);
-            error = inError;
-        }
-
-        if (error) throw error;
-
-        // 2. Unit Info Update (Occupancy)
-        let targetId = null;
-        const { data: exactMatch } = await supabase
-            .from('units_info')
-            .select('id')
-            .eq('unit_text', unit)
-            .eq('year_num', selectedYear)
-            .maybeSingle();
-
-        if (exactMatch) {
-            targetId = exactMatch.id;
-        } else {
-            const { data: genericMatch } = await supabase
-                .from('units_info')
-                .select('id')
-                .eq('unit_text', unit)
-                .is('year_num', null)
-                .maybeSingle();
-            if (genericMatch) targetId = genericMatch.id;
-        }
-
-        if (targetId) {
-            await supabase.from('units_info').update({ is_occupied: d.isOccupied }).eq('id', targetId);
-        } else {
-            await supabase.from('units_info').insert({
-                unit_text: unit,
-                year_num: selectedYear,
-                is_occupied: d.isOccupied
-            });
-        }
-
-        await fetchData(false);
-        alert(`${unit} আপডেট সফল হয়েছে!`);
-    } catch (e: any) {
-        console.error(e);
-        alert(`আপডেট করতে সমস্যা হয়েছে: ${e.message}`);
-    } finally {
-        setLoading(false);
-    }
-  };
-
   // Generate Data
   const getUnitData = (unit: string): MonthlyRecord[] => {
     const now = new Date();
@@ -889,80 +790,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     }
     return ALL_UNITS;
   }, [viewMode, parkingUnits, externalUnits]);
-
-  // Bulk Update Data Initialization
-  useEffect(() => {
-    if (showBulkUpdate) {
-      const newBulkData: Record<string, { status: Status, amount: number, due: number, date: string, isOccupied: boolean }> = {};
-      
-      visibleUnits.forEach(unit => {
-        const dbUnitText = viewMode === 'PARKING' ? `${unit}_P` : unit;
-        const payment = dbData.find(d => d.unit_text === dbUnitText && d.month_name === bulkUpdateMonth && d.year_num === selectedYear);
-        
-        // Check Occupancy
-        const uInfoKey = `${unit}-${selectedYear}`;
-        const uInfo = (unitsInfo[uInfoKey] || unitsInfo[unit] || DEFAULT_UNIT_INFO) as UnitInfo;
-        const isOccupied = uInfo.is_occupied !== undefined ? uInfo.is_occupied : true;
-
-        let status: Status = 'DUE';
-        let amount = 0;
-        let due = 0;
-        let date = '';
-
-        // Default Amounts
-        let defaultAmount = 0;
-        if (viewMode === 'SERVICE') {
-             defaultAmount = isOccupied ? 2000 : 500;
-        } else {
-             // Parking logic - default to 0 if unknown
-             defaultAmount = 0;
-        }
-
-        if (payment) {
-            amount = payment.amount;
-            due = payment.due;
-            
-            // Parse custom date string "D MonthName YYYY" -> "YYYY-MM-DD"
-            if (payment.paid_date) {
-                const parts = payment.paid_date.split(' ');
-                if (parts.length === 3) {
-                    const d = parts[0].padStart(2, '0');
-                    const mName = parts[1];
-                    const y = parts[2];
-                    const mIdx = MONTHS_LOGIC.indexOf(mName);
-                    if (mIdx !== -1) {
-                        const m = String(mIdx + 1).padStart(2, '0');
-                        date = `${y}-${m}-${d}`;
-                    }
-                }
-            }
-
-            if (amount > 0 && due > 0) status = 'PARTIAL';
-            else if (amount > 0) status = 'PAID';
-            else if (amount === 0 && due === 0) status = 'UPCOMING';
-            else status = 'DUE';
-        } else {
-            // Default for new month
-            const monthIdx = MONTHS_LOGIC.indexOf(bulkUpdateMonth);
-            const currentMonthIdx = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            
-            if (selectedYear > currentYear || (selectedYear === currentYear && monthIdx > currentMonthIdx)) {
-                status = 'UPCOMING';
-                amount = 0;
-                due = 0;
-            } else {
-                status = 'DUE';
-                amount = 0;
-                due = defaultAmount;
-            }
-        }
-        
-        newBulkData[unit] = { status, amount, due, date, isOccupied }; 
-      });
-      setBulkData(newBulkData);
-    }
-  }, [showBulkUpdate, bulkUpdateMonth, selectedYear, viewMode, visibleUnits, dbData, unitsInfo]);
 
   const allUnitsSummary = useMemo(() => {
     return visibleUnits.map(unit => {
@@ -2602,6 +2429,72 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     </div>
   );
 
+  const handleSendSms = async () => {
+    if (!smsApiKey || !smsSenderId || !smsMessage) {
+        alert('অনুগ্রহ করে API Key, Sender ID এবং Message প্রদান করুন।');
+        return;
+    }
+    if (smsSelectedUnits.length === 0) {
+        alert('অনুগ্রহ করে অন্তত একটি ইউনিট নির্বাচন করুন।');
+        return;
+    }
+
+    if (!confirm(`আপনি কি নিশ্চিত যে আপনি ${smsSelectedUnits.length} টি ইউনিটে এসএমএস পাঠাতে চান?`)) return;
+
+    setIsSendingSms(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+        for (const unit of smsSelectedUnits) {
+            const uInfoKey = `${unit}-${selectedYear}`;
+            const uInfo = (unitsInfo[uInfoKey] || unitsInfo[unit] || DEFAULT_UNIT_INFO) as UnitInfo;
+            const phone = uInfo.phone || '';
+
+            if (!phone) {
+                failCount++;
+                continue;
+            }
+
+            // Clean phone number (remove +88, spaces, dashes)
+            let cleanPhone = phone.replace(/[^0-9]/g, '');
+            if (cleanPhone.startsWith('88')) {
+                cleanPhone = cleanPhone.substring(2);
+            }
+
+            if (cleanPhone.length !== 11) {
+                failCount++;
+                continue;
+            }
+
+            // Replace variables in message
+            const personalizedMessage = smsMessage.replace(/{{unit}}/g, unit);
+
+            try {
+                const response = await fetch(`https://bulksmsbd.net/api/smsapi?api_key=${smsApiKey}&type=text&number=${cleanPhone}&senderid=${smsSenderId}&message=${encodeURIComponent(personalizedMessage)}`);
+                const data = await response.json();
+                
+                if (data.response_code === 202) {
+                    successCount++;
+                } else {
+                    failCount++;
+                    console.error('SMS API Error:', data);
+                }
+            } catch (e) {
+                console.error('Fetch Error:', e);
+                failCount++;
+            }
+        }
+
+        alert(`এসএমএস পাঠানো সম্পন্ন হয়েছে!\nসফল: ${successCount}\nব্যর্থ: ${failCount}`);
+    } catch (e) {
+        console.error(e);
+        alert('এসএমএস পাঠাতে সমস্যা হয়েছে।');
+    } finally {
+        setIsSendingSms(false);
+    }
+  };
+
   // VIEW 2 & 3 Combined Logic Wrapper
   return (
     <div className="px-4 pb-24 animate-in slide-in-from-bottom-4 duration-500 bg-slate-50 dark:bg-slate-900 min-h-screen">
@@ -2711,15 +2604,15 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
              </button>
 
              <button 
-                onClick={() => setShowBulkUpdate(true)}
+                onClick={() => setShowSmsSender(true)}
                 className="bg-emerald-600 dark:bg-emerald-700 border border-emerald-700 dark:border-emerald-600 rounded-xl p-3 flex items-center justify-end gap-3 hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors text-right shadow-sm"
              >
                  <div>
-                   <p className="text-sm font-bold text-white">বাল্ক আপডেট</p>
-                   <p className="text-[10px] text-emerald-200 mt-0.5">একসাথে সব ইউনিট আপডেট করুন</p>
+                   <p className="text-sm font-bold text-white">এসএমএস পাঠান</p>
+                   <p className="text-[10px] text-emerald-200 mt-0.5">সব ইউনিটে এসএমএস পাঠান</p>
                  </div>
                  <div className="bg-emerald-500 dark:bg-emerald-600 p-2 rounded-full text-white">
-                   <ListFilter size={16} />
+                   <MessageSquare size={16} />
                  </div>
              </button>
 
@@ -2869,407 +2762,152 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         </div>
       )}
 
-      {/* VIEW: BULK UPDATE */}
-      {showBulkUpdate ? (
-        <div className="animate-in slide-in-from-right duration-300 pb-24">
+      {/* VIEW: SMS SENDER */}
+      {showSmsSender ? (
+        <div className="animate-in slide-in-from-right duration-300 pb-40">
              <div className="flex items-center gap-3 mb-4">
                  <button 
-                  onClick={() => setShowBulkUpdate(false)}
+                  onClick={() => setShowSmsSender(false)}
                   className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95"
                 >
                   <ArrowLeft size={20} />
                 </button>
                 <div className="flex-1">
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">বাল্ক আপডেট</h2>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">একসাথে সব ইউনিট আপডেট</p>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">এসএমএস পাঠান</h2>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">BulkSMSBD API এর মাধ্যমে</p>
                 </div>
              </div>
 
-             {/* Month Selector */}
+             {/* API Configuration */}
+             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4 space-y-3">
+                <div>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">API Key</label>
+                    <input 
+                        type="text" 
+                        value={smsApiKey}
+                        onChange={(e) => setSmsApiKey(e.target.value)}
+                        placeholder="আপনার BulkSMSBD API Key"
+                        className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                </div>
+                <div>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">Sender ID</label>
+                    <input 
+                        type="text" 
+                        value={smsSenderId}
+                        onChange={(e) => setSmsSenderId(e.target.value)}
+                        placeholder="আপনার Sender ID (e.g. 88096...)"
+                        className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                </div>
+             </div>
+
+             {/* Message Input */}
              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4">
-                <div className="flex justify-between items-center mb-2">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">মাস ও সাল নির্বাচন করুন</label>
-                </div>
-                <div className="flex gap-3">
-                    <div className="relative flex-1">
-                        <select 
-                            value={bulkUpdateMonth}
-                            onChange={(e) => setBulkUpdateMonth(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-3 pl-4 pr-10 appearance-none font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                <div className="mb-3">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 block">টেমপ্লেট নির্বাচন করুন</label>
+                    <div className="flex flex-wrap gap-2">
+                        <button 
+                            onClick={() => setSmsMessage('সম্মানিত বাসিন্দা (ইউনিট: {{unit}}), অনুগ্রহ করে চলতি মাসের সার্ভিস চার্জ পরিশোধ করার জন্য অনুরোধ করা হচ্ছে। ধন্যবাদ।')}
+                            className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
                         >
-                            {MONTHS_LOGIC.map((m, i) => {
-                                 const hasData = dbData.some(d => 
-                                     d.month_name === m && 
-                                     d.year_num === selectedYear && 
-                                     (viewMode === 'PARKING' ? d.unit_text.endsWith('_P') : !d.unit_text.endsWith('_P'))
-                                 );
-                                return (
-                                    <option key={i} value={m}>
-                                        {t.months[i]} {hasData ? '✅' : ''}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rotate-90" size={16} />
-                    </div>
-                    <div className="relative w-1/3">
-                        <select 
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                            className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-3 pl-4 pr-8 appearance-none font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            সার্ভিস চার্জ দেওয়ার জন্য
+                        </button>
+                        <button 
+                            onClick={() => setSmsMessage('সম্মানিত বাসিন্দা (ইউনিট: {{unit}}), আপনার সার্ভিস চার্জ সফলভাবে গ্রহণ করা হয়েছে। ধন্যবাদ।')}
+                            className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
                         >
-                            {[2024, 2025, 2026, 2027].map(y => (
-                                <option key={y} value={y}>{y}</option>
-                            ))}
-                        </select>
-                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rotate-90" size={16} />
+                            সার্ভিস চার্জ পাওয়া গেছে
+                        </button>
+                        <button 
+                            onClick={() => setSmsMessage('সম্মানিত বাসিন্দা (ইউনিট: {{unit}}), আপনার সার্ভিস চার্জ এখনো বকেয়া আছে। অনুগ্রহ করে দ্রুত পরিশোধ করুন। ধন্যবাদ।')}
+                            className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                        >
+                            সার্ভিস চার্জ বকেয়া আছে
+                        </button>
                     </div>
                 </div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 block flex justify-between">
+                    <span>এসএমএস মেসেজ</span>
+                    <span className="text-[10px] text-emerald-500 normal-case">ইউনিট নম্বর বসাতে {'{{unit}}'} ব্যবহার করুন</span>
+                </label>
+                <textarea 
+                    value={smsMessage}
+                    onChange={(e) => setSmsMessage(e.target.value)}
+                    placeholder="আপনার মেসেজ এখানে লিখুন..."
+                    rows={4}
+                    className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
              </div>
 
-             {/* Bulk List */}
-             <div className="space-y-3">
-                {visibleUnits.map((unit) => {
-                    const data = bulkData[unit];
-                    if (!data) return null;
+             {/* Unit Selection */}
+             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-4">
+                <div className="flex justify-between items-center mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">ইউনিট সমূহ ({smsSelectedUnits.length} নির্বাচিত)</label>
+                    <button 
+                        onClick={() => {
+                            if (smsSelectedUnits.length === ALL_UNITS.length) {
+                                setSmsSelectedUnits([]);
+                            } else {
+                                setSmsSelectedUnits(ALL_UNITS);
+                            }
+                        }}
+                        className="text-xs font-bold text-emerald-600 dark:text-emerald-400"
+                    >
+                        {smsSelectedUnits.length === ALL_UNITS.length ? 'সব বাতিল করুন' : 'সব নির্বাচন করুন'}
+                    </button>
+                </div>
+                <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
+                    {ALL_UNITS.map(unit => {
+                        const uInfoKey = `${unit}-${selectedYear}`;
+                        const uInfo = (unitsInfo[uInfoKey] || unitsInfo[unit] || DEFAULT_UNIT_INFO) as UnitInfo;
+                        const phone = uInfo.phone || '';
+                        const isSelected = smsSelectedUnits.includes(unit);
 
-                    return (
-                        <div key={unit} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm">
-                            <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-700 pb-3">
-                                <h3 className="text-xl font-black text-slate-800 dark:text-white">{unit}</h3>
-                                <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
-                                    <button
-                                        onClick={() => {
-                                            setBulkData(prev => ({
-                                                ...prev,
-                                                [unit]: { ...prev[unit], isOccupied: true }
-                                            }));
-                                        }}
-                                        className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all ${
-                                            data.isOccupied 
-                                            ? 'bg-white dark:bg-slate-600 text-emerald-600 dark:text-emerald-400 shadow-sm' 
-                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                                        }`}
-                                    >
-                                        বসবাসরত
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setBulkData(prev => ({
-                                                ...prev,
-                                                [unit]: { ...prev[unit], isOccupied: false }
-                                            }));
-                                        }}
-                                        className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all ${
-                                            !data.isOccupied 
-                                            ? 'bg-white dark:bg-slate-600 text-red-500 dark:text-red-400 shadow-sm' 
-                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                                        }`}
-                                    >
-                                        খালি
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Status Selection - Button Group Style like Modal */}
-                            <div className="mb-4">
-                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 block">পেমেন্ট স্ট্যাটাস</label>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {[
-                                        { value: 'PAID', label: 'পরিশোধিত', color: 'bg-green-500', text: 'text-green-600', border: 'border-green-200', bg: 'bg-green-50' },
-                                        { value: 'DUE', label: 'বকেয়া', color: 'bg-red-500', text: 'text-red-600', border: 'border-red-200', bg: 'bg-red-50' },
-                                        { value: 'PARTIAL', label: 'আংশিক', color: 'bg-orange-500', text: 'text-orange-600', border: 'border-orange-200', bg: 'bg-orange-50' },
-                                        { value: 'UPCOMING', label: 'আসন্ন', color: 'bg-slate-500', text: 'text-slate-600', border: 'border-slate-200', bg: 'bg-slate-50' }
-                                    ].map((opt) => (
-                                        <button
-                                            key={opt.value}
-                                            onClick={() => {
-                                                let newAmount = data.amount;
-                                                let newDue = data.due;
-                                                
-                                                // Auto-calculate logic similar to modal
-                                                let defaultAmount = 0;
-                                                if (viewMode === 'SERVICE') {
-                                                    defaultAmount = data.isOccupied ? 2000 : 500;
-                                                } else {
-                                                    defaultAmount = 0; // Parking default
-                                                }
-
-                                                if (opt.value === 'PAID') {
-                                                    newAmount = defaultAmount;
-                                                    newDue = 0;
-                                                } else if (opt.value === 'DUE') {
-                                                    newAmount = 0;
-                                                    newDue = defaultAmount;
-                                                } else if (opt.value === 'UPCOMING') {
-                                                    newAmount = 0;
-                                                    newDue = 0;
-                                                } else if (opt.value === 'PARTIAL') {
-                                                    newAmount = defaultAmount / 2;
-                                                    newDue = defaultAmount / 2;
-                                                }
-
-                                                setBulkData(prev => ({
-                                                    ...prev,
-                                                    [unit]: { 
-                                                        ...prev[unit], 
-                                                        status: opt.value as Status,
-                                                        amount: newAmount,
-                                                        due: newDue
-                                                    }
-                                                }));
-                                            }}
-                                            className={`py-2 rounded-lg text-[10px] font-bold border transition-all ${
-                                                data.status === opt.value 
-                                                ? `${opt.color} text-white shadow-md border-transparent` 
-                                                : `bg-white dark:bg-slate-800 ${opt.text} ${opt.border} hover:bg-slate-50 dark:hover:bg-slate-700`
-                                            }`}
-                                        >
-                                            {opt.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-4">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">তারিখ</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {/* Day */}
-                                        <div className="relative">
-                                            <select
-                                                value={data.date ? new Date(data.date).getDate().toString() : '1'}
-                                                onChange={(e) => {
-                                                    const current = data.date ? new Date(data.date) : new Date();
-                                                    current.setDate(parseInt(e.target.value));
-                                                    // Format as YYYY-MM-DD
-                                                    const y = current.getFullYear();
-                                                    const m = String(current.getMonth() + 1).padStart(2, '0');
-                                                    const d = String(current.getDate()).padStart(2, '0');
-                                                    setBulkData(prev => ({
-                                                        ...prev,
-                                                        [unit]: { ...prev[unit], date: `${y}-${m}-${d}` }
-                                                    }));
-                                                }}
-                                                disabled={data.status === 'DUE' || data.status === 'UPCOMING'}
-                                                className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl py-2.5 pl-3 pr-8 text-sm font-bold appearance-none focus:outline-none focus:border-indigo-500"
-                                            >
-                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                                    <option key={d} value={d}>{d}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-
-                                        {/* Month */}
-                                        <div className="relative">
-                                            <select
-                                                value={data.date ? MONTHS_LOGIC[new Date(data.date).getMonth()] : bulkUpdateMonth}
-                                                onChange={(e) => {
-                                                    const monthIdx = MONTHS_LOGIC.indexOf(e.target.value);
-                                                    const current = data.date ? new Date(data.date) : new Date();
-                                                    current.setMonth(monthIdx);
-                                                    const y = current.getFullYear();
-                                                    const m = String(current.getMonth() + 1).padStart(2, '0');
-                                                    const d = String(current.getDate()).padStart(2, '0');
-                                                    setBulkData(prev => ({
-                                                        ...prev,
-                                                        [unit]: { ...prev[unit], date: `${y}-${m}-${d}` }
-                                                    }));
-                                                }}
-                                                disabled={data.status === 'DUE' || data.status === 'UPCOMING'}
-                                                className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl py-2.5 pl-3 pr-8 text-sm font-bold appearance-none focus:outline-none focus:border-indigo-500"
-                                            >
-                                                {MONTHS_LOGIC.map((m) => (
-                                                    <option key={m} value={m}>{t.months[MONTHS_LOGIC.indexOf(m)]}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-
-                                        {/* Year */}
-                                        <div className="relative">
-                                            <select
-                                                value={data.date ? new Date(data.date).getFullYear().toString() : selectedYear.toString()}
-                                                onChange={(e) => {
-                                                    const current = data.date ? new Date(data.date) : new Date();
-                                                    current.setFullYear(parseInt(e.target.value));
-                                                    const y = current.getFullYear();
-                                                    const m = String(current.getMonth() + 1).padStart(2, '0');
-                                                    const d = String(current.getDate()).padStart(2, '0');
-                                                    setBulkData(prev => ({
-                                                        ...prev,
-                                                        [unit]: { ...prev[unit], date: `${y}-${m}-${d}` }
-                                                    }));
-                                                }}
-                                                disabled={data.status === 'DUE' || data.status === 'UPCOMING'}
-                                                className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl py-2.5 pl-3 pr-8 text-sm font-bold appearance-none focus:outline-none focus:border-indigo-500"
-                                            >
-                                                {[2024, 2025, 2026, 2027].map(y => (
-                                                    <option key={y} value={y}>{y}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 mt-3">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">জমা (Amount)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
-                                        <input 
-                                            type="number" 
-                                            value={data.amount}
-                                            onChange={(e) => {
-                                                setBulkData(prev => ({
-                                                    ...prev,
-                                                    [unit]: { ...prev[unit], amount: parseInt(e.target.value) || 0 }
-                                                }));
-                                            }}
-                                            className="w-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-green-700 dark:text-green-400 focus:outline-none focus:border-green-500 transition-colors"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 block">বকেয়া (Due)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">৳</span>
-                                        <input 
-                                            type="number" 
-                                            value={data.due}
-                                            onChange={(e) => {
-                                                setBulkData(prev => ({
-                                                    ...prev,
-                                                    [unit]: { ...prev[unit], due: parseInt(e.target.value) || 0 }
-                                                }));
-                                            }}
-                                            className="w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl py-2.5 pl-8 pr-3 text-sm font-bold text-red-600 dark:text-red-400 focus:outline-none focus:border-red-500 transition-colors"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="mt-4 flex justify-end border-t border-slate-100 dark:border-slate-700 pt-3">
-                                <button
-                                    onClick={() => handleSingleUnitSave(unit)}
-                                    disabled={loading}
-                                    className="flex items-center gap-2 bg-slate-800 dark:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors disabled:opacity-50 active:scale-95"
-                                >
-                                    <Save size={16} />
-                                    সেভ করুন
-                                </button>
-                            </div>
-                        </div>
-                    );
-                })}
-             </div>
-
-             {/* Save Button */}
-             <div className="fixed bottom-6 left-0 right-0 px-4 z-20 flex justify-center">
-                <button 
-                    onClick={async () => {
-                        if (!confirm("আপনি কি নিশ্চিত যে আপনি " + bulkUpdateMonth + " মাসের সব ইউনিট আপডেট করতে চান?")) return;
-                        setLoading(true);
-                        try {
-                            const promises = visibleUnits.map(async (unit) => {
-                                const d = bulkData[unit];
-                                if (!d) return;
-
-                                const dbUnitText = viewMode === 'PARKING' ? `${unit}_P` : unit;
-                                
-                                // Format Date: YYYY-MM-DD -> D MonthName YYYY
-                                let paidDate = null;
-                                if (d.date) {
-                                    const [y, m, day] = d.date.split('-');
-                                    const mIdx = parseInt(m) - 1;
-                                    if (mIdx >= 0 && mIdx < MONTHS_LOGIC.length) {
-                                        const mName = MONTHS_LOGIC[mIdx];
-                                        paidDate = `${parseInt(day)} ${mName} ${y}`;
+                        return (
+                            <div 
+                                key={unit} 
+                                onClick={() => {
+                                    if (isSelected) {
+                                        setSmsSelectedUnits(prev => prev.filter(u => u !== unit));
+                                    } else {
+                                        setSmsSelectedUnits(prev => [...prev, unit]);
                                     }
-                                }
-                                // If no date selected but status is PAID/PARTIAL, default to today
-                                else if (d.status === 'PAID' || d.status === 'PARTIAL') {
-                                    const now = new Date();
-                                    const day = now.getDate();
-                                    const mName = MONTHS_LOGIC[now.getMonth()];
-                                    const y = now.getFullYear();
-                                    paidDate = `${day} ${mName} ${y}`;
-                                }
+                                }}
+                                className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                                    isSelected 
+                                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' 
+                                    : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-5 h-5 rounded flex items-center justify-center border ${
+                                        isSelected 
+                                        ? 'bg-emerald-500 border-emerald-500 text-white' 
+                                        : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-500'
+                                    }`}>
+                                        {isSelected && <Check size={14} />}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white">{unit}</p>
+                                        <p className="text-[10px] text-slate-500 dark:text-slate-400">{phone || 'নম্বর নেই'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+             </div>
 
-                                // 1. Payment Update
-                                const { data: existing } = await supabase
-                                    .from('payments')
-                                    .select('id')
-                                    .eq('unit_text', dbUnitText)
-                                    .eq('month_name', bulkUpdateMonth)
-                                    .eq('year_num', selectedYear)
-                                    .maybeSingle();
-                                
-                                const paymentPayload = {
-                                    unit_text: dbUnitText,
-                                    month_name: bulkUpdateMonth,
-                                    year_num: selectedYear,
-                                    amount: d.amount,
-                                    due: d.due,
-                                    paid_date: paidDate
-                                };
-
-                                if (existing) {
-                                    await supabase.from('payments').update(paymentPayload).eq('id', existing.id);
-                                } else {
-                                    await supabase.from('payments').insert(paymentPayload);
-                                }
-
-                                // 2. Unit Info Update (Occupancy)
-                                let targetId = null;
-                                const { data: exactMatch } = await supabase
-                                    .from('units_info')
-                                    .select('id')
-                                    .eq('unit_text', unit)
-                                    .eq('year_num', selectedYear)
-                                    .maybeSingle();
-
-                                if (exactMatch) {
-                                    targetId = exactMatch.id;
-                                } else {
-                                    const { data: genericMatch } = await supabase
-                                        .from('units_info')
-                                        .select('id')
-                                        .eq('unit_text', unit)
-                                        .is('year_num', null)
-                                        .maybeSingle();
-                                    if (genericMatch) targetId = genericMatch.id;
-                                }
-
-                                if (targetId) {
-                                    await supabase.from('units_info').update({ is_occupied: d.isOccupied }).eq('id', targetId);
-                                } else {
-                                    await supabase.from('units_info').insert({
-                                        unit_text: unit,
-                                        year_num: selectedYear,
-                                        is_occupied: d.isOccupied
-                                    });
-                                }
-                            });
-
-                            await Promise.all(promises);
-                            
-                            await fetchData(false);
-                            alert("বাল্ক আপডেট সফল হয়েছে!");
-                            setShowBulkUpdate(false);
-                        } catch (e: any) {
-                            console.error(e);
-                            alert(`বাল্ক আপডেট সেভ করতে সমস্যা হয়েছে: ${e.message}`);
-                        } finally {
-                            setLoading(false);
-                        }
-                    }}
-                    className="w-full max-w-md bg-emerald-600 text-white py-3 rounded-xl font-bold text-lg shadow-lg shadow-emerald-200 dark:shadow-none hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+             {/* Send Button */}
+             <div className="fixed bottom-28 left-0 right-0 px-4 z-40 flex justify-center">
+                <button 
+                    onClick={handleSendSms}
+                    disabled={isSendingSms || smsSelectedUnits.length === 0}
+                    className="w-full max-w-md bg-emerald-600 text-white py-3 rounded-xl font-bold text-lg shadow-lg shadow-emerald-200 dark:shadow-none hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {loading ? <RefreshCw className="animate-spin" /> : <Save />}
-                    সব সেভ করুন
+                    {isSendingSms ? <RefreshCw className="animate-spin" /> : <Send size={20} />}
+                    {isSendingSms ? 'পাঠানো হচ্ছে...' : 'এসএমএস পাঠান'}
                 </button>
              </div>
         </div>
