@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, TrendingUp, TrendingDown, Wallet, CreditCard, Banknote, Droplets, Trash2, Zap, User, MoreHorizontal, Calculator, Calendar, CalendarDays, ChevronRight, Save, X, Plus, Minus, PieChart, ArrowUpRight, ArrowDownRight, Lock, Unlock, Loader2, Landmark } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 import { BankAccountsView } from './BankAccountsView';
 
@@ -428,10 +427,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
 
                 return (
                     <div key={acc.month} className="space-y-2">
-                      <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: index * 0.02 }}
+                      <div
                           onClick={() => handleEditClick(acc.month)}
                           className={`grid grid-cols-12 items-center px-4 py-5 cursor-pointer transition-all rounded-xl border relative ${isEditing ? 'bg-emerald-50 border-emerald-200 shadow-sm' : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'} ${isCurrentMonth ? 'border-emerald-500/50 ring-1 ring-emerald-500/20 animate-glow' : ''}`}
                       >
@@ -470,17 +466,13 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                               <ChevronRight size={7} className={`text-slate-400 transition-transform ${isEditing ? 'rotate-90' : ''}`} />
                             </div>
                           </div>
-                      </motion.div>
+                      </div>
 
                       {/* Inline Detail/Edit View */}
-                      <AnimatePresence>
-                        {isEditing && editData && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden bg-white border border-emerald-100 rounded-xl shadow-inner mx-1"
-                          >
+                      {isEditing && editData && (
+                        <div
+                          className="overflow-hidden bg-white border border-emerald-100 rounded-xl shadow-inner mx-1"
+                        >
                             <div className="p-5 space-y-6">
                               {/* Income Section */}
                               <div className="space-y-3">
@@ -745,9 +737,8 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                                 )}
                               </div>
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                        </div>
+                      )}
                     </div>
                 );
             })}
@@ -755,22 +746,15 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
       </div>
 
       {/* PIN Modal - Clean & Professional */}
-      <AnimatePresence>
-        {showPinModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowPinModal(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-[300px] bg-white rounded-2xl shadow-2xl p-8 border border-slate-100"
-            >
+      {showPinModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div 
+            onClick={() => setShowPinModal(false)}
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+          />
+          <div 
+            className="relative w-full max-w-[300px] bg-white rounded-2xl shadow-2xl p-8 border border-slate-100"
+          >
               <div className="text-center mb-6">
                 <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <Lock size={24} />
@@ -811,10 +795,9 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
                   </button>
                 </div>
               </form>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
     </div>
   );
 };

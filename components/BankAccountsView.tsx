@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Building2, Plus, Minus, Landmark, Wallet, Lock, X, Check, Unlock, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 
 const EDIT_PIN = "1966";
@@ -246,57 +245,49 @@ export const BankAccountsView: React.FC<BankAccountsViewProps> = ({ onBack }) =>
 
         <div className="max-w-md mx-auto p-4 space-y-6">
           {/* PIN Modal */}
-          <AnimatePresence>
-            {showPinModal && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setShowPinModal(false)}
-                  className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-                />
-                <motion.div 
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  className="relative w-full max-w-[300px] bg-white rounded-2xl shadow-2xl p-8 border border-slate-100"
-                >
-                  <div className="text-center mb-6">
-                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                      <Lock size={24} />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800">নিরাপত্তা পিন</h3>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">এডিট মোড আনলক করুন</p>
+          {showPinModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+              <div 
+                onClick={() => setShowPinModal(false)}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              />
+              <div 
+                className="relative w-full max-w-[300px] bg-white rounded-2xl shadow-2xl p-8 border border-slate-100"
+              >
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <Lock size={24} />
                   </div>
+                  <h3 className="text-xl font-bold text-slate-800">নিরাপত্তা পিন</h3>
+                  <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">এডিট মোড আনলক করুন</p>
+                </div>
 
-                  <form onSubmit={handlePinSubmit} className="space-y-6">
-                    <input 
-                      type="password"
-                      maxLength={4}
-                      value={pinInput}
-                      onChange={(e) => {
-                        setPinInput(e.target.value);
-                        setPinError(false);
-                      }}
-                      autoFocus
-                      className={`w-full text-center text-3xl tracking-[0.5em] font-bold py-3 bg-slate-50 border-2 rounded-xl focus:outline-none transition-all ${pinError ? 'border-rose-500' : 'border-slate-100 focus:border-emerald-500'}`}
-                      placeholder="••••"
-                    />
-                    {pinError && (
-                      <p className="text-[10px] text-center font-bold text-rose-500 uppercase">ভুল পিন কোড!</p>
-                    )}
-                    <button 
-                      type="submit"
-                      className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform"
-                    >
-                      আনলক করুন
-                    </button>
-                  </form>
-                </motion.div>
+                <form onSubmit={handlePinSubmit} className="space-y-6">
+                  <input 
+                    type="password"
+                    maxLength={4}
+                    value={pinInput}
+                    onChange={(e) => {
+                      setPinInput(e.target.value);
+                      setPinError(false);
+                    }}
+                    autoFocus
+                    className={`w-full text-center text-3xl tracking-[0.5em] font-bold py-3 bg-slate-50 border-2 rounded-xl focus:outline-none transition-all ${pinError ? 'border-rose-500' : 'border-slate-100 focus:border-emerald-500'}`}
+                    placeholder="••••"
+                  />
+                  {pinError && (
+                    <p className="text-[10px] text-center font-bold text-rose-500 uppercase">ভুল পিন কোড!</p>
+                  )}
+                  <button 
+                    type="submit"
+                    className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform"
+                  >
+                    আনলক করুন
+                  </button>
+                </form>
               </div>
-            )}
-          </AnimatePresence>
+            </div>
+          )}
 
           {/* Quick Add Section (Inline Style) */}
           {isAuthorized && (
@@ -313,64 +304,59 @@ export const BankAccountsView: React.FC<BankAccountsViewProps> = ({ onBack }) =>
                 </button>
               </div>
 
-              <AnimatePresence>
-                {isAddingTransaction && (
-                  <motion.form 
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    onSubmit={handleQuickAdd} 
-                    className="space-y-4 overflow-hidden"
-                  >
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setNewTx({...newTx, type: 'deposit', bankId: selectedBank.id})}
-                        className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${newTx.type === 'deposit' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
-                      >
-                        <Plus size={14} /> জমা
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setNewTx({...newTx, type: 'withdraw', bankId: selectedBank.id})}
-                        className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${newTx.type === 'withdraw' ? 'bg-rose-500 text-white shadow-lg shadow-rose-100' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
-                      >
-                        <Minus size={14} /> উত্তোলন
-                      </button>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">টাকার পরিমাণ</label>
-                      <input 
-                        required
-                        type="number"
-                        placeholder="৳ ০.০০"
-                        value={newTx.amount}
-                        onChange={e => setNewTx({...newTx, amount: e.target.value, bankId: selectedBank.id})}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-lg font-black focus:border-emerald-500 outline-none transition-all"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">বিবরণ (ঐচ্ছিক)</label>
-                      <input 
-                        type="text"
-                        placeholder="বিবরণ লিখুন"
-                        value={newTx.note}
-                        onChange={e => setNewTx({...newTx, note: e.target.value, bankId: selectedBank.id})}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium focus:border-emerald-500 outline-none transition-all"
-                      />
-                    </div>
-
-                    <button 
-                      type="submit"
-                      className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+              {isAddingTransaction && (
+                <form 
+                  onSubmit={handleQuickAdd} 
+                  className="space-y-4 overflow-hidden"
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setNewTx({...newTx, type: 'deposit', bankId: selectedBank.id})}
+                      className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${newTx.type === 'deposit' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
                     >
-                      <Check size={16} /> নিশ্চিত করুন
+                      <Plus size={14} /> জমা
                     </button>
-                  </motion.form>
-                )}
-              </AnimatePresence>
+                    <button
+                      type="button"
+                      onClick={() => setNewTx({...newTx, type: 'withdraw', bankId: selectedBank.id})}
+                      className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${newTx.type === 'withdraw' ? 'bg-rose-50 text-rose-500' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
+                    >
+                      <Minus size={14} /> উত্তোলন
+                    </button>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">টাকার পরিমাণ</label>
+                    <input 
+                      required
+                      type="number"
+                      placeholder="৳ ০.০০"
+                      value={newTx.amount}
+                      onChange={e => setNewTx({...newTx, amount: e.target.value, bankId: selectedBank.id})}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-lg font-black focus:border-emerald-500 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">বিবরণ (ঐচ্ছিক)</label>
+                    <input 
+                      type="text"
+                      placeholder="বিবরণ লিখুন"
+                      value={newTx.note}
+                      onChange={e => setNewTx({...newTx, note: e.target.value, bankId: selectedBank.id})}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium focus:border-emerald-500 outline-none transition-all"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                  >
+                    <Check size={16} /> নিশ্চিত করুন
+                  </button>
+                </form>
+              )}
             </div>
           )}
 
@@ -461,57 +447,50 @@ export const BankAccountsView: React.FC<BankAccountsViewProps> = ({ onBack }) =>
 
       <div className="max-w-md mx-auto p-4 space-y-4">
         {/* PIN Modal */}
-        <AnimatePresence>
-          {showPinModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setShowPinModal(false)}
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-              />
-              <motion.div 
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="relative w-full max-w-[300px] bg-white rounded-2xl shadow-2xl p-8 border border-slate-100"
-              >
-                <div className="text-center mb-6">
-                  <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <Lock size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800">নিরাপত্তা পিন</h3>
-                  <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">এডিট মোড আনলক করুন</p>
+        {/* PIN Modal */}
+        {showPinModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <div 
+              onClick={() => setShowPinModal(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <div 
+              className="relative w-full max-w-[300px] bg-white rounded-2xl shadow-2xl p-8 border border-slate-100"
+            >
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <Lock size={24} />
                 </div>
+                <h3 className="text-xl font-bold text-slate-800">নিরাপত্তা পিন</h3>
+                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">এডিট মোড আনলক করুন</p>
+              </div>
 
-                <form onSubmit={handlePinSubmit} className="space-y-6">
-                  <input 
-                    type="password"
-                    maxLength={4}
-                    value={pinInput}
-                    onChange={(e) => {
-                      setPinInput(e.target.value);
-                      setPinError(false);
-                    }}
-                    autoFocus
-                    className={`w-full text-center text-3xl tracking-[0.5em] font-bold py-3 bg-slate-50 border-2 rounded-xl focus:outline-none transition-all ${pinError ? 'border-rose-500' : 'border-slate-100 focus:border-emerald-500'}`}
-                    placeholder="••••"
-                  />
-                  {pinError && (
-                    <p className="text-[10px] text-center font-bold text-rose-500 uppercase">ভুল পিন কোড!</p>
-                  )}
-                  <button 
-                    type="submit"
-                    className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform"
-                  >
-                    আনলক করুন
-                  </button>
-                </form>
-              </motion.div>
+              <form onSubmit={handlePinSubmit} className="space-y-6">
+                <input 
+                  type="password"
+                  maxLength={4}
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value);
+                    setPinError(false);
+                  }}
+                  autoFocus
+                  className={`w-full text-center text-3xl tracking-[0.5em] font-bold py-3 bg-slate-50 border-2 rounded-xl focus:outline-none transition-all ${pinError ? 'border-rose-500' : 'border-slate-100 focus:border-emerald-500'}`}
+                  placeholder="••••"
+                />
+                {pinError && (
+                  <p className="text-[10px] text-center font-bold text-rose-500 uppercase">ভুল পিন কোড!</p>
+                )}
+                <button 
+                  type="submit"
+                  className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform"
+                >
+                  আনলক করুন
+                </button>
+              </form>
             </div>
-          )}
-        </AnimatePresence>
+          </div>
+        )}
 
         {/* Quick Add Section (Inline Style) */}
         {isAuthorized && (
@@ -528,77 +507,72 @@ export const BankAccountsView: React.FC<BankAccountsViewProps> = ({ onBack }) =>
               </button>
             </div>
 
-            <AnimatePresence>
-              {isAddingTransaction && (
-                <motion.form 
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  onSubmit={handleQuickAdd} 
-                  className="space-y-4 overflow-hidden"
-                >
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ব্যাংক নির্বাচন করুন</label>
-                    <select 
-                      required
-                      value={newTx.bankId}
-                      onChange={e => setNewTx({...newTx, bankId: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:border-emerald-500 outline-none transition-all"
-                    >
-                      <option value="">নির্বাচন করুন</option>
-                      {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setNewTx({...newTx, type: 'deposit'})}
-                      className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${newTx.type === 'deposit' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
-                    >
-                      <Plus size={14} /> জমা
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNewTx({...newTx, type: 'withdraw'})}
-                      className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${newTx.type === 'withdraw' ? 'bg-rose-500 text-white shadow-lg shadow-rose-100' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
-                    >
-                      <Minus size={14} /> উত্তোলন
-                    </button>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">টাকার পরিমাণ</label>
-                    <input 
-                      required
-                      type="number"
-                      placeholder="৳ ০.০০"
-                      value={newTx.amount}
-                      onChange={e => setNewTx({...newTx, amount: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-lg font-black focus:border-emerald-500 outline-none transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">বিবরণ (ঐচ্ছিক)</label>
-                    <input 
-                      type="text"
-                      placeholder="বিবরণ লিখুন"
-                      value={newTx.note}
-                      onChange={e => setNewTx({...newTx, note: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium focus:border-emerald-500 outline-none transition-all"
-                    />
-                  </div>
-
-                  <button 
-                    type="submit"
-                    className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+            {isAddingTransaction && (
+              <form 
+                onSubmit={handleQuickAdd} 
+                className="space-y-4 overflow-hidden"
+              >
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ব্যাংক নির্বাচন করুন</label>
+                  <select 
+                    required
+                    value={newTx.bankId}
+                    onChange={e => setNewTx({...newTx, bankId: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:border-emerald-500 outline-none transition-all"
                   >
-                    <Check size={16} /> নিশ্চিত করুন
+                    <option value="">নির্বাচন করুন</option>
+                    {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setNewTx({...newTx, type: 'deposit'})}
+                    className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${newTx.type === 'deposit' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
+                  >
+                    <Plus size={14} /> জমা
                   </button>
-                </motion.form>
-              )}
-            </AnimatePresence>
+                  <button
+                    type="button"
+                    onClick={() => setNewTx({...newTx, type: 'withdraw'})}
+                    className={`py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${newTx.type === 'withdraw' ? 'bg-rose-500 text-white shadow-lg shadow-rose-100' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
+                  >
+                    <Minus size={14} /> উত্তোলন
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">টাকার পরিমাণ</label>
+                  <input 
+                    required
+                    type="number"
+                    placeholder="৳ ০.০০"
+                    value={newTx.amount}
+                    onChange={e => setNewTx({...newTx, amount: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-lg font-black focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">বিবরণ (ঐচ্ছিক)</label>
+                  <input 
+                    type="text"
+                    placeholder="বিবরণ লিখুন"
+                    value={newTx.note}
+                    onChange={e => setNewTx({...newTx, note: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                >
+                  <Check size={16} /> নিশ্চিত করুন
+                </button>
+              </form>
+            )}
           </div>
         )}
 
