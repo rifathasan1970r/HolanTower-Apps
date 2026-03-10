@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
 export const PullToRefresh: React.FC<{ children: React.ReactNode; isEnabled?: boolean }> = ({ children, isEnabled = true }) => {
@@ -98,59 +97,54 @@ export const PullToRefresh: React.FC<{ children: React.ReactNode; isEnabled?: bo
   return (
     <div className="relative">
       {/* Loading Indicator Overlay */}
-      <AnimatePresence>
-        {pullY > 20 && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: pullY - 40 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-20 left-0 right-0 flex justify-center pointer-events-none z-[100] max-w-md mx-auto"
-          >
-            <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full px-4 py-2 shadow-xl border border-slate-200 dark:border-slate-700 flex items-center gap-3">
-              <div className="relative w-5 h-5 flex items-center justify-center">
-                {/* Background Circle */}
-                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
-                  <circle
-                    cx="18"
-                    cy="18"
-                    r="16"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    className="text-slate-200 dark:text-slate-700"
-                  />
-                  {/* Progress Circle */}
-                  <motion.circle
-                    cx="18"
-                    cy="18"
-                    r="16"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeDasharray="100"
-                    strokeDashoffset={100 - progress}
-                    strokeLinecap="round"
-                    className="text-indigo-600 dark:text-indigo-400"
-                  />
-                </svg>
-                <RefreshCw size={10} className={`text-indigo-600 dark:text-indigo-400 ${progress >= 100 ? 'animate-spin' : ''}`} />
-              </div>
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                {progress >= 100 ? 'রিলোড হচ্ছে...' : 'রিফ্রেশ করতে ধরে রাখুন'}
-              </span>
+      {pullY > 20 && (
+        <div 
+          style={{ top: '80px', transform: `translateY(${pullY - 40}px)` }}
+          className="fixed left-0 right-0 flex justify-center pointer-events-none z-[100] max-w-md mx-auto"
+        >
+          <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full px-4 py-2 shadow-xl border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+            <div className="relative w-5 h-5 flex items-center justify-center">
+              {/* Background Circle */}
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  className="text-slate-200 dark:text-slate-700"
+                />
+                {/* Progress Circle */}
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeDasharray="100"
+                  strokeDashoffset={100 - progress}
+                  strokeLinecap="round"
+                  className="text-indigo-600 dark:text-indigo-400"
+                />
+              </svg>
+              <RefreshCw size={10} className={`text-indigo-600 dark:text-indigo-400 ${progress >= 100 ? 'animate-spin' : ''}`} />
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+              {progress >= 100 ? 'রিলোড হচ্ছে...' : 'রিফ্রেশ করতে ধরে রাখুন'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Main Content with Transform */}
-      <motion.div
-        animate={{ y: pullY }}
-        transition={{ type: "spring", stiffness: 400, damping: 40 }}
+      <div
+        style={{ transform: `translateY(${pullY}px)`, transition: 'transform 0.2s ease-out' }}
         className="relative z-10"
       >
         {children}
-      </motion.div>
+      </div>
     </div>
   );
 };
