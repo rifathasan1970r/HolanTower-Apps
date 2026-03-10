@@ -30,7 +30,6 @@ import { PDFDownloadPage } from './components/PDFDownloadPage';
 import { ContactView } from './components/ContactView';
 import { DownloadAppView } from './components/DownloadAppView';
 import { DuePaymentMarquee } from './components/DuePaymentMarquee';
-import { FlatInfoView } from './components/FlatInfoView';
 
 const App: React.FC = () => {
   const isExitingRef = useRef(false);
@@ -356,10 +355,6 @@ const App: React.FC = () => {
 
       case 'DOWNLOAD_APP':
         return <DownloadAppView onBack={() => setCurrentView('MENU')} />;
-
-      case 'FLAT_INFO':
-        return <FlatInfoView onBack={() => setCurrentView('MENU')} />;
-
       case 'MENU':
       case 'HOME':
       default:

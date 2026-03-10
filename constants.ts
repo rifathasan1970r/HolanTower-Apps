@@ -20,8 +20,7 @@ import {
   Clock,
   Smartphone,
   FileText,
-  Download,
-  Building2
+  Download
 } from 'lucide-react';
 import { MenuItem, Notice } from './types';
 
@@ -166,15 +165,6 @@ export const MENU_ITEMS: MenuItem[] = [
     color: 'bg-teal-500',
     description: 'জরুরী যোগাযোগ নম্বর',
     gradient: 'from-teal-400 to-emerald-600'
-  },
-  { 
-    id: 'flat_info', 
-    label: 'ফ্ল্যাটের তথ্য', 
-    icon: Building2,
-    view: 'FLAT_INFO',
-    color: 'bg-blue-500',
-    description: 'ফ্ল্যাট সম্পর্কিত তথ্য',
-    gradient: 'from-blue-400 to-indigo-600'
   }
 ];
 
