@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset, Wrench, Settings } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './lib/supabaseClient';
 
 import { APP_NAME, MENU_ITEMS, TRANSLATIONS, MENU_NOTICE_TEXT, DESCO_NOTICE_TEXT, SERVICE_CHARGE_NOTICE_TEXT, EMERGENCY_NOTICE_TEXT } from './constants';
@@ -420,8 +421,13 @@ const App: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 {MENU_ITEMS.slice(0, currentView === 'HOME' ? 4 : undefined).map((item, index) => (
-                  <button
+                  <motion.button
                     key={item.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       setCurrentView(item.view);
                     }}
@@ -438,7 +444,7 @@ const App: React.FC = () => {
                       <h4 className="font-bold text-slate-800 dark:text-white text-sm mb-0.5 group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">{item.label}</h4>
                       <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium line-clamp-1">{item.description}</p>
                     </div>
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
