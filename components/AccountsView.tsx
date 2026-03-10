@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, TrendingUp, TrendingDown, Wallet, CreditCard, Banknote, Droplets, Trash2, Zap, User, MoreHorizontal, Calculator, Calendar, CalendarDays, ChevronRight, Save, X, Plus, Minus, PieChart, ArrowUpRight, ArrowDownRight, Lock, Unlock, Loader2 } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Wallet, CreditCard, Banknote, Droplets, Trash2, Zap, User, MoreHorizontal, Calculator, Calendar, CalendarDays, ChevronRight, Save, X, Plus, Minus, PieChart, ArrowUpRight, ArrowDownRight, Lock, Unlock, Loader2, Landmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
+import { BankAccountsView } from './BankAccountsView';
 
 interface AccountsViewProps {
   onBack: () => void;
@@ -62,6 +63,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
   const [editData, setEditData] = useState<MonthlyAccountData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showBankAccounts, setShowBankAccounts] = useState(false);
   
   // PIN Protection State
   const [showPinModal, setShowPinModal] = useState(false);
@@ -296,6 +298,10 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
     return { inc, exp, bal: inc - exp };
   };
 
+  if (showBankAccounts) {
+    return <BankAccountsView onBack={() => setShowBankAccounts(false)} />;
+  }
+
   return (
     <div className="pb-24 animate-in fade-in duration-1000 bg-[#f8fafc] min-h-screen relative font-sans text-slate-900">
       
@@ -346,6 +352,23 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
             ))}
           </div>
         </div>
+
+        {/* Bank Accounts Button */}
+        <button 
+          onClick={() => setShowBankAccounts(true)}
+          className="w-full bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Landmark size={20} />
+            </div>
+            <div className="text-left">
+              <h3 className="text-sm font-bold text-slate-800">ব্যাংক হিসাব</h3>
+              <p className="text-[10px] font-medium text-slate-500">ইসলামী ব্যাংক ও আইএফআইসি ব্যাংক</p>
+            </div>
+          </div>
+          <ChevronRight size={18} className="text-slate-400" />
+        </button>
 
         {/* Premium Ledger Summary Card */}
         <div 
