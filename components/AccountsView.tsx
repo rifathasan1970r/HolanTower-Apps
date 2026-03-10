@@ -51,7 +51,8 @@ const getDefaultAccounts = (year: number): MonthlyAccountData[] =>
 export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
   const currentMonthName = useMemo(() => {
     const date = new Date();
-    const monthIndex = date.getMonth();
+    let monthIndex = date.getMonth() - 1;
+    if (monthIndex < 0) monthIndex = 11; // Handle January -> December
     return MONTHS[monthIndex];
   }, []);
 
@@ -262,19 +263,27 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
   const summary = useMemo(() => {
     let totalIncome = 0;
     let totalExpense = 0;
+    let lastMonthBalance = 0;
 
     accounts.forEach(acc => {
       const otherIncome = acc.income.otherItems?.reduce((sum, item) => sum + item.amount, 0) || 0;
       const otherExpense = acc.expense.otherItems?.reduce((sum, item) => sum + item.amount, 0) || 0;
       
-      totalIncome += (acc.income.surplus + acc.income.serviceCharge + otherIncome);
-      totalExpense += (acc.expense.water + acc.expense.electricity + acc.expense.garbage + acc.expense.caretaker + acc.expense.nightGuard + otherExpense);
+      const inc = acc.income.surplus + acc.income.serviceCharge + otherIncome;
+      const exp = acc.expense.water + acc.expense.electricity + acc.expense.garbage + acc.expense.caretaker + acc.expense.nightGuard + otherExpense;
+      
+      totalIncome += inc;
+      totalExpense += exp;
+
+      if (inc > 0 || exp > 0) {
+        lastMonthBalance = inc - exp;
+      }
     });
 
     return {
       totalIncome,
       totalExpense,
-      balance: totalIncome - totalExpense
+      balance: lastMonthBalance
     };
   }, [accounts]);
 
@@ -345,7 +354,7 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
         >
           <div className="p-6 border-b border-white/10">
             <div className="flex justify-between items-center">
-              <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">মোট উদ্বৃত্ত</p>
+              <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">বর্তমান উদ্বৃত্ত</p>
               <div className="w-8 h-8 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center text-white shadow-sm backdrop-blur-sm">
                 <PieChart size={18} />
               </div>
