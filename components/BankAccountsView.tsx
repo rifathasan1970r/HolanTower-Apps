@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Building2, Plus, Minus, Landmark, Wallet } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabaseClient';
 
 interface BankAccountsViewProps {
   onBack: () => void;
@@ -39,13 +39,14 @@ const initialBanks: BankAccount[] = [
 export const BankAccountsView: React.FC<BankAccountsViewProps> = ({ onBack }) => {
   const [banks, setBanks] = useState<BankAccount[]>(initialBanks);
   const [loading, setLoading] = useState(true);
+  const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       const { data, error } = await supabase.from('bank_accounts').select('*, bank_transactions(*)');
       if (error) {
         console.error('Error fetching bank accounts', error);
-      } else if (data) {
+      } else if (data && data.length > 0) {
         setBanks(data.map(b => ({
           ...b,
           transactions: b.bank_transactions.map(t => ({
@@ -126,6 +127,87 @@ export const BankAccountsView: React.FC<BankAccountsViewProps> = ({ onBack }) =>
 
   if (loading) return null;
 
+  const selectedBank = banks.find(b => b.id === selectedBankId);
+
+  if (selectedBankId && selectedBank) {
+    return (
+      <div className="min-h-screen bg-slate-50 pb-20">
+        {/* Header */}
+        <div className="bg-white sticky top-0 z-20 border-b border-slate-200 shadow-sm">
+          <div className="max-w-md mx-auto px-4 h-16 flex items-center gap-4">
+            <button 
+              onClick={() => setSelectedBankId(null)}
+              className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition-transform"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <h1 className="text-lg font-bold text-slate-800">{selectedBank.name}</h1>
+              <p className="text-xs text-slate-500">লেনদেনের বিবরণ</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-md mx-auto p-4 space-y-6">
+          {/* Bank Balance Card */}
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 flex flex-col items-center text-center space-y-4">
+            <div className={`w-20 h-20 rounded-3xl flex items-center justify-center ${selectedBank.id === 'islami' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+              <Landmark size={40} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">বর্তমান ব্যালেন্স</p>
+              <h2 className="text-4xl font-black text-slate-900">৳ {selectedBank.balance.toLocaleString()}</h2>
+            </div>
+
+            <div className="grid grid-cols-2 w-full gap-3 pt-4">
+              <button 
+                onClick={() => handleTransaction(selectedBank.id, 'deposit')}
+                className="flex items-center justify-center gap-2 py-3.5 bg-slate-900 text-white rounded-2xl font-bold text-sm active:scale-95 transition-transform"
+              >
+                <Plus size={18} /> জমা
+              </button>
+              <button 
+                onClick={() => handleTransaction(selectedBank.id, 'withdraw')}
+                className="flex items-center justify-center gap-2 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm active:scale-95 transition-transform"
+              >
+                <Minus size={18} /> উত্তোলন
+              </button>
+            </div>
+          </div>
+
+          {/* Transaction History */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider px-2">সাম্প্রতিক লেনদেন</h3>
+            {selectedBank.transactions.length > 0 ? (
+              <div className="space-y-3">
+                {selectedBank.transactions.map(tx => (
+                  <div key={tx.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'deposit' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                        {tx.type === 'deposit' ? <Plus size={16} /> : <Minus size={16} />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-700">{tx.type === 'deposit' ? 'জমা' : 'উত্তোলন'}</p>
+                        <p className="text-[11px] text-slate-500">{new Date(tx.date).toLocaleDateString('bn-BD')} {tx.note && `• ${tx.note}`}</p>
+                      </div>
+                    </div>
+                    <p className={`text-base font-black ${tx.type === 'deposit' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {tx.type === 'deposit' ? '+' : '-'} ৳ {tx.amount.toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 bg-white rounded-3xl border border-dashed border-slate-200">
+                <p className="text-sm text-slate-400">কোনো লেনদেন পাওয়া যায়নি</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
@@ -139,82 +221,33 @@ export const BankAccountsView: React.FC<BankAccountsViewProps> = ({ onBack }) =>
           </button>
           <div>
             <h1 className="text-lg font-bold text-slate-800">ব্যাংক হিসাব</h1>
-            <p className="text-xs text-slate-500">সকল ব্যাংক অ্যাকাউন্টের বিবরণ</p>
+            <p className="text-xs text-slate-500">ব্যাংক নির্বাচন করুন</p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-md mx-auto p-4 space-y-6">
-        {/* Total Balance Summary */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col items-center justify-center space-y-2">
-          <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-2">
-            <Landmark size={24} />
-          </div>
-          <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">সর্বমোট ব্যাংক ব্যালেন্স</p>
-          <h2 className="text-4xl font-black text-slate-800 tracking-tight">৳ {totalBalance.toLocaleString()}</h2>
-        </div>
-
-        {/* Bank Accounts */}
-        <div className="space-y-4">
+      <div className="max-w-md mx-auto p-4 space-y-4">
+        {/* Bank List - Vertical Stack */}
+        <div className="space-y-3">
           {banks.map(bank => (
-            <div key={bank.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-5 border-b border-slate-100">
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                      <Wallet size={20} />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-800">{bank.name}</h3>
-                      <p className="text-xs text-slate-500 font-medium">বর্তমান ব্যালেন্স</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-black text-slate-800">৳ {bank.balance.toLocaleString()}</p>
-                  </div>
+            <button
+              key={bank.id}
+              onClick={() => setSelectedBankId(bank.id)}
+              className="w-full bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between active:scale-[0.98] transition-all hover:border-indigo-200 group"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${bank.id === 'islami' ? 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100' : 'bg-blue-50 text-blue-600 group-hover:bg-blue-100'}`}>
+                  <Landmark size={28} />
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button 
-                    onClick={() => handleTransaction(bank.id, 'deposit')}
-                    className="flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-sm active:scale-95 transition-transform"
-                  >
-                    <Plus size={16} /> টাকা জমা
-                  </button>
-                  <button 
-                    onClick={() => handleTransaction(bank.id, 'withdraw')}
-                    className="flex items-center justify-center gap-2 py-2.5 bg-rose-50 text-rose-700 rounded-xl font-bold text-sm active:scale-95 transition-transform"
-                  >
-                    <Minus size={16} /> টাকা উত্তোলন
-                  </button>
+                <div className="text-left overflow-hidden">
+                  <h3 className="text-lg font-bold text-slate-800 whitespace-nowrap truncate">{bank.name}</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">ট্যাপ করে বিস্তারিত দেখুন</p>
                 </div>
               </div>
-
-              {/* Recent Transactions */}
-              {bank.transactions.length > 0 && (
-                <div className="bg-slate-50/50 p-4">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">সাম্প্রতিক লেনদেন</p>
-                  <div className="space-y-3">
-                    {bank.transactions.slice(0, 3).map(tx => (
-                      <div key={tx.id} className="flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${tx.type === 'deposit' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
-                            {tx.type === 'deposit' ? <Plus size={14} /> : <Minus size={14} />}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-700">{tx.type === 'deposit' ? 'জমা' : 'উত্তোলন'}</p>
-                            <p className="text-[10px] text-slate-500">{new Date(tx.date).toLocaleDateString('bn-BD')} {tx.note && `• ${tx.note}`}</p>
-                          </div>
-                        </div>
-                        <p className={`text-sm font-bold ${tx.type === 'deposit' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          {tx.type === 'deposit' ? '+' : '-'} ৳ {tx.amount.toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+              <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:text-indigo-500 group-hover:bg-indigo-50 transition-colors">
+                <ArrowLeft size={16} className="rotate-180" />
+              </div>
+            </button>
           ))}
         </div>
       </div>
