@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -68,7 +69,9 @@ export const DuePaymentMarquee: React.FC = () => {
   if (loading || dueUnits.length === 0) return null;
 
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       className="relative bg-gradient-to-br from-white/80 to-white/40 dark:from-slate-800/80 dark:to-slate-900/40 backdrop-blur-xl rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/20 dark:border-slate-700/50 overflow-hidden shadow-[0_0_20px_rgba(225,29,72,0.1)] dark:shadow-[0_0_20px_rgba(225,29,72,0.15)]"
     >
       <div className="flex items-center justify-between mb-4">
@@ -91,7 +94,14 @@ export const DuePaymentMarquee: React.FC = () => {
       </div>
 
       <div className="relative flex overflow-hidden w-full">
-        <div 
+        <motion.div 
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ 
+            duration: Math.max(dueUnits.length * 4, 25), 
+            repeat: Infinity, 
+            ease: "linear",
+            repeatType: "loop"
+          }}
           className="flex items-center gap-3 py-1 whitespace-nowrap"
         >
           {dueUnits.map((unit) => (
@@ -107,8 +117,8 @@ export const DuePaymentMarquee: React.FC = () => {
               <span className="text-[10px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">বকেয়া</span>
             </div>
           ))}
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
