@@ -17,35 +17,30 @@ export const DuePaymentMarquee: React.FC = () => {
   useEffect(() => {
     const fetchDueUnits = async () => {
       const now = new Date();
-      const month = MONTHS_BN[now.getMonth()];
+      const monthIndex = now.getMonth();
+      const month = MONTHS_BN[monthIndex];
       const year = now.getFullYear();
       setCurrentMonth(month);
       setCurrentYear(year);
 
       try {
-        // Fetch all payments for current month/year
         const { data, error } = await supabase
           .from('payments')
-          .select('unit_text, amount, due')
+          .select('unit_text')
+          .eq('year_num', year)
           .eq('month_name', month)
-          .eq('year_num', year);
+          .gt('due', 0);
 
         if (error) throw error;
 
-        // Get all units that HAVE paid (amount > 0)
-        const paidUnits = new Set(data?.filter(p => p.amount > 0 && p.due === 0).map(p => p.unit_text) || []);
-        const partialUnits = new Set(data?.filter(p => p.amount > 0 && p.due > 0).map(p => p.unit_text) || []);
-
-        // Define all units
-        const FLOORS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
-        const UNITS_PER_FLOOR = ['A', 'B', 'C'];
-        const ALL_UNITS = FLOORS.flatMap(f => UNITS_PER_FLOOR.map(u => `${f}${u}`));
-
-        // Filter units that haven't paid fully
-        const unpaid = ALL_UNITS.filter(unit => !paidUnits.has(unit));
-        setDueUnits(unpaid);
+        if (data) {
+          const dueList = data
+            .map(record => record.unit_text)
+            .filter(unit => !unit.endsWith('_P'));
+          setDueUnits(dueList);
+        }
       } catch (err) {
-        console.error('Error fetching due units:', err);
+        console.error("Error fetching due units for marquee:", err);
       } finally {
         setLoading(false);
       }
@@ -53,12 +48,15 @@ export const DuePaymentMarquee: React.FC = () => {
 
     fetchDueUnits();
 
-    // Subscribe to changes
     const channel = supabase
-      .channel('payments_due_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
-        fetchDueUnits();
-      })
+      .channel('public:payments')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payments' },
+        () => {
+          fetchDueUnits();
+        }
+      )
       .subscribe();
 
     return () => {

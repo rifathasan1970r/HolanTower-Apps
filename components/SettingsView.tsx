@@ -25,23 +25,52 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
       try {
         const { data, error } = await supabase
           .from('app_settings')
-          .select('value')
-          .eq('key', 'is_reload_enabled')
+          .select('*')
+          .eq('id', 'global_config')
           .single();
-        
-        if (data) {
-          const enabled = data.value === 'true';
-          setIsReloadEnabled(enabled);
-        } else if (error && error.code === 'PGRST116') {
-          // Setting doesn't exist, create it
-          await supabase.from('app_settings').insert({ key: 'is_reload_enabled', value: 'true' });
+
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error fetching settings:", error);
+          return;
+        }
+
+        if (data && data.value) {
+          if (typeof data.value.isReloadEnabled === 'boolean') {
+            setIsReloadEnabled(data.value.isReloadEnabled);
+          }
         }
       } catch (err) {
-        console.error('Error fetching settings:', err);
+        console.error("Error fetching settings:", err);
       }
     };
 
     fetchSettings();
+
+    // Subscribe to settings changes
+    const channel = supabase
+      .channel('app_settings_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'app_settings',
+          filter: 'id=eq.global_config'
+        },
+        (payload) => {
+          const newData = payload.new as any;
+          if (newData && newData.value) {
+            if (typeof newData.value.isReloadEnabled === 'boolean') {
+              setIsReloadEnabled(newData.value.isReloadEnabled);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleAdminLogin = () => {
@@ -59,18 +88,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
   const toggleMaintenancePopup = async () => {
     if (isMaintenanceUpdating) return;
     setIsMaintenanceUpdating(true);
-    const newValue = !maintenanceMode;
     
     try {
+      const newValue = !maintenanceMode;
       const { error } = await supabase
         .from('app_settings')
-        .upsert({ key: 'show_maintenance_popup', value: String(newValue) }, { onConflict: 'key' });
+        .upsert({
+          id: 'maintenance_mode',
+          value: { enabled: newValue }
+        });
+
+      if (error) throw error;
       
-      if (error) {
-        console.error('Error updating maintenance setting:', error);
-      }
+      // The actual state update for maintenanceMode is handled in App.tsx via subscription
+      // We just trigger the DB update here
     } catch (err) {
-      console.error('Error updating maintenance setting:', err);
+      console.error("Error updating maintenance mode:", err);
+      alert("মেইনটেন্যান্স মোড আপডেট করতে সমস্যা হয়েছে।");
     } finally {
       setIsMaintenanceUpdating(false);
     }
@@ -84,13 +118,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack, darkMode, to
     try {
       const { error } = await supabase
         .from('app_settings')
-        .upsert({ key: 'is_reload_enabled', value: String(newValue) }, { onConflict: 'key' });
+        .upsert({
+          id: 'global_config',
+          value: { isReloadEnabled: newValue }
+        });
+
+      if (error) throw error;
       
-      if (!error) {
-        setIsReloadEnabled(newValue);
-      }
+      setIsReloadEnabled(newValue);
     } catch (err) {
-      console.error('Error updating reload setting:', err);
+      console.error("Error updating reload setting:", err);
+      alert("রিলোড অপশন আপডেট করতে সমস্যা হয়েছে।");
     } finally {
       setIsUpdating(false);
     }

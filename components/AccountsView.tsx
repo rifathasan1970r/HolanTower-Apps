@@ -123,7 +123,6 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
   const loadData = async () => {
     setLoading(true);
     
-    // 1. Try to load from Supabase
     try {
       const { data, error } = await supabase
         .from('building_accounts')
@@ -131,7 +130,6 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ onBack }) => {
         .eq('year', selectedYear);
 
       if (error) {
-        // If table doesn't exist or other error, fallback to local
         console.warn("Supabase fetch failed, using local fallback:", error.message);
         throw error;
       }

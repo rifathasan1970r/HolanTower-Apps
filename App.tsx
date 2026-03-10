@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Building2, Phone, MapPin, ChevronRight, User, CloudSun, Calendar, Zap, Key, Bed, Bath, Maximize, AlertTriangle, X, LogOut, Sun, Moon, Sunset, Wrench, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from './lib/supabaseClient';
-
 import { APP_NAME, MENU_ITEMS, TRANSLATIONS, MENU_NOTICE_TEXT, DESCO_NOTICE_TEXT, SERVICE_CHARGE_NOTICE_TEXT, EMERGENCY_NOTICE_TEXT } from './constants';
 import { ViewState } from './types';
 import NoticeBoard from './components/NoticeBoard';
@@ -76,6 +74,7 @@ const App: React.FC = () => {
   const [currentSeconds, setCurrentSeconds] = useState('');
   const [amPm, setAmPm] = useState('');
   const [timeIcon, setTimeIcon] = useState<React.ReactNode>(<CloudSun size={24} className="text-yellow-300" />);
+  // Settings State (Local)
   const [isReloadEnabled, setIsReloadEnabled] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   
@@ -145,54 +144,6 @@ const App: React.FC = () => {
     updateTime();
     const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
-  }, []);
-
-  // Fetch Global Settings
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('key, value');
-        
-        if (data) {
-          data.forEach(setting => {
-            if (setting.key === 'is_reload_enabled') {
-              setIsReloadEnabled(setting.value === 'true');
-            } else if (setting.key === 'show_maintenance_popup') {
-              setMaintenanceMode(setting.value === 'true');
-            }
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching settings:', err);
-      }
-    };
-
-    fetchSettings();
-
-    // Subscribe to changes for real-time updates
-    const channel = supabase
-      .channel('app_settings_changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'app_settings'
-      }, (payload) => {
-        const newData = payload.new as any;
-        if (newData) {
-          if (newData.key === 'is_reload_enabled') {
-            setIsReloadEnabled(newData.value === 'true');
-          } else if (newData.key === 'show_maintenance_popup') {
-            setMaintenanceMode(newData.value === 'true');
-          }
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   // Handle native overscroll behavior

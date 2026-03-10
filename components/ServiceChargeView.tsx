@@ -3,12 +3,12 @@ import { motion } from 'framer-motion';
 import { AIAssistant } from './AIAssistant';
 import { ChevronLeft, ChevronRight, ArrowLeft, Search, CheckCircle2, XCircle, Clock, Users, Home, PieChart, CalendarDays, TrendingUp, Wallet, ArrowUpRight, ListFilter, RefreshCw, Lock, Unlock, Edit3, Save, X, Grid, Calendar as CalendarIcon, DollarSign, Check, Info, MessageCircle, Send, Phone, Car, Bot, FileDown, ChevronDown, MessageSquare, Bell, AlertCircle } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { supabase } from '../lib/supabaseClient';
 import { TRANSLATIONS, FLAT_OWNERS } from '../constants';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import { useLocalStorage } from '../src/hooks/useLocalStorage';
+import { supabase } from '../lib/supabaseClient';
 
 // কনফিগারেশন: ২৭টি ইউনিট (ফ্লোর ২ থেকে ১০)
 const FLOORS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -97,12 +97,12 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [fullYearTableUnitFilter, setFullYearTableUnitFilter] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Supabase State
+  // Data States
   const [dbData, setDbData] = useState<PaymentData[]>([]);
   const [unitsInfo, setUnitsInfo] = useState<Record<string, UnitInfo>>({});
   const [whatsAppLogs, setWhatsAppLogs] = useState<WhatsAppLog[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [useMock, setUseMock] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [useMock, setUseMock] = useState<boolean>(true);
 
   // Admin State
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -193,86 +193,45 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   // Fetch data from Supabase
   const fetchData = async (showLoading = true, fetchUnitsInfo = true) => {
     if (showLoading) setLoading(true);
+    
     try {
-      // Fetch Payments
       const { data: payData, error: payError } = await supabase
         .from('payments')
         .select('*')
         .eq('year_num', selectedYear);
 
       if (payError) throw payError;
-      if (payData) setDbData(payData as PaymentData[]);
+      
+      if (payData) {
+        setDbData(payData as PaymentData[]);
+      }
 
-      // Fetch Units Occupancy Info
       if (fetchUnitsInfo) {
-        const { data: uData, error: uError } = await supabase
+        const { data: unitData, error: unitError } = await supabase
           .from('units_info')
           .select('*');
-        
-        if (uError) {
-            console.error("Error fetching units_info:", uError);
-        } else if (uData) {
-            const mapping: Record<string, UnitInfo> = {};
-            let parkingConfig: string[] | null = null;
-            let extUnits: {id: string, name: string, owner: string}[] | null = null;
+          
+        if (!unitError && unitData) {
+          const infoMap: Record<string, UnitInfo> = {};
+          unitData.forEach(u => {
+            const key = u.year_num ? `${u.unit_text}-${u.year_num}` : u.unit_text;
+            infoMap[key] = u;
+          });
+          setUnitsInfo(infoMap);
+        }
 
-            uData.forEach((u: any) => {
-                // Check for Parking Config
-                const isParkingConfig = u.unit_text === '_PARKING_CONFIG_' && u.year_num === selectedYear;
-                const isCompositeParkingConfig = u.unit_text === `_PARKING_CONFIG_${selectedYear}`;
-
-                if (isParkingConfig || isCompositeParkingConfig) {
-                    try {
-                        if (u.note) {
-                            const parsed = JSON.parse(u.note);
-                            if (Array.isArray(parsed)) {
-                                parkingConfig = parsed;
-                            } else if (typeof parsed === 'object') {
-                                parkingConfig = parsed.selectedStandardUnits || [];
-                                extUnits = parsed.externalUnits || [];
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Error parsing parking config", e);
-                    }
-                    return;
-                }
-
-                // Use year-specific key if available, otherwise fallback to unit_text
-                const key = u.year_num ? `${u.unit_text}-${u.year_num}` : u.unit_text;
-                
-                mapping[key] = { 
-                    unit_text: u.unit_text,
-                    is_occupied: u.is_occupied, 
-                    note: u.note || '',
-                    phone: u.phone || '',
-                    confirm_template: u.confirm_template || '',
-                    due_template: u.due_template || '',
-                    owner_phone: u.owner_phone || '',
-                    owner_confirm_template: u.owner_confirm_template || '',
-                    owner_due_template: u.owner_due_template || '',
-                    year_num: u.year_num
-                };
-            });
-            setUnitsInfo(mapping);
-            if (parkingConfig !== null) setParkingUnits(parkingConfig);
-            if (extUnits !== null) setExternalUnits(extUnits);
+        const { data: logData, error: logError } = await supabase
+          .from('whatsapp_logs')
+          .select('*')
+          .eq('year_num', selectedYear);
+          
+        if (!logError && logData) {
+          setWhatsAppLogs(logData as WhatsAppLog[]);
         }
       }
-
-      // Fetch WhatsApp Logs
-      const { data: logData, error: logError } = await supabase
-        .from('whatsapp_logs')
-        .select('*')
-        .eq('year_num', selectedYear);
-      
-      if (!logError && logData) {
-        setWhatsAppLogs(logData as WhatsAppLog[]);
-      }
-      
       setUseMock(false);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch (err) {
+      console.error("Supabase fetch error:", err);
       setUseMock(true);
     } finally {
       if (showLoading) setLoading(false);
@@ -286,60 +245,50 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const fetchDueSummaryData = async () => {
     setLoadingDueSummary(true);
     try {
-      const { data, error } = await supabase
+      // Fetch 2025 due
+      const { data: data2025, error: err2025 } = await supabase
         .from('payments')
-        .select('*')
-        .in('year_num', [2025, 2026]);
-      
-      if (error) throw error;
-
-      const summaryMap: Record<string, { due2025: number, due2026: number }> = {};
-      
-      ALL_UNITS.forEach(unit => {
-        summaryMap[unit] = { due2025: 0, due2026: 0 };
-      });
-
-      const now = new Date();
-      const currentRealYear = now.getFullYear();
-      const currentRealMonthIdx = now.getMonth();
-
-      ALL_UNITS.forEach(unit => {
-        const isOccupiedDefault = unit.slice(-1) !== 'B';
+        .select('unit_text, due')
+        .eq('year_num', 2025)
+        .gt('due', 0);
         
-        [2025, 2026].forEach(year => {
-          const uInfoKey = `${unit}-${year}`;
-          const uInfo = unitsInfo[uInfoKey] || unitsInfo[unit];
-          const isOccupied = uInfo?.is_occupied ?? isOccupiedDefault;
-          const defaultAmount = isOccupied ? 2000 : 500;
+      // Fetch 2026 due
+      const { data: data2026, error: err2026 } = await supabase
+        .from('payments')
+        .select('unit_text, due')
+        .eq('year_num', 2026)
+        .gt('due', 0);
 
-          MONTHS_LOGIC.forEach((month, index) => {
-            const paymentRecord = data?.find(
-              d => d.unit_text === unit && d.month_name === month && d.year_num === year
-            );
+      if (err2025) throw err2025;
+      if (err2026) throw err2026;
 
-            if (paymentRecord) {
-              if (year === 2025) summaryMap[unit].due2025 += paymentRecord.due;
-              if (year === 2026) summaryMap[unit].due2026 += paymentRecord.due;
-            } else {
-              const isFuture = year > currentRealYear || (year === currentRealYear && index > currentRealMonthIdx);
-              if (!isFuture) {
-                if (year === 2025) summaryMap[unit].due2025 += defaultAmount;
-                if (year === 2026) summaryMap[unit].due2026 += defaultAmount;
-              }
-            }
-          });
-        });
+      const summaryMap: Record<string, {due2025: number, due2026: number}> = {};
+      
+      ALL_UNITS.forEach(u => {
+        summaryMap[u] = { due2025: 0, due2026: 0 };
       });
 
-      const result = ALL_UNITS.map(unit => ({
+      data2025?.forEach(d => {
+        if (summaryMap[d.unit_text]) {
+          summaryMap[d.unit_text].due2025 += d.due;
+        }
+      });
+
+      data2026?.forEach(d => {
+        if (summaryMap[d.unit_text]) {
+          summaryMap[d.unit_text].due2026 += d.due;
+        }
+      });
+
+      const summaryArray = Object.keys(summaryMap).map(unit => ({
         unit,
         due2025: summaryMap[unit].due2025,
         due2026: summaryMap[unit].due2026
-      }));
+      })).filter(item => item.due2025 > 0 || item.due2026 > 0);
 
-      setDueSummaryData(result);
-    } catch (error) {
-      console.error('Error fetching due summary data:', error);
+      setDueSummaryData(summaryArray);
+    } catch (err) {
+      console.error("Error fetching due summary:", err);
     } finally {
       setLoadingDueSummary(false);
     }
@@ -349,78 +298,25 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     setIsSavingParking(true);
     
     try {
-        const config = {
-            selectedStandardUnits: newParkingUnits,
-            externalUnits: newExternalUnits
-        };
-        const configStr = JSON.stringify(config);
-        const compositeKey = `_PARKING_CONFIG_${selectedYear}`;
+      // Save to Supabase (assuming there's a settings table or similar)
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+          id: 'parking_config',
+          value: { parkingUnits: newParkingUnits, externalUnits: newExternalUnits }
+        });
 
-        console.log(`Saving parking config for ${selectedYear}...`);
+      if (error) throw error;
 
-        // Strategy 1: Try upsert with unit_text as conflict target
-        let { error } = await supabase
-            .from('units_info')
-            .upsert({ 
-                unit_text: compositeKey, 
-                year_num: selectedYear, 
-                note: configStr,
-                is_occupied: true 
-            }, { onConflict: 'unit_text' });
-            
-        // Strategy 2: If Strategy 1 fails, try with unit_text and year_num as conflict target
-        if (error) {
-            console.warn("Upsert with unit_text failed, trying with unit_text,year_num:", error);
-            const { error: error2 } = await supabase
-                .from('units_info')
-                .upsert({ 
-                    unit_text: compositeKey, 
-                    year_num: selectedYear, 
-                    note: configStr,
-                    is_occupied: true 
-                }, { onConflict: 'unit_text,year_num' });
-            error = error2;
-        }
-
-        // Strategy 3: If still fails, try a simple insert (might fail if exists, but worth a shot)
-        if (error) {
-            console.warn("Upsert failed again, trying simple insert:", error);
-            const { error: error3 } = await supabase
-                .from('units_info')
-                .insert({ 
-                    unit_text: compositeKey, 
-                    year_num: selectedYear, 
-                    note: configStr,
-                    is_occupied: true 
-                });
-            // If insert fails because it exists, try update
-            if (error3 && error3.code === '23505') {
-                 const { error: error4 } = await supabase
-                    .from('units_info')
-                    .update({ note: configStr })
-                    .eq('unit_text', compositeKey);
-                 error = error4;
-            } else {
-                error = error3;
-            }
-        }
-            
-        if (error) {
-            console.error("All saving strategies failed:", error);
-            alert(`সেভ করতে সমস্যা হয়েছে: ${error.message || 'Unknown error'}`);
-        } else {
-            console.log("Parking config saved successfully");
-            setParkingUnits(newParkingUnits);
-            setExternalUnits(newExternalUnits);
-            setShowParkingManager(false);
-            // Refresh data to be sure all users see it
-            fetchData(false);
-        }
-    } catch (e: any) {
-        console.error("Exception saving parking config:", e);
-        alert(`একটি ত্রুটি ঘটেছে: ${e.message || 'Unknown error'}`);
+      setParkingUnits(newParkingUnits);
+      setExternalUnits(newExternalUnits);
+      setShowParkingManager(false);
+      alert("পার্কিং কনফিগারেশন সেভ করা হয়েছে");
+    } catch (err) {
+      console.error("Error saving parking config:", err);
+      alert("পার্কিং কনফিগারেশন সেভ করতে সমস্যা হয়েছে।");
     } finally {
-        setIsSavingParking(false);
+      setIsSavingParking(false);
     }
   };
 
@@ -444,52 +340,31 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     const currentInfo = unitsInfo[yearKey] || unitsInfo[unit] || { unit_text: unit, is_occupied: isOccupiedDefault, note: '' };
     const newVal = !currentInfo.is_occupied;
 
-    // Optimistic update - immediate UI feedback
-    const newUnitsInfo = { ...unitsInfo, [yearKey]: { ...currentInfo, is_occupied: newVal } };
-    setUnitsInfo(newUnitsInfo);
-    
     try {
-        // Use a more robust check-then-act pattern to ensure persistence with year_num
-        const { data: existing, error: fetchError } = await supabase
-            .from('units_info')
-            .select('unit_text')
-            .eq('unit_text', unit)
-            .eq('year_num', selectedYear)
-            .maybeSingle();
+      const { error } = await supabase
+        .from('units_info')
+        .upsert({
+          unit_text: unit,
+          year_num: selectedYear,
+          is_occupied: newVal,
+          note: currentInfo.note || '',
+          phone: currentInfo.phone || '',
+          confirm_template: currentInfo.confirm_template || DEFAULT_UNIT_INFO.confirm_template,
+          due_template: currentInfo.due_template || DEFAULT_UNIT_INFO.due_template,
+          owner_phone: currentInfo.owner_phone || '',
+          owner_confirm_template: currentInfo.owner_confirm_template || DEFAULT_UNIT_INFO.owner_confirm_template,
+          owner_due_template: currentInfo.owner_due_template || DEFAULT_UNIT_INFO.owner_due_template
+        }, { onConflict: 'unit_text,year_num' });
 
-        if (fetchError) {
-            console.warn("Supabase fetch error (year_num might not exist), trying with unit_text only as composite key.");
-            // Fallback: try using unit_text as the composite key "unit-year"
-            const compositeKey = `${unit}-${selectedYear}`;
-            await supabase.from('units_info').upsert({ unit_text: compositeKey, is_occupied: newVal, note: currentInfo.note }, { onConflict: 'unit_text' });
-            return;
-        }
+      if (error) throw error;
 
-        let error = null;
-        if (existing) {
-            const { error: updateError } = await supabase
-                .from('units_info')
-                .update({ is_occupied: newVal })
-                .eq('unit_text', unit)
-                .eq('year_num', selectedYear);
-            error = updateError;
-        } else {
-            const { error: insertError } = await supabase
-                .from('units_info')
-                .insert({ unit_text: unit, is_occupied: newVal, note: currentInfo.note, year_num: selectedYear });
-            error = insertError;
-        }
-
-        if (error) {
-            console.error("Supabase error updating occupancy:", error);
-        } else {
-            // Refresh data to ensure sync
-            await fetchData(false, true);
-        }
+      const newUnitsInfo = { ...unitsInfo, [yearKey]: { ...currentInfo, is_occupied: newVal } };
+      setUnitsInfo(newUnitsInfo);
     } catch (err) {
-        console.error("Error updating occupancy:", err);
+      console.error("Occupancy toggle error:", err);
+      alert("স্ট্যাটাস পরিবর্তন করতে সমস্যা হয়েছে।");
     } finally {
-        setProcessingUpdate(false);
+      setProcessingUpdate(false);
     }
   };
 
@@ -616,9 +491,6 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         if (isDateEnabled) {
              paidDate = `${day} ${monthName} ${yearVal}`;
         } else {
-             // If date is disabled but status is PAID/PARTIAL, maybe use current date or keep empty?
-             // Existing logic was: (isDateEnabled && status !== 'UPCOMING')
-             // Let's stick to user input. If disabled, empty string.
              paidDate = '';
         }
     }
@@ -626,71 +498,47 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     const finalAmount = status === 'UPCOMING' ? 0 : amount;
     const finalDue = status === 'UPCOMING' ? 0 : due;
 
-    // Determine DB Unit Text
-    // If viewMode is PARKING, we append _P. 
-    // BUT we must be careful. If the unit is already stored as 2A_P in editModalData.unit, we shouldn't append again.
-    // editModalData.unit comes from startEditing(unit, ...). 
-    // In startEditing, we pass the raw unit (e.g. '2A').
-    // So appending _P is correct if we are in PARKING mode.
     const dbUnitText = viewMode === 'PARKING' ? `${unit}_P` : unit;
 
     try {
-      // Check if record exists
-      const { data: existingData, error: fetchError } = await supabase
+      const { error } = await supabase
         .from('payments')
-        .select('id')
-        .eq('unit_text', dbUnitText)
-        .eq('month_name', month)
-        .eq('year_num', year)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      let error = null;
-
-      if (existingData) {
-        // UPDATE
-        const { error: updateError } = await supabase
-          .from('payments')
-          .update({
-            amount: finalAmount,
-            due: finalDue,
-            paid_date: paidDate
-          })
-          .eq('id', existingData.id);
-        error = updateError;
-      } else {
-        // INSERT
-        const { error: insertError } = await supabase
-          .from('payments')
-          .insert({
-            unit_text: dbUnitText,
-            month_name: month,
-            year_num: year,
-            amount: finalAmount,
-            due: finalDue,
-            paid_date: paidDate
-          });
-        error = insertError;
-      }
+        .upsert({
+          unit_text: dbUnitText,
+          month_name: month,
+          year_num: year,
+          amount: finalAmount,
+          due: finalDue,
+          paid_date: paidDate
+        }, { onConflict: 'unit_text,month_name,year_num' });
 
       if (error) throw error;
 
-      // Also update occupancy/parking type if needed? 
-      // The user didn't explicitly ask to save occupancy changes from this modal to DB in this request,
-      // but the modal has occupancy toggles. 
-      // Currently handleModalOccupancyChange updates local state `editModalData`.
-      // If we want to persist occupancy, we should do it here too.
-      // However, occupancy is stored in `units_info`, not `payments`.
-      // Let's stick to payments for now as per "Service charge er moto PIN set kore deo edit korar jonno".
+      // Update local state
+      const newDbData = [...dbData];
+      const index = newDbData.findIndex(d => d.unit_text === dbUnitText && d.month_name === month && d.year_num === year);
       
-      await fetchData(false, false); 
+      const record = {
+        unit_text: dbUnitText,
+        month_name: month,
+        year_num: year,
+        amount: finalAmount,
+        due: finalDue,
+        paid_date: paidDate
+      };
+
+      if (index >= 0) {
+        newDbData[index] = record;
+      } else {
+        newDbData.push(record);
+      }
+      
+      setDbData(newDbData);
       setIsEditModalOpen(false);
       setPinInput(''); // Reset PIN
-      
-    } catch (err: any) {
-      console.error("Error saving payment:", err);
-      alert(`সেভ করতে সমস্যা হয়েছে: ${err.message}`);
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("তথ্য সেভ করতে সমস্যা হয়েছে।");
     } finally {
       setProcessingUpdate(false);
     }
@@ -710,23 +558,34 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     setProcessingUpdate(true);
     
     const isOccupiedDefault = selectedUnit.slice(-1) !== 'B';
-    const currentInfo = unitsInfo[selectedUnit] || { unit_text: selectedUnit, is_occupied: isOccupiedDefault, note: '' };
+    const yearKey = `${selectedUnit}-${selectedYear}`;
+    const currentInfo = unitsInfo[yearKey] || unitsInfo[selectedUnit] || { unit_text: selectedUnit, is_occupied: isOccupiedDefault, note: '' };
 
     try {
-        const { error } = await supabase
-            .from('units_info')
-            .upsert({ unit_text: selectedUnit, is_occupied: currentInfo.is_occupied, note: noteInput }, { onConflict: 'unit_text' });
+      const { error } = await supabase
+        .from('units_info')
+        .upsert({
+          unit_text: selectedUnit,
+          year_num: selectedYear,
+          is_occupied: currentInfo.is_occupied,
+          note: noteInput,
+          phone: currentInfo.phone || '',
+          confirm_template: currentInfo.confirm_template || DEFAULT_UNIT_INFO.confirm_template,
+          due_template: currentInfo.due_template || DEFAULT_UNIT_INFO.due_template,
+          owner_phone: currentInfo.owner_phone || '',
+          owner_confirm_template: currentInfo.owner_confirm_template || DEFAULT_UNIT_INFO.owner_confirm_template,
+          owner_due_template: currentInfo.owner_due_template || DEFAULT_UNIT_INFO.owner_due_template
+        }, { onConflict: 'unit_text,year_num' });
 
-        if (error) throw error;
-        setUnitsInfo(prev => ({ ...prev, [selectedUnit]: { ...currentInfo, note: noteInput } }));
-        setEditingNote(false);
+      if (error) throw error;
+
+      setUnitsInfo(prev => ({ ...prev, [yearKey]: { ...currentInfo, note: noteInput } }));
+      setEditingNote(false);
     } catch (err) {
-        console.error("Error saving note:", err);
-        // Fallback to local state if column doesn't exist
-        setUnitsInfo(prev => ({ ...prev, [selectedUnit]: { ...currentInfo, note: noteInput } }));
-        setEditingNote(false);
+      console.error("Note save error:", err);
+      alert("নোট সেভ করতে সমস্যা হয়েছে।");
     } finally {
-        setProcessingUpdate(false);
+      setProcessingUpdate(false);
     }
   };
 
@@ -3299,98 +3158,10 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                     owner_due_template: info.owner_due_template
                                                 };
                                                 localStorage.setItem('whatsapp_data_local', JSON.stringify(localData));
+                                                alert("Saved locally!");
                                             } catch (e) {
                                                 console.error("Local backup failed", e);
-                                            }
-                                            
-                                            try {
-                                                // Strategy: 
-                                                // 1. Check exact year match -> Update
-                                                // 2. Check generic (null year) match -> Update
-                                                // 3. Insert new specific year record
-                                                // 4. If Insert fails (Unique Constraint), find ANY record for unit and Update it
-
-                                                let targetId = null;
-
-                                                // 1. Exact Match
-                                                const { data: exactMatch } = await supabase
-                                                    .from('units_info')
-                                                    .select('id')
-                                                    .eq('unit_text', unit)
-                                                    .eq('year_num', selectedYear)
-                                                    .maybeSingle();
-
-                                                if (exactMatch) {
-                                                    targetId = exactMatch.id;
-                                                } else {
-                                                    // 2. Generic Match (year is null)
-                                                    const { data: genericMatch } = await supabase
-                                                        .from('units_info')
-                                                        .select('id')
-                                                        .eq('unit_text', unit)
-                                                        .is('year_num', null)
-                                                        .maybeSingle();
-                                                    
-                                                    if (genericMatch) targetId = genericMatch.id;
-                                                }
-
-                                                const payload = {
-                                                    phone: info.phone || null,
-                                                    confirm_template: info.confirm_template || null,
-                                                    due_template: info.due_template || null,
-                                                    owner_phone: info.owner_phone || null,
-                                                    owner_confirm_template: info.owner_confirm_template || null,
-                                                    owner_due_template: info.owner_due_template || null
-                                                };
-
-                                                if (targetId) {
-                                                    // Update existing
-                                                    const { error: upError } = await supabase
-                                                        .from('units_info')
-                                                        .update(payload)
-                                                        .eq('id', targetId);
-                                                    if (upError) throw upError;
-                                                } else {
-                                                    // Insert new
-                                                    const { error: inError } = await supabase
-                                                        .from('units_info')
-                                                        .insert({
-                                                            unit_text: unit,
-                                                            year_num: selectedYear,
-                                                            is_occupied: info.is_occupied !== undefined ? info.is_occupied : (unit.slice(-1) !== 'B'),
-                                                            ...payload
-                                                        });
-                                                    
-                                                    if (inError) {
-                                                        // 4. Fallback for Unique Constraint on unit_text
-                                                        if (inError.code === '23505') {
-                                                            const { data: anyMatch } = await supabase
-                                                                .from('units_info')
-                                                                .select('id')
-                                                                .eq('unit_text', unit)
-                                                                .limit(1)
-                                                                .maybeSingle();
-                                                            
-                                                            if (anyMatch) {
-                                                                const { error: fallbackError } = await supabase
-                                                                    .from('units_info')
-                                                                    .update(payload)
-                                                                    .eq('id', anyMatch.id);
-                                                                if (fallbackError) throw fallbackError;
-                                                            } else {
-                                                                throw inError;
-                                                            }
-                                                        } else {
-                                                            throw inError;
-                                                        }
-                                                    }
-                                                }
-                                                
-                                                await fetchData(false);
-                                                alert("Saved successfully to Supabase!");
-                                            } catch (e: any) {
-                                                console.error("Save error:", e);
-                                                alert(`Saved locally! (Database Error: ${e.message || 'Check connection'})`);
+                                                alert("Failed to save locally.");
                                             }
                                         }}
                                         className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors"
@@ -3497,31 +3268,16 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                 document.body.removeChild(link);
                                             }
 
-                                            // Log to Supabase
-                                            try {
-                                                await supabase.from('whatsapp_logs').insert({
-                                                    unit_text: unit,
-                                                    month_name: whatsAppMonth,
-                                                    year_num: selectedYear,
-                                                    message_type: status === 'PAID' ? 'confirm' : 'due',
-                                                    target_audience: whatsAppTarget,
-                                                    sent_count: 1,
-                                                    last_sent_at: new Date().toISOString()
-                                                });
-                                                
-                                                // Update local log state
-                                                setWhatsAppLogs(prev => [...prev, {
-                                                    unit_text: unit,
-                                                    month_name: whatsAppMonth,
-                                                    year_num: selectedYear,
-                                                    message_type: status === 'PAID' ? 'confirm' : 'due',
-                                                    target_audience: whatsAppTarget,
-                                                    sent_count: 1,
-                                                    last_sent_at: new Date().toISOString()
-                                                }]);
-                                            } catch (e) {
-                                                console.error("Log error", e);
-                                            }
+                                            // Log locally
+                                            setWhatsAppLogs(prev => [...prev, {
+                                                unit_text: unit,
+                                                month_name: whatsAppMonth,
+                                                year_num: selectedYear,
+                                                message_type: status === 'PAID' ? 'confirm' : 'due',
+                                                target_audience: whatsAppTarget,
+                                                sent_count: 1,
+                                                last_sent_at: new Date().toISOString()
+                                            }]);
                                         }}
                                         className={`flex-[2] ${status === 'PAID' ? 'bg-green-500 hover:bg-green-600 shadow-green-200' : 'bg-red-500 hover:bg-red-600 shadow-red-200'} text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg dark:shadow-none`}
                                     >

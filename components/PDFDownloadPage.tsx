@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
 import { FLAT_OWNERS } from '../constants';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { FileDown, RefreshCw, ArrowLeft, Copy, Check } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 // English months array to map logic consistently
 const MONTHS_LOGIC = [
