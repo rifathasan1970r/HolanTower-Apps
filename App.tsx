@@ -16,7 +16,6 @@ import { EmergencyView } from './components/EmergencyView';
 import { ToLetView } from './components/ToLetView';
 import { WaterBillView } from './components/WaterBillView';
 import { LiftInstructionsView } from './components/LiftInstructionsView';
-import ImageSlider from './components/ImageSlider';
 import { MaintenanceView } from './components/MaintenanceView';
 import { SettingsView } from './components/SettingsView';
 import { PrayerTimeView } from './components/PrayerTimeView';
@@ -28,6 +27,7 @@ import { PDFDownloadPage } from './components/PDFDownloadPage';
 import { ContactView } from './components/ContactView';
 import { DownloadAppView } from './components/DownloadAppView';
 import { DuePaymentMarquee } from './components/DuePaymentMarquee';
+import { GalleryView } from './components/GalleryView';
 
 const App: React.FC = () => {
   const isExitingRef = useRef(false);
@@ -306,6 +306,8 @@ const App: React.FC = () => {
 
       case 'DOWNLOAD_APP':
         return <DownloadAppView onBack={() => setCurrentView('MENU')} />;
+      case 'GALLERY':
+        return <GalleryView onBack={() => setCurrentView('MENU')} />;
       case 'MENU':
       case 'HOME':
       default:
@@ -404,16 +406,6 @@ const App: React.FC = () => {
             {currentView === 'HOME' && (
               <div className="px-1">
                 <DuePaymentMarquee />
-              </div>
-            )}
-
-            {/* Image Slider Section (Only Home) */}
-            {currentView === 'HOME' && (
-              <div className="pb-4">
-                <div className="flex justify-between items-center mb-3 px-1">
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-white">গ্যালারি</h3>
-                </div>
-                <ImageSlider />
               </div>
             )}
 

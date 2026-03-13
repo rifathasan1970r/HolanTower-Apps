@@ -17,9 +17,15 @@ export const DuePaymentMarquee: React.FC = () => {
   useEffect(() => {
     const fetchDueUnits = async () => {
       const now = new Date();
-      const monthIndex = now.getMonth();
+      let monthIndex = now.getMonth() - 1;
+      let year = now.getFullYear();
+      
+      if (monthIndex < 0) {
+        monthIndex = 11;
+        year -= 1;
+      }
+      
       const month = MONTHS_BN[monthIndex];
-      const year = now.getFullYear();
       setCurrentMonth(month);
       setCurrentYear(year);
 
@@ -64,7 +70,7 @@ export const DuePaymentMarquee: React.FC = () => {
     };
   }, []);
 
-  if (loading || dueUnits.length === 0) return null;
+  if (loading) return null;
 
   return (
     <motion.div 
@@ -74,7 +80,7 @@ export const DuePaymentMarquee: React.FC = () => {
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2.5 rounded-2xl text-white shadow-lg shadow-red-500/20">
+          <div className={`p-2.5 rounded-2xl text-white shadow-lg ${dueUnits.length > 0 ? 'bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/20' : 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/20'}`}>
             <AlertCircle size={20} />
           </div>
           <div>
@@ -84,38 +90,44 @@ export const DuePaymentMarquee: React.FC = () => {
             </p>
           </div>
         </div>
-        <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 px-3 py-1.5 rounded-xl">
-          <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">
-            {dueUnits.length} টি বাকি
+        <div className={`border px-3 py-1.5 rounded-xl ${dueUnits.length > 0 ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-800' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800'}`}>
+          <span className={`text-[11px] font-bold whitespace-nowrap ${dueUnits.length > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+            {dueUnits.length > 0 ? `${dueUnits.length} টি বাকি` : 'সব পরিশোধিত'}
           </span>
         </div>
       </div>
 
       <div className="relative flex overflow-hidden w-full">
-        <motion.div 
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{ 
-            duration: Math.max(dueUnits.length * 4, 25), 
-            repeat: Infinity, 
-            ease: "linear",
-            repeatType: "loop"
-          }}
-          className="flex items-center gap-3 py-1 whitespace-nowrap"
-        >
-          {dueUnits.map((unit) => (
-            <div key={unit} className="flex items-center gap-2 bg-white/60 dark:bg-slate-700/40 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-200/50 dark:border-slate-600/50 shadow-sm shrink-0">
-              <span className="text-xs font-black text-slate-900 dark:text-white">{unit}</span>
-              <span className="text-[10px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">বকেয়া</span>
-            </div>
-          ))}
-          {/* Duplicate for seamless loop */}
-          {dueUnits.map((unit) => (
-            <div key={`${unit}-dup`} className="flex items-center gap-2 bg-white/60 dark:bg-slate-700/40 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-200/50 dark:border-slate-600/50 shadow-sm shrink-0">
-              <span className="text-xs font-black text-slate-900 dark:text-white">{unit}</span>
-              <span className="text-[10px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">বকেয়া</span>
-            </div>
-          ))}
-        </motion.div>
+        {dueUnits.length > 0 ? (
+          <motion.div 
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ 
+              duration: Math.max(dueUnits.length * 4, 25), 
+              repeat: Infinity, 
+              ease: "linear",
+              repeatType: "loop"
+            }}
+            className="flex items-center gap-3 py-1 whitespace-nowrap"
+          >
+            {dueUnits.map((unit) => (
+              <div key={unit} className="flex items-center gap-2 bg-white/60 dark:bg-slate-700/40 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-200/50 dark:border-slate-600/50 shadow-sm shrink-0">
+                <span className="text-xs font-black text-slate-900 dark:text-white">{unit}</span>
+                <span className="text-[10px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">বকেয়া</span>
+              </div>
+            ))}
+            {/* Duplicate for seamless loop */}
+            {dueUnits.map((unit) => (
+              <div key={`${unit}-dup`} className="flex items-center gap-2 bg-white/60 dark:bg-slate-700/40 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-200/50 dark:border-slate-600/50 shadow-sm shrink-0">
+                <span className="text-xs font-black text-slate-900 dark:text-white">{unit}</span>
+                <span className="text-[10px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">বকেয়া</span>
+              </div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="flex items-center justify-center w-full py-2 bg-white/60 dark:bg-slate-700/40 backdrop-blur-sm rounded-xl border border-slate-200/50 dark:border-slate-600/50">
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">এই মাসে কোনো বকেয়া নেই</span>
+          </div>
+        )}
       </div>
     </motion.div>
   );
