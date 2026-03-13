@@ -71,7 +71,7 @@ const QuickRechargeModal = ({ onClose, data }: { onClose: () => void, data: type
                        autoFocus
                        type="text" 
                        placeholder="সার্চ (যেমন 2A বা নাম)..." 
-                       className="w-full p-[8px] m-[6px_0] rounded-[8px] border border-[#503cc8]/6 font-[700] outline-none focus:border-[#6f49ff] text-sm"
+                       className="w-full p-[8px] m-[6px_0] rounded-[8px] border border-[#503cc8]/6 font-[700] outline-none focus:border-[#6f49ff] text-base"
                        value={search}
                        onChange={e => setSearch(e.target.value)}
                        onClick={e => e.stopPropagation()}
@@ -320,7 +320,7 @@ export const DescoView: React.FC<DescoViewProps> = ({ lang = 'bn', setView }) =>
                         placeholder={t.searchPlaceholder}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl py-2.5 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 h-10"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl py-2.5 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-base font-semibold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 h-10"
                     />
                 </div>
                 <div className="relative w-[32%] shadow-lg shadow-slate-200/50 dark:shadow-none rounded-2xl">

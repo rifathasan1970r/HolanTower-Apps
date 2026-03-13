@@ -102,7 +102,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [unitsInfo, setUnitsInfo] = useState<Record<string, UnitInfo>>({});
   const [whatsAppLogs, setWhatsAppLogs] = useState<WhatsAppLog[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [useMock, setUseMock] = useState<boolean>(true);
+  const [useMock, setUseMock] = useState<boolean>(false);
 
   // Admin State
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -240,6 +240,22 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
 
   useEffect(() => {
     fetchData();
+    
+    // Real-time listener for payments table
+    const channel = supabase
+      .channel('public:payments_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payments' },
+        () => {
+          fetchData(false);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedYear]);
 
   const fetchDueSummaryData = async () => {
@@ -1027,7 +1043,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     </div>
                     <div className="flex justify-between items-end">
                         <span className="text-[10px] text-slate-500 dark:text-slate-400">এই মাসে বকেয়া ছিল</span>
-                        <span className="text-lg font-black text-slate-800 dark:text-white whitespace-nowrap">৳ {highestDueMonthStat?.due.toLocaleString()}</span>
+                        <span className="text-lg font-black text-slate-800 dark:text-white whitespace-nowrap">৳ {(highestDueMonthStat?.due || 0).toLocaleString()}</span>
                     </div>
                 </div>
 
@@ -1070,7 +1086,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 <div className="bg-slate-50 dark:bg-slate-700/30 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-xs text-slate-500 dark:text-slate-400">মাসিক চার্জ</span>
-                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">৳ {selectedUnitSummary.monthlyCharge.toLocaleString()}</span>
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">৳ {(selectedUnitSummary?.monthlyCharge || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-xs text-slate-500 dark:text-slate-400">সর্বশেষ পেমেন্ট</span>
@@ -1092,7 +1108,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                         </span>
                     </div>
                     <span className={`text-lg font-black ${selectedUnitSummary.totalDue > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                        {selectedUnitSummary.totalDue > 0 ? `৳ ${selectedUnitSummary.totalDue.toLocaleString()}` : 'OK'}
+                        {selectedUnitSummary?.totalDue > 0 ? `৳ ${(selectedUnitSummary.totalDue || 0).toLocaleString()}` : 'OK'}
                     </span>
                 </div>
             </div>
@@ -2171,7 +2187,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 <CheckCircle2 size={16} />
                             </div>
                             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-0.5">{t.totalCollected}</span>
-                            <span className="text-base font-black text-green-600 dark:text-green-400">৳ {selectedMonthStat.collected.toLocaleString()}</span>
+                            <span className="text-base font-black text-green-600 dark:text-green-400">৳ {(selectedMonthStat?.collected || 0).toLocaleString()}</span>
                         </div>
 
                         <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
@@ -2179,7 +2195,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                 <XCircle size={16} />
                             </div>
                             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-0.5">{t.totalDue}</span>
-                            <span className="text-base font-black text-red-600 dark:text-red-400">৳ {selectedMonthStat.due.toLocaleString()}</span>
+                            <span className="text-base font-black text-red-600 dark:text-red-400">৳ {(selectedMonthStat?.due || 0).toLocaleString()}</span>
                         </div>
                     </div>
 
@@ -3400,12 +3416,12 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                     </td>
                                     <td className="py-3 text-center">
                                         <span className={`text-sm font-semibold ${data.collected > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`}>
-                                            {data.collected > 0 ? `৳ ${data.collected.toLocaleString()}` : '-'}
+                                            {data.collected > 0 ? `৳ ${(data.collected || 0).toLocaleString()}` : '-'}
                                         </span>
                                     </td>
                                     <td className="py-3 pr-4 text-right">
                                         {data.due > 0 ? (
-                                            <span className="text-sm font-bold text-red-500 dark:text-red-400">৳ {data.due.toLocaleString()}</span>
+                                            <span className="text-sm font-bold text-red-500 dark:text-red-400">৳ {(data.due || 0).toLocaleString()}</span>
                                         ) : (
                                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
                                                 <CheckCircle2 size={10} /> {t.paid}
