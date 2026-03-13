@@ -40,9 +40,9 @@ export const DuePaymentMarquee: React.FC = () => {
         if (error) throw error;
 
         if (data) {
-          const dueList = data
+          const dueList = Array.from(new Set(data
             .map(record => record.unit_text)
-            .filter(unit => !unit.endsWith('_P'));
+            .filter(unit => !unit.endsWith('_P'))));
           setDueUnits(dueList);
         }
       } catch (err) {

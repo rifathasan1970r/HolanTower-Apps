@@ -81,19 +81,27 @@ const App: React.FC = () => {
   // Dark Mode State
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark';
+      try {
+        return localStorage.getItem('theme') === 'dark';
+      } catch (e) {
+        return false;
+      }
     }
     return false;
   });
 
   // Apply Dark Mode
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+    try {
+      if (darkMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    } catch (e) {
+      // Ignore localStorage errors
     }
   }, [darkMode]);
 
@@ -157,10 +165,14 @@ const App: React.FC = () => {
 
   // Advanced Back Navigation Support
   useEffect(() => {
-    // Initialize history state if not already set
-    if (!window.history.state || window.history.state.view === undefined) {
-      window.history.replaceState({ view: 'BASE' }, '');
-      window.history.pushState({ view: 'HOME', unit: null, summary: false }, '');
+    try {
+      // Initialize history state if not already set
+      if (!window.history.state || window.history.state.view === undefined) {
+        window.history.replaceState({ view: 'BASE' }, '');
+        window.history.pushState({ view: 'HOME', unit: null, summary: false }, '');
+      }
+    } catch (e) {
+      // Ignore history errors
     }
 
     const handlePopState = (event: PopStateEvent) => {
@@ -171,7 +183,9 @@ const App: React.FC = () => {
           // We hit the bottom of our app history
           setShowExitDialog(true);
           // Push the current view back so we stay in the app
-          window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+          try {
+            window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+          } catch (e) {}
         } else if (state.view) {
           // Navigate to the view stored in history
           setCurrentView(state.view);
@@ -192,27 +206,31 @@ const App: React.FC = () => {
 
   // Sync manual navigation with History API
   useEffect(() => {
-    const state = window.history.state;
-    if (!state || state.view === 'BASE') return;
+    try {
+      const state = window.history.state;
+      if (!state || state.view === 'BASE') return;
 
-    const viewChanged = state.view !== currentView;
-    const summaryChanged = state.summary !== showSummaryList;
-    const unitChanged = state.unit !== selectedUnit;
+      const viewChanged = state.view !== currentView;
+      const summaryChanged = state.summary !== showSummaryList;
+      const unitChanged = state.unit !== selectedUnit;
 
-    // Only push/replace state if something actually changed
-    if (viewChanged || summaryChanged || unitChanged) {
-      // Rule: When switching/sliding between units, DO NOT create new history entries.
-      // If we are already in a unit and we change to another unit, use replaceState.
-      const isSlidingUnits = !viewChanged && !summaryChanged && unitChanged && state.unit !== null && selectedUnit !== null;
-      
-      // Rule: Switching between Grid and Summary List -> replaceState (to keep "All Unit List" as one level)
-      const isSwitchingListType = !viewChanged && summaryChanged && !unitChanged && selectedUnit === null;
+      // Only push/replace state if something actually changed
+      if (viewChanged || summaryChanged || unitChanged) {
+        // Rule: When switching/sliding between units, DO NOT create new history entries.
+        // If we are already in a unit and we change to another unit, use replaceState.
+        const isSlidingUnits = !viewChanged && !summaryChanged && unitChanged && state.unit !== null && selectedUnit !== null;
+        
+        // Rule: Switching between Grid and Summary List -> replaceState (to keep "All Unit List" as one level)
+        const isSwitchingListType = !viewChanged && summaryChanged && !unitChanged && selectedUnit === null;
 
-      if (isSlidingUnits || isSwitchingListType) {
-        window.history.replaceState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
-      } else {
-        window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+        if (isSlidingUnits || isSwitchingListType) {
+          window.history.replaceState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+        } else {
+          window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
+        }
       }
+    } catch (e) {
+      // Ignore history errors
     }
   }, [currentView, selectedUnit, showSummaryList]);
 
@@ -238,7 +256,9 @@ const App: React.FC = () => {
     // Go back 2 steps: 
     // 1. Undo the pushState we did when showing the dialog
     // 2. Undo the initial navigation to BASE (effectively exiting)
-    window.history.go(-2);
+    try {
+      window.history.go(-2);
+    } catch (e) {}
   };
 
   const renderContent = () => {
