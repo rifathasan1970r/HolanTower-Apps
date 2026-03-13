@@ -52,6 +52,15 @@ export const EMERGENCY_NOTICE_TEXT = "সম্মানিত ফ্ল্য�
 
 export const MENU_ITEMS: MenuItem[] = [
   { 
+    id: 'gallery', 
+    label: 'গ্যালারি', 
+    icon: ImageIcon,
+    view: 'GALLERY',
+    color: 'bg-pink-500',
+    description: 'ভবনের ছবিসমূহ',
+    gradient: 'from-pink-400 to-rose-600'
+  },
+  { 
     id: 'service', 
     label: 'সার্ভিস চার্জ', 
     icon: CreditCard, 
@@ -158,15 +167,6 @@ export const MENU_ITEMS: MenuItem[] = [
     color: 'bg-purple-500',
     description: 'অ্যাপটি ডাউনলোড করুন',
     gradient: 'from-purple-400 to-violet-600'
-  },
-  { 
-    id: 'gallery', 
-    label: 'গ্যালারি', 
-    icon: ImageIcon,
-    view: 'GALLERY',
-    color: 'bg-pink-500',
-    description: 'ভবনের ছবিসমূহ',
-    gradient: 'from-pink-400 to-rose-600'
   },
   { 
     id: 'contact', 

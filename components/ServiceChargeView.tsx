@@ -13,8 +13,7 @@ import { supabase } from '../lib/supabaseClient';
 // কনফিগারেশন: ২৭টি ইউনিট (ফ্লোর ২ থেকে ১০)
 const FLOORS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 const UNITS_PER_FLOOR = ['A', 'B', 'C'];
-// Use FLAT_OWNERS as the source of truth for units to ensure all units (like MAIN) are included
-const ALL_UNITS = FLAT_OWNERS.map(owner => owner.flat);
+const ALL_UNITS = FLOORS.flatMap(f => UNITS_PER_FLOOR.map(u => `${f}${u}`));
 const SERVICE_CHARGE_AMOUNT = 2000;
 
 // English months array to map logic consistently, UI will use translated array
@@ -201,30 +200,13 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
         .select('*')
         .eq('year_num', selectedYear);
 
-      if (payError) {
-        console.error("Payments fetch error:", payError);
-        throw payError;
-      }
+      if (payError) throw payError;
       
       if (payData) {
         setDbData(payData as PaymentData[]);
-      } else {
-        setDbData([]);
       }
 
       if (fetchUnitsInfo) {
-        // Fetch Parking Config
-        const { data: configData, error: configError } = await supabase
-          .from('app_settings')
-          .select('*')
-          .eq('id', 'parking_config')
-          .single();
-          
-        if (!configError && configData && configData.value) {
-          if (configData.value.parkingUnits) setParkingUnits(configData.value.parkingUnits);
-          if (configData.value.externalUnits) setExternalUnits(configData.value.externalUnits);
-        }
-
         const { data: unitData, error: unitError } = await supabase
           .from('units_info')
           .select('*');
