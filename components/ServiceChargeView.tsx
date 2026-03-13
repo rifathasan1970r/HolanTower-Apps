@@ -674,13 +674,14 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   }, [viewMode, parkingUnits, externalUnits]);
 
   const allUnitsSummary = useMemo(() => {
+    if (!visibleUnits || !Array.isArray(visibleUnits)) return [];
     return visibleUnits.map(unit => {
         const records = getUnitData(unit);
-        const collected = records.reduce((sum, r) => sum + (r.status === 'PAID' ? r.amount : 0), 0);
-        const due = records.reduce((sum, r) => sum + r.due, 0);
+        const collected = records.reduce((sum, r) => sum + (r.status === 'PAID' ? (Number(r.amount) || 0) : 0), 0);
+        const due = records.reduce((sum, r) => sum + (Number(r.due) || 0), 0);
         return { unit, collected, due };
     });
-  }, [selectedYear, dbData, unitsInfo, lang, viewMode, visibleUnits]); // Added visibleUnits dependency
+  }, [selectedYear, dbData, unitsInfo, lang, viewMode, visibleUnits]);
 
   // New: 12-Month Aggregate Stats
   const monthlyStats = useMemo(() => {
@@ -817,11 +818,12 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
   const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
 
 
-  const grandTotalCollected = allUnitsSummary.reduce((acc, curr) => acc + curr.collected, 0);
-  const grandTotalDue = allUnitsSummary.reduce((acc, curr) => acc + curr.due, 0);
+  const grandTotalCollected = (allUnitsSummary || []).reduce((acc, curr) => acc + (Number(curr.collected) || 0), 0);
+  const grandTotalDue = (allUnitsSummary || []).reduce((acc, curr) => acc + (Number(curr.due) || 0), 0);
 
   // Calculate highest due month
   const highestDueMonthStat = useMemo(() => {
+      if (!monthlyStats || monthlyStats.length === 0) return null;
       return monthlyStats.reduce((max, current) => (current.due > max.due ? current : max), monthlyStats[0]);
   }, [monthlyStats]);
 
@@ -957,8 +959,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                                     {rows}
                                                     <tr className="bg-slate-50 dark:bg-slate-700/50 font-black">
                                                         <td className="py-4 pl-4 text-slate-700 dark:text-white uppercase">মোট যোগফল</td>
-                                                        <td className="py-4 text-center text-indigo-600 dark:text-indigo-400">৳{totalAmount.toLocaleString()}</td>
-                                                        <td className="py-4 text-center text-red-600 dark:text-red-400">৳{totalDue.toLocaleString()}</td>
+                                                        <td className="py-4 text-center text-indigo-600 dark:text-indigo-400">৳{(totalAmount || 0).toLocaleString()}</td>
+                                                        <td className="py-4 text-center text-red-600 dark:text-red-400">৳{(totalDue || 0).toLocaleString()}</td>
                                                         <td className="py-4 pr-4 text-right"></td>
                                                     </tr>
                                                 </>
@@ -1016,7 +1018,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                         </div>
                         <span className="text-sm font-bold text-slate-600 dark:text-slate-300">বছরে মোট আদায়</span>
                     </div>
-                    <span className="text-lg font-black text-green-600 dark:text-green-400 whitespace-nowrap">৳ {grandTotalCollected.toLocaleString()}</span>
+                    <span className="text-lg font-black text-green-600 dark:text-green-400 whitespace-nowrap">৳ {(grandTotalCollected || 0).toLocaleString()}</span>
                 </div>
 
                 {/* Total Due */}
@@ -1027,7 +1029,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                         </div>
                         <span className="text-sm font-bold text-slate-600 dark:text-slate-300">বছরে মোট বকেয়া</span>
                     </div>
-                    <span className="text-lg font-black text-red-600 dark:text-red-400 whitespace-nowrap">৳ {grandTotalDue.toLocaleString()}</span>
+                    <span className="text-lg font-black text-red-600 dark:text-red-400 whitespace-nowrap">৳ {(grandTotalDue || 0).toLocaleString()}</span>
                 </div>
 
                 {/* Highest Due Month */}
@@ -1050,7 +1052,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 {/* Total Billable (Collected + Due) */}
                 <div className="bg-slate-50 dark:bg-slate-700/30 border border-slate-100 dark:border-slate-700 rounded-xl p-4 flex justify-between items-center">
                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400">বছরের মোট দাবি (Billable)</span>
-                    <span className="text-base font-black text-slate-700 dark:text-slate-300 whitespace-nowrap">৳ {(grandTotalCollected + grandTotalDue).toLocaleString()}</span>
+                    <span className="text-base font-black text-slate-700 dark:text-slate-300 whitespace-nowrap">৳ {((grandTotalCollected || 0) + (grandTotalDue || 0)).toLocaleString()}</span>
                 </div>
             </div>
          </div>
@@ -1574,8 +1576,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
     const nextUnit = currentIndex < visibleUnits.length - 1 ? visibleUnits[currentIndex + 1] : null;
 
     const records = getUnitData(selectedUnit);
-    const totalAmount = records.reduce((sum, r) => sum + r.amount, 0);
-    const totalDue = records.reduce((sum, r) => sum + r.due, 0);
+    const totalAmount = records.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    const totalDue = records.reduce((sum, r) => sum + (Number(r.due) || 0), 0);
     
     // Stats for Graph
     const paidCount = records.filter(r => r.status === 'PAID').length;
@@ -1656,11 +1658,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                   <div className="grid grid-cols-2 gap-3 pt-2">
                       <div className="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-700 dark:to-slate-800 rounded-2xl p-4 text-white shadow-lg shadow-slate-900/20 dark:shadow-none">
                           <p className="text-[10px] text-slate-300 font-medium uppercase tracking-wider mb-1">মোট টাকা</p>
-                          <p className="font-bold text-base sm:text-lg whitespace-nowrap">৳ {totalAmount.toLocaleString()}</p>
+                          <p className="font-bold text-base sm:text-lg whitespace-nowrap">৳ {(totalAmount || 0).toLocaleString()}</p>
                       </div>
                       <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-4 text-white shadow-lg shadow-red-500/20 dark:shadow-none">
                           <p className="text-[10px] text-red-100 font-medium uppercase tracking-wider mb-1">মোট বকেয়া</p>
-                          <p className="font-bold text-base sm:text-lg whitespace-nowrap">৳ {totalDue.toLocaleString()}</p>
+                          <p className="font-bold text-base sm:text-lg whitespace-nowrap">৳ {(totalDue || 0).toLocaleString()}</p>
                       </div>
                   </div>
               </div>
@@ -1863,11 +1865,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                 )}
                 <div className="text-center px-1 flex flex-col items-center justify-center">
                     <p className="text-[10px] text-white/80 font-medium uppercase mb-1">{t.totalAmount}</p>
-                    <p className="font-bold text-white text-base">৳ {totalAmount.toLocaleString()}</p>
+                    <p className="font-bold text-white text-base">৳ {(totalAmount || 0).toLocaleString()}</p>
                 </div>
                 <div className="text-center px-1 flex flex-col items-center justify-center">
                     <p className="text-[10px] text-white/80 font-medium uppercase mb-1">{t.totalDue}</p>
-                    <p className="font-bold text-base text-white">৳ {totalDue.toLocaleString()}</p>
+                    <p className="font-bold text-base text-white">৳ {(totalDue || 0).toLocaleString()}</p>
                 </div>
             </div>
         </div>
@@ -1944,8 +1946,8 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     <tfoot className="bg-slate-50 dark:bg-slate-700 border-t border-slate-200 dark:border-slate-600">
                         <tr>
                             <td className="py-3 pl-3 text-sm font-bold text-slate-700 dark:text-slate-200">{t.total}</td>
-                            <td className="py-3 text-center text-sm font-bold text-slate-700 dark:text-slate-200">৳ {totalAmount.toLocaleString()}</td>
-                            <td className="py-3 text-center text-sm font-bold text-red-600 dark:text-red-400">{totalDue > 0 ? `৳ ${totalDue.toLocaleString()}` : '-'}</td>
+                            <td className="py-3 text-center text-sm font-bold text-slate-700 dark:text-slate-200">৳ {(totalAmount || 0).toLocaleString()}</td>
+                            <td className="py-3 text-center text-sm font-bold text-red-600 dark:text-red-400">{totalDue > 0 ? `৳ ${(totalDue || 0).toLocaleString()}` : '-'}</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -3365,11 +3367,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     </div>
                     <div className="px-3 text-center">
                         <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">{t.totalCollected}</p>
-                        <p className="text-base sm:text-lg font-bold whitespace-nowrap">৳ {grandTotalCollected.toLocaleString()}</p>
+                        <p className="text-base sm:text-lg font-bold whitespace-nowrap">৳ {(grandTotalCollected || 0).toLocaleString()}</p>
                     </div>
                     <div className="pl-3 text-right">
                         <p className="text-[10px] text-red-200 font-medium uppercase mb-1">{t.totalDue}</p>
-                        <p className="text-base sm:text-lg font-bold text-red-100 whitespace-nowrap">৳ {grandTotalDue.toLocaleString()}</p>
+                        <p className="text-base sm:text-lg font-bold text-red-100 whitespace-nowrap">৳ {(grandTotalDue || 0).toLocaleString()}</p>
                     </div>
                 </div>
             </div>
@@ -3462,13 +3464,13 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                              <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center border border-red-100 dark:border-red-800/50 flex flex-col items-center justify-center">
                                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">২০২৫ মোট বকেয়া</p>
                                  <div className="flex items-baseline gap-1">
-                                     <p className="text-lg sm:text-xl font-black text-red-600 dark:text-red-400 whitespace-nowrap">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025, 0).toLocaleString()}</p>
+                                     <p className="text-lg sm:text-xl font-black text-red-600 dark:text-red-400 whitespace-nowrap">৳ {(dueSummaryData.reduce((sum, item) => sum + (Number(item.due2025) || 0), 0)).toLocaleString()}</p>
                                  </div>
                              </div>
                              <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3 text-center border border-orange-100 dark:border-orange-800/50 flex flex-col items-center justify-center">
                                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">২০২৬ মোট বকেয়া</p>
                                  <div className="flex items-baseline gap-1">
-                                     <p className="text-lg sm:text-xl font-black text-orange-600 dark:text-orange-400 whitespace-nowrap">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2026, 0).toLocaleString()}</p>
+                                     <p className="text-lg sm:text-xl font-black text-orange-600 dark:text-orange-400 whitespace-nowrap">৳ {(dueSummaryData.reduce((sum, item) => sum + (Number(item.due2026) || 0), 0)).toLocaleString()}</p>
                                  </div>
                              </div>
                          </div>
@@ -3479,7 +3481,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                  </div>
                                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300">সর্বমোট বকেয়া</span>
                              </div>
-                             <span className="text-base font-black text-indigo-600 dark:text-indigo-400 whitespace-nowrap">৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025 + item.due2026, 0).toLocaleString()}</span>
+                             <span className="text-base font-black text-indigo-600 dark:text-indigo-400 whitespace-nowrap">৳ {(dueSummaryData.reduce((sum, item) => sum + (Number(item.due2025) || 0) + (Number(item.due2026) || 0), 0)).toLocaleString()}</span>
                          </div>
                      </div>
 
@@ -3507,19 +3509,19 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                          <div>
                                              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">২০২৫</p>
                                              <p className={`text-sm font-bold ${item.due2025 > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                                                 {item.due2025 > 0 ? `৳ ${item.due2025.toLocaleString()}` : '0'}
+                                                 {item.due2025 > 0 ? `৳ ${(item.due2025 || 0).toLocaleString()}` : '0'}
                                              </p>
                                          </div>
                                          <div>
                                              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">২০২৬</p>
                                              <p className={`text-sm font-bold ${item.due2026 > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
-                                                 {item.due2026 > 0 ? `৳ ${item.due2026.toLocaleString()}` : '0'}
+                                                 {item.due2026 > 0 ? `৳ ${(item.due2026 || 0).toLocaleString()}` : '0'}
                                              </p>
                                          </div>
                                          <div className="pl-2 border-l border-slate-200 dark:border-slate-700">
                                              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">মোট</p>
                                              <p className={`text-sm font-bold ${(item.due2025 + item.due2026) > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                                                 {(item.due2025 + item.due2026) > 0 ? `৳ ${(item.due2025 + item.due2026).toLocaleString()}` : '0'}
+                                                 {(item.due2025 + item.due2026) > 0 ? `৳ ${((item.due2025 || 0) + (item.due2026 || 0)).toLocaleString()}` : '0'}
                                              </p>
                                          </div>
                                      </div>
@@ -3532,19 +3534,19 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                                  <div>
                                      <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">২০২৫</p>
                                      <p className="text-sm font-bold text-red-600 dark:text-red-400">
-                                         ৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025, 0).toLocaleString()}
+                                         ৳ {(dueSummaryData.reduce((sum, item) => sum + (Number(item.due2025) || 0), 0)).toLocaleString()}
                                      </p>
                                  </div>
                                  <div>
                                      <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">২০২৬</p>
                                      <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
-                                         ৳ {dueSummaryData.reduce((sum, item) => sum + item.due2026, 0).toLocaleString()}
+                                         ৳ {(dueSummaryData.reduce((sum, item) => sum + (Number(item.due2026) || 0), 0)).toLocaleString()}
                                      </p>
                                  </div>
                                  <div className="pl-2 border-l border-slate-200 dark:border-slate-700">
                                      <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">মোট</p>
                                      <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                                         ৳ {dueSummaryData.reduce((sum, item) => sum + item.due2025 + item.due2026, 0).toLocaleString()}
+                                         ৳ {(dueSummaryData.reduce((sum, item) => sum + (Number(item.due2025) || 0) + (Number(item.due2026) || 0), 0)).toLocaleString()}
                                      </p>
                                  </div>
                              </div>
@@ -3787,7 +3789,7 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                             </div>
                             <span className="text-xs font-bold text-slate-600 dark:text-slate-300">মোট জমে থাকা বকেয়া</span>
                         </div>
-                        <span className="text-base font-black text-red-600 dark:text-red-400">৳ {agingStats.totalAccumulatedDue.toLocaleString()}</span>
+                        <span className="text-base font-black text-red-600 dark:text-red-400">৳ {(agingStats?.totalAccumulatedDue || 0).toLocaleString()}</span>
                     </div>
                 </div>
             </div>
@@ -3838,11 +3840,11 @@ export const ServiceChargeView: React.FC<ServiceChargeViewProps> = ({
                     </div>
                     <div className="px-3 text-center">
                         <p className="text-[10px] text-indigo-200 font-medium uppercase mb-1">{t.totalCollected}</p>
-                        <p className="text-base sm:text-lg font-bold whitespace-nowrap">৳ {grandTotalCollected.toLocaleString()}</p>
+                        <p className="text-base sm:text-lg font-bold whitespace-nowrap">৳ {(grandTotalCollected || 0).toLocaleString()}</p>
                     </div>
                     <div className="pl-3 text-right">
                         <p className="text-[10px] text-red-200 font-medium uppercase mb-1">{t.totalDue}</p>
-                        <p className="text-base sm:text-lg font-bold text-red-100 whitespace-nowrap">৳ {grandTotalDue.toLocaleString()}</p>
+                        <p className="text-base sm:text-lg font-bold text-red-100 whitespace-nowrap">৳ {(grandTotalDue || 0).toLocaleString()}</p>
                     </div>
                 </div>
                 <p className="text-[10px] text-indigo-200 mt-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">

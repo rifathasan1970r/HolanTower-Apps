@@ -138,14 +138,19 @@ const App: React.FC = () => {
       // Time parts
       const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
       // Example: "05:47:03 AM"
-      const [hms, ap] = timeStr.split(' ');
+      const parts = timeStr.split(' ');
+      const hms = parts[0] || "00:00:00";
+      const ap = parts[1] || "AM";
       const [h, m, s] = hms.split(':');
       
       // Convert HH:MM and SS to Bangla digits for consistency with the rest of the app
-      const toBanglaDigits = (str: string) => str.replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[parseInt(d)]);
+      const toBanglaDigits = (str: string | undefined) => {
+        if (!str) return '০০';
+        return str.replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[parseInt(d)]);
+      };
       
-      setCurrentTime(toBanglaDigits(`${h}:${m}`));
-      setCurrentSeconds(toBanglaDigits(s));
+      setCurrentTime(toBanglaDigits(`${h || '00'}:${m || '00'}`));
+      setCurrentSeconds(toBanglaDigits(s || '00'));
       setAmPm(ap);
     };
 
@@ -169,7 +174,7 @@ const App: React.FC = () => {
       // Initialize history state if not already set
       if (!window.history.state || window.history.state.view === undefined) {
         window.history.replaceState({ view: 'BASE' }, '');
-        window.history.pushState({ view: 'HOME', unit: null, summary: false }, '');
+        window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
       }
     } catch (e) {
       // Ignore history errors
@@ -182,15 +187,22 @@ const App: React.FC = () => {
         if (state.view === 'BASE') {
           // We hit the bottom of our app history
           setShowExitDialog(true);
-          // Push the current view back so we stay in the app
+          // Push the current state back so we stay in the app
           try {
             window.history.pushState({ view: currentView, unit: selectedUnit, summary: showSummaryList }, '');
           } catch (e) {}
         } else if (state.view) {
           // Navigate to the view stored in history
+          // Use a ref to prevent the "Sync manual navigation" effect from pushing a new state
+          isExitingRef.current = true;
           setCurrentView(state.view);
           setSelectedUnit(state.unit !== undefined ? state.unit : null);
           setShowSummaryList(state.summary !== undefined ? !!state.summary : false);
+          
+          // Reset the ref after a short delay
+          setTimeout(() => {
+            isExitingRef.current = false;
+          }, 100);
         }
       }
     };
@@ -206,6 +218,8 @@ const App: React.FC = () => {
 
   // Sync manual navigation with History API
   useEffect(() => {
+    if (isExitingRef.current) return;
+
     try {
       const state = window.history.state;
       if (!state || state.view === 'BASE') return;
